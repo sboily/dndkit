@@ -1,6 +1,18 @@
-"""D&D 5e rules the tools apply: hit points and experience."""
+"""D&D 5e rules the tools apply: hit points, experience, levels, encounters."""
 
 from dataclasses import dataclass
+
+from gamemaster_mcp.game.registry import normalize
+from gamemaster_mcp.game.tables import (
+    CLASS_ALIASES,
+    CLASSES,
+    DIFFICULTY_THRESHOLDS,
+    ENCOUNTER_MULTIPLIERS,
+    FULL_CASTER_SLOTS,
+    PACT_SLOTS,
+    XP_BY_CHALLENGE,
+    XP_FOR_LEVEL,
+)
 
 
 @dataclass(frozen=True)
@@ -32,3 +44,87 @@ def experience_per_character(total_xp: int, party_size: int) -> int:
     if party_size < 1:
         raise ValueError("party_size must be at least 1")
     return total_xp // party_size
+
+
+def class_key(class_name: str) -> str | None:
+    """The 5e class a name refers to ("Magicien" -> "wizard"), or None if homebrew."""
+    name = normalize(class_name)
+    key = CLASS_ALIASES.get(name, name)
+    return key if key in CLASSES else None
+
+
+def hit_die(class_name: str) -> int:
+    """The class's hit die size; d8 for a class the rules do not know."""
+    key = class_key(class_name)
+    return CLASSES[key][0] if key else 8
+
+
+def proficiency_bonus(level: int) -> int:
+    """+2 at levels 1-4, up to +6 at 17-20."""
+    return 2 + (max(1, level) - 1) // 4
+
+
+def level_for_xp(xp: int) -> int:
+    """The highest level *xp* experience points reach."""
+    return max(level for level, needed in XP_FOR_LEVEL.items() if xp >= needed)
+
+
+def xp_for_challenge(challenge: str) -> int | None:
+    """Monster XP for a challenge rating ("1/4", "0.25", "3"), None if unknown."""
+    text = challenge.strip().replace(",", ".")
+    decimals = {"0.125": "1/8", "0.25": "1/4", "0.5": "1/2"}
+    return XP_BY_CHALLENGE.get(decimals.get(text, text))
+
+
+def spell_slots_for(class_name: str, level: int) -> dict[int, int] | None:
+    """Spell slots by slot level for a single-class character; None for non-casters."""
+    key = class_key(class_name)
+    progression = CLASSES[key][1] if key else "none"
+    if progression == "full":
+        return dict(enumerate(FULL_CASTER_SLOTS[level], start=1))
+    if progression in ("half", "half_up"):
+        if progression == "half" and level < 2:
+            return {}
+        return dict(enumerate(FULL_CASTER_SLOTS[(level + 1) // 2], start=1))
+    if progression == "pact":
+        count, slot_level = PACT_SLOTS[level]
+        return {slot_level: count}
+    return None
+
+
+@dataclass(frozen=True)
+class Difficulty:
+    """An encounter rated against a party (DMG ch. 3, "Creating a Combat Encounter")."""
+
+    total_xp: int
+    multiplier: float
+    adjusted_xp: int
+    thresholds: tuple[int, int, int, int]  # easy, medium, hard, deadly for the party
+    rating: str  # trivial, easy, medium, hard, deadly
+
+
+def encounter_difficulty(party_levels: list[int], monster_xps: list[int]) -> Difficulty:
+    """Rate monsters against a party: XP times a count multiplier, against thresholds."""
+    if not party_levels:
+        raise ValueError("the party has no characters")
+    per_level = [DIFFICULTY_THRESHOLDS[min(20, max(1, level))] for level in party_levels]
+    easy, medium, hard, deadly = (sum(row[i] for row in per_level) for i in range(4))
+    step = _multiplier_step(len(monster_xps))
+    if len(party_levels) < 3:
+        step += 1
+    elif len(party_levels) >= 6:
+        step -= 1
+    multiplier = ENCOUNTER_MULTIPLIERS[max(0, min(step, len(ENCOUNTER_MULTIPLIERS) - 1))]
+    total = sum(monster_xps)
+    adjusted = int(total * multiplier) if monster_xps else 0
+    ratings = ((deadly, "deadly"), (hard, "hard"), (medium, "medium"), (easy, "easy"))
+    rating = next((name for limit, name in ratings if adjusted >= limit), "trivial")
+    return Difficulty(total, multiplier, adjusted, (easy, medium, hard, deadly), rating)
+
+
+def _multiplier_step(monsters: int) -> int:
+    """Index into ENCOUNTER_MULTIPLIERS for a monster count, before party size."""
+    for step, upper in enumerate((0, 1, 2, 6, 10, 14)):
+        if monsters <= upper:
+            return step
+    return 6

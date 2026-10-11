@@ -1,4 +1,4 @@
-"""Character resource tools: inventory, spell slots, death saves and rests."""
+"""Character resource tools: inventory, death saves and rests."""
 
 from collections.abc import Callable
 from typing import Annotated, Literal
@@ -8,12 +8,10 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.game import resources
-from gamemaster_mcp.game.resources import DeathSave
+from gamemaster_mcp.game.resources import DeathSave, RestKind
 from gamemaster_mcp.models import Item
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools.deps import NameOrId, get_store
-
-SpellLevel = Annotated[int, Field(ge=1, le=9, description="Spell slot level (1-9)")]
 
 
 @tool
@@ -59,31 +57,6 @@ def remove_item_from_character(
 
 
 @tool
-def set_spell_slots(
-    character_name_or_id: NameOrId,
-    level: SpellLevel,
-    max_slots: Annotated[int, Field(ge=0, le=9, description="Slots at this level; 0 removes")],
-    store: CampaignStore = Depends(get_store),
-) -> str:
-    """Set how many spell slots a character has at one level."""
-    with store.transaction() as campaign:
-        character = resources.set_spell_slots(campaign, character_name_or_id, level, max_slots)
-    return f"{character.name}'s spell slots: {resources.describe_slots(character)}."
-
-
-@tool
-def use_spell_slot(
-    character_name_or_id: NameOrId,
-    level: SpellLevel,
-    store: CampaignStore = Depends(get_store),
-) -> str:
-    """Spend one spell slot when a character casts a levelled spell."""
-    with store.transaction() as campaign:
-        character, left = resources.use_spell_slot(campaign, character_name_or_id, level)
-    return f"{character.name} has {left} level {level} slot(s) left."
-
-
-@tool
 def record_death_save(
     character_name_or_id: NameOrId,
     outcome: Annotated[
@@ -100,23 +73,22 @@ def record_death_save(
 
 
 @tool
-def long_rest(
+def rest(
+    kind: Annotated[RestKind, Field(description="short (1 hour) or long (8 hours)")] = "long",
     names_or_ids: Annotated[
         list[str] | None, Field(description="Who rests; omit for the whole party")
     ] = None,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Long rest: full hit points, spell slots back, temporary HP and death saves cleared."""
+    """Rest. Long: full HP, spell slots back, one exhaustion level less. Short: pact slots."""
     with store.transaction() as campaign:
-        lines = resources.long_rest(campaign, names_or_ids or [])
+        lines = resources.rest(campaign, names_or_ids or [], kind)
     return "\n".join(lines) or "No characters to rest."
 
 
 TOOLS: list[Callable[..., str]] = [
     add_item_to_character,
     remove_item_from_character,
-    set_spell_slots,
-    use_spell_slot,
     record_death_save,
-    long_rest,
+    rest,
 ]

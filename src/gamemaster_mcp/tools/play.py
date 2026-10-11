@@ -1,23 +1,32 @@
-"""Tools used at the table: game state and combat turns."""
+"""Tools used at the table: game state, hit points and conditions."""
 
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastmcp.dependencies import Depends
 from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import combat
-from gamemaster_mcp.models import Combatant, now
+from gamemaster_mcp.game import effects
+from gamemaster_mcp.models import now
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render
+from gamemaster_mcp.tools.apps import PARTY_APP, app_meta
 from gamemaster_mcp.tools.deps import READ_ONLY, get_store, provided
 
+Targets = Annotated[
+    list[str], Field(min_length=1, description="Characters or combatants, e.g. 'Goblin 2'")
+]
+Condition = Literal[
+    "blinded", "charmed", "deafened", "frightened", "grappled", "incapacitated", "invisible",
+    "paralyzed", "petrified", "poisoned", "prone", "restrained", "stunned", "unconscious",
+]  # fmt: skip
 
-@tool(annotations=READ_ONLY)
+
+@tool(annotations=READ_ONLY, meta=app_meta(PARTY_APP))
 def get_game_state(store: CampaignStore = Depends(get_store)) -> str:
-    """Where the party is: session, location, date, funds, active quests, combat."""
+    """Where the party is: session, location, date, funds, party HP, quests, combat."""
     with store.reading() as campaign:
         return render.game_state(campaign)
 
@@ -52,59 +61,43 @@ def update_game_state(
 
 
 @tool
-def start_combat(
-    participants: Annotated[
-        list[Combatant],
-        Field(min_length=1, description="Everyone in the fight with their initiative roll"),
-    ],
+def change_hit_points(
+    names: Targets,
+    amount: Annotated[int, Field(description="Negative for damage, positive for healing")],
+    temporary: Annotated[
+        bool, Field(description="Grant temporary HP instead (they don't stack)")
+    ] = False,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Start a combat: sorts by initiative; same-named foes become 'Goblin 1', 'Goblin 2'."""
+    """Damage or heal characters and monsters. Temporary HP absorb damage first; a monster
+    at 0 HP leaves the fight; a character at 0 HP falls unconscious."""
+    if amount == 0:
+        raise InvalidChangeError("The amount must not be 0.")
     with store.transaction() as campaign:
-        first = combat.start(campaign.game_state, participants)
-        order = render.initiative(campaign.game_state)
-    return f"Combat started. {first.name} acts first.\n{order}"
+        if temporary:
+            if amount < 0:
+                raise InvalidChangeError(
+                    "Temporary hit points are granted with a positive amount."
+                )
+            return "\n".join(effects.grant_temporary_hp(campaign, names, amount))
+        return "\n".join(effects.change_hit_points(campaign, names, amount))
 
 
 @tool
-def next_turn(store: CampaignStore = Depends(get_store)) -> str:
-    """End the current turn and give the next combatant theirs."""
-    with store.transaction() as campaign:
-        state = campaign.game_state
-        current = combat.next_turn(state)
-        new_round = state.turn_index == 0
-    prefix = f"Round {state.combat_round} begins. " if new_round else ""
-    return f"{prefix}{current.name}'s turn (initiative {current.initiative})."
-
-
-@tool
-def remove_combatant(
-    name: Annotated[str, Field(min_length=1, description="Combatant name, e.g. 'Goblin 2'")],
+def set_condition(
+    names: Targets,
+    condition: Annotated[Condition, Field(description="5e condition")],
+    active: Annotated[bool, Field(description="false to remove it")] = True,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Take a defeated or fleeing combatant out of the initiative order."""
+    """Add or remove a condition (poisoned, prone...) on characters or monsters."""
     with store.transaction() as campaign:
-        removed, acting = combat.remove_combatant(campaign.game_state, name)
-    if acting is None:
-        return f"{removed.name} removed. No one is left: combat over."
-    return f"{removed.name} removed. Current turn: {acting.name}."
-
-
-@tool
-def end_combat(store: CampaignStore = Depends(get_store)) -> str:
-    """End the combat and clear the initiative order."""
-    with store.transaction() as campaign:
-        if not campaign.game_state.in_combat:
-            raise InvalidChangeError("No combat is running.")
-        rounds = combat.end(campaign.game_state)
-    return f"Combat over after {rounds} round(s)."
+        return "\n".join(effects.set_condition(campaign, names, condition, active))
 
 
 TOOLS: list[Callable[..., str]] = [
     get_game_state,
     update_game_state,
-    start_combat,
-    next_turn,
-    remove_combatant,
-    end_combat,
+    change_hit_points,
+    set_condition,
 ]

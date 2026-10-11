@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gamemaster-mcp"
-version = "0.2.0"
+version = "0.3.0"
 description = "A D&D 5e campaign management MCP server, built for voice game masters"
 authors = [{ name = "Joel Casimir", email = "y9agf5y5@anonaddy.me" }]
 license = "MIT"
@@ -36,6 +36,9 @@ gamemaster-mcp = "gamemaster_mcp.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"gamemaster_mcp.ui" = ["*.html", "*.css", "*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

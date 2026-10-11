@@ -3,7 +3,7 @@
 import pytest
 
 from gamemaster_mcp.errors import AlreadyExistsError, InvalidChangeError, NotFoundError
-from gamemaster_mcp.game import characters, combat, registry, resources, world
+from gamemaster_mcp.game import characters, combat, effects, registry, resources, spellbook, world
 from gamemaster_mcp.models import NPC, Combatant, Item, Quest
 from tests.helpers import make_campaign, make_character
 
@@ -60,22 +60,31 @@ def test_lowering_max_hp_lowers_current_hp() -> None:
     assert characters.update(campaign, "Aria", {"hit_points_max": 6}, {}).hit_points_current == 6
 
 
-def test_adjust_checks_every_name_before_changing_anyone() -> None:
+def test_hit_points_check_every_name_before_changing_anyone() -> None:
     campaign = make_campaign()
     aria = characters.create(campaign, make_character("Aria", hp=10))
     with pytest.raises(NotFoundError, match="'Arya'"):
-        characters.adjust(campaign, ["Aria", "Arya"], hp_change=-5)
+        effects.change_hit_points(campaign, ["Aria", "Arya"], -5)
     assert aria.hit_points_current == 10
 
 
-def test_damage_at_zero_hp_adds_a_death_save_failure() -> None:
+def test_dropping_to_zero_follows_the_rules() -> None:
     campaign = make_campaign()
     aria = characters.create(campaign, make_character("Aria", hp=5))
-    characters.adjust(campaign, ["Aria"], hp_change=-5)
-    characters.adjust(campaign, ["Aria"], hp_change=-1)
+    effects.change_hit_points(campaign, ["Aria"], -5)
+    assert aria.conditions == ["unconscious", "prone"]
+    effects.change_hit_points(campaign, ["Aria"], -1)
     assert aria.death_saves_failure == 1
-    characters.adjust(campaign, ["Aria"], hp_change=3)
+    effects.change_hit_points(campaign, ["Aria"], 3)
     assert (aria.hit_points_current, aria.death_saves_failure) == (3, 0)
+    assert aria.conditions == ["prone"]
+
+
+def test_massive_damage_kills_outright() -> None:
+    campaign = make_campaign()
+    aria = characters.create(campaign, make_character("Aria", hp=6))
+    assert "killed outright" in effects.change_hit_points(campaign, ["Aria"], -12)[0]
+    assert aria.death_saves_failure == 3
 
 
 def test_death_saves_follow_the_rules() -> None:
@@ -103,14 +112,15 @@ def test_items_stack_and_are_removed() -> None:
 def test_spell_slots_are_spent_and_restored_by_a_long_rest() -> None:
     campaign = make_campaign()
     aria = characters.create(campaign, make_character("Aria", hp=8))
-    resources.set_spell_slots(campaign, "Aria", 1, 2)
-    resources.use_spell_slot(campaign, "Aria", 1)
-    resources.use_spell_slot(campaign, "Aria", 1)
+    spellbook.set_spell_slots(campaign, "Aria", 1, 2)
+    spellbook.use_spell_slot(campaign, "Aria", 1)
+    spellbook.use_spell_slot(campaign, "Aria", 1)
     with pytest.raises(InvalidChangeError, match="no level 1 slot left"):
-        resources.use_spell_slot(campaign, "Aria", 1)
+        spellbook.use_spell_slot(campaign, "Aria", 1)
     aria.hit_points_current = 3
-    resources.long_rest(campaign, [])
-    assert (aria.hit_points_current, aria.spell_slots_used) == (8, {})
+    aria.exhaustion = 2
+    resources.rest(campaign, [], "long")
+    assert (aria.hit_points_current, aria.spell_slots_used, aria.exhaustion) == (8, {}, 1)
 
 
 def test_quest_objectives_complete_by_number_or_fragment() -> None:
@@ -151,11 +161,11 @@ def test_removing_the_current_combatant_passes_the_turn() -> None:
         state, [Combatant(name=n, initiative=i) for n, i in (("A", 3), ("B", 2), ("C", 1))]
     )
     combat.next_turn(state)  # B acts
-    removed, acting = combat.remove_combatant(state, "b")
+    removed, acting = combat.remove(state, "b")
     assert (removed.name, acting and acting.name) == ("B", "C")
-    removed, acting = combat.remove_combatant(state, "A")
+    removed, acting = combat.remove(state, "A")
     assert acting is not None and acting.name == "C"
-    assert combat.remove_combatant(state, "C")[1] is None
+    assert combat.remove(state, "C")[1] is None
     assert not state.in_combat
 
 

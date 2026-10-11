@@ -7,14 +7,19 @@ registers.
 from collections.abc import Callable
 
 from gamemaster_mcp.tools import (
+    bestiary,
     campaign,
     characters,
+    combat,
     journal,
     locations,
     npcs,
     play,
+    progression,
     quests,
     resources,
+    screen,
+    spells,
     utility,
 )
 
@@ -22,12 +27,17 @@ ALL_TOOLS: list[Callable[..., str]] = [
     *campaign.TOOLS,
     *characters.TOOLS,
     *resources.TOOLS,
+    *spells.TOOLS,
+    *progression.TOOLS,
     *npcs.TOOLS,
     *locations.TOOLS,
     *quests.TOOLS,
     *play.TOOLS,
+    *combat.TOOLS,
+    *bestiary.TOOLS,
     *journal.TOOLS,
     *utility.TOOLS,
+    *screen.TOOLS,
 ]
 
 __all__ = ["ALL_TOOLS"]

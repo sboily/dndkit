@@ -38,14 +38,29 @@ def known_names(entities: Iterable[Named]) -> str:
 
 
 def find[E: Named](items: Mapping[str, E], ref: str, kind: str) -> E:
-    """The entity whose ID or name is *ref*."""
+    """The entity whose ID or name is *ref*, or the only one whose name contains it.
+
+    Spoken names get shortened ("the lighthouse" for "The Dark Lighthouse"): a
+    part of a name (3 characters or more) is enough when no other name shares it.
+    """
     if ref in items:
         return items[ref]
     wanted = normalize(ref)
     for entity in items.values():
         if normalize(entity.name) == wanted:
             return entity
+    partial = [e for e in items.values() if len(wanted) >= 3 and wanted in normalize(e.name)]
+    if len(partial) == 1:
+        return partial[0]
     raise NotFoundError(f"No {kind} named '{ref}'. Known {kind}s: {known_names(items.values())}.")
+
+
+def find_optional[E: Named](items: Mapping[str, E], ref: str) -> E | None:
+    """The entity *ref* names, or None."""
+    try:
+        return find(items, ref, "entity")
+    except NotFoundError:
+        return None
 
 
 def find_many[E: Named](items: Mapping[str, E], refs: Iterable[str], kind: str) -> list[E]:

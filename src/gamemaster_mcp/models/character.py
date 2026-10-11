@@ -8,6 +8,22 @@ from pydantic import Field
 from gamemaster_mcp.models.base import GameModel, new_id, now
 
 ABILITIES = ("strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma")
+CONDITIONS = (
+    "blinded",
+    "charmed",
+    "deafened",
+    "frightened",
+    "grappled",
+    "incapacitated",
+    "invisible",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "stunned",
+    "unconscious",
+)
 
 
 class AbilityScore(GameModel):
@@ -52,17 +68,17 @@ class Item(GameModel):
 
 
 class Spell(GameModel):
-    """A known spell. Ranges are free text ("Self", "Touch", "120 feet")."""
+    """A known spell; only the name and level are required."""
 
     id: str = Field(default_factory=new_id)
-    name: str
-    level: int = Field(ge=0, le=9)
-    school: str
-    casting_time: str
-    range: int | str = 5
-    duration: str
-    components: list[str]
-    description: str
+    name: str = Field(min_length=1)
+    level: int = Field(ge=0, le=9)  # 0 is a cantrip
+    school: str = ""
+    casting_time: str = ""
+    range: int | str = ""  # free text: "Self", "Touch", "120 feet"
+    duration: str = ""
+    components: list[str] = Field(default_factory=list)
+    description: str = ""
     material_components: str | None = None
     prepared: bool = False
 
@@ -98,6 +114,9 @@ class Character(GameModel):
     hit_dice_remaining: str = "1d8"
     death_saves_success: int = Field(default=0, ge=0, le=3)
     death_saves_failure: int = Field(default=0, ge=0, le=3)
+    conditions: list[str] = Field(default_factory=list)  # names from CONDITIONS
+    exhaustion: int = Field(default=0, ge=0, le=6)
+    experience_points: int = Field(default=0, ge=0)
 
     proficiency_bonus: int = 2
     skill_proficiencies: list[str] = Field(default_factory=list)

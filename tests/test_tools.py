@@ -28,7 +28,7 @@ def walk_schemas(node: Any) -> list[dict[str, Any]]:
 
 async def test_tool_catalogue_suits_voice_clients(client: Client) -> None:
     tools = await client.list_tools()
-    assert len(tools) == 42
+    assert len(tools) == 52
     assert all(TOOL_NAME.fullmatch(t.name) for t in tools)
     catalogue = [{"name": t.name, "d": t.description, "p": t.input_schema} for t in tools]
     assert len(json.dumps(catalogue)) / 4 < TOOL_SEARCH_TOKENS
@@ -61,7 +61,7 @@ async def test_character_changes_by_name_and_by_id(client: Client) -> None:
     await call(client, "update_character", name_or_id="aria", strength=18, class_level=2)
     await call(client, "update_character", name_or_id=character_id.group(1), armor_class=13)
     await call(client, "add_item_to_character", character_name_or_id="ARIA", item_name="Staff")
-    await call(client, "bulk_update_characters", names_or_ids=["Aria"], hp_change=-4)
+    await call(client, "change_hit_points", names=["Aria"], amount=-4)
     sheet = await call(client, "get_character", name_or_id=character_id.group(1))
     assert "level 2 Elf Wizard, HP 6/10, AC 13" in sheet
     assert "STR 18 (+4)" in sheet and "Inventory: Staff x1" in sheet
@@ -70,7 +70,7 @@ async def test_character_changes_by_name_and_by_id(client: Client) -> None:
 async def test_failed_call_changes_nothing(client: Client) -> None:
     await call(client, "create_campaign", name="Ghost", description="d")
     await call(client, "create_character", name="Aria", character_class="Wizard", race="Elf")
-    await call_error(client, "bulk_update_characters", names_or_ids=["Aria", "Arya"], hp_change=-9)
+    await call_error(client, "change_hit_points", names=["Aria", "Arya"], amount=-9)
     await call_error(client, "update_character", name_or_id="Aria", hit_points_current=99)
     assert "HP 10/10" in await call(client, "get_character", name_or_id="Aria")
 
@@ -118,9 +118,8 @@ async def test_quests_show_progress_and_active_ones(client: Client) -> None:
 async def test_utilities_need_no_campaign(client: Client) -> None:
     assert "= " in await call(client, "roll_dice", notation="2d6+1d4+3")
     assert "Invalid dice notation" in await call_error(client, "roll_dice", notation="1d20abc")
-    assert "450 XP each" in await call(
-        client, "calculate_experience", party_size=2, encounter_xp=900
-    )
+    assert (await call(client, "lookup_rule", topic="à terre")).startswith("prone:")
+    assert "Topics:" in await call_error(client, "lookup_rule", topic="dragon breath")
 
 
 async def test_remove_from_campaign(client: Client) -> None:

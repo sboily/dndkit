@@ -1,16 +1,19 @@
 """Pydantic models for campaigns, characters and the world."""
 
 from gamemaster_mcp.models.base import GameModel, new_id, now
+from gamemaster_mcp.models.bestiary import Encounter, EncounterGroup, EncounterStatus, Monster
 from gamemaster_mcp.models.campaign import (
     AdventureEvent,
     Campaign,
     Combatant,
     EventType,
     GameState,
+    Participant,
     SessionNote,
 )
 from gamemaster_mcp.models.character import (
     ABILITIES,
+    CONDITIONS,
     AbilityScore,
     Character,
     CharacterClass,
@@ -22,6 +25,7 @@ from gamemaster_mcp.models.world import NPC, Attitude, Location, Quest, QuestSta
 
 __all__ = [
     "ABILITIES",
+    "CONDITIONS",
     "NPC",
     "AbilityScore",
     "AdventureEvent",
@@ -30,11 +34,16 @@ __all__ = [
     "Character",
     "CharacterClass",
     "Combatant",
+    "Encounter",
+    "EncounterGroup",
+    "EncounterStatus",
     "EventType",
     "GameModel",
     "GameState",
     "Item",
     "Location",
+    "Monster",
+    "Participant",
     "Quest",
     "QuestStatus",
     "Race",

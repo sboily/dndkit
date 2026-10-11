@@ -11,15 +11,37 @@ from typing import Any
 from pydantic import Field, field_validator
 
 from gamemaster_mcp.models.base import GameModel, new_id, now
+from gamemaster_mcp.models.bestiary import Encounter, Monster
 from gamemaster_mcp.models.character import Character
 from gamemaster_mcp.models.world import NPC, Location, Quest
 
 
 class Combatant(GameModel):
-    """One entry in the initiative order."""
+    """One entry in the initiative order.
 
-    name: str = Field(min_length=1, description="Combatant name, e.g. 'Aria' or 'Goblin'")
-    initiative: int = Field(description="Initiative roll result")
+    A party character is linked by ``character_id`` and its hit points and
+    conditions live on its sheet; any other combatant (monster, NPC) keeps its
+    own here, when they are known.
+    """
+
+    name: str = Field(min_length=1)
+    initiative: int
+    character_id: str | None = None
+    monster: str | None = None  # bestiary entry it was built from
+    hit_points: int | None = Field(default=None, ge=0)
+    hit_points_max: int | None = Field(default=None, ge=1)
+    armor_class: int | None = Field(default=None, ge=0)
+    xp: int = Field(default=0, ge=0)
+    conditions: list[str] = Field(default_factory=list)
+
+
+class Participant(GameModel):
+    """Someone joining a fight, as a tool call describes them."""
+
+    name: str = Field(min_length=1, description="Character, monster or NPC name")
+    initiative: int = Field(description="Initiative roll")
+    hit_points: int | None = Field(default=None, ge=1, description="HP, if not in bestiary")
+    armor_class: int | None = Field(default=None, ge=0, description="AC, if not in bestiary")
 
 
 class GameState(GameModel):
@@ -35,6 +57,8 @@ class GameState(GameModel):
     initiative_order: list[Combatant] = Field(default_factory=list)
     turn_index: int = Field(default=0, ge=0)
     combat_round: int = Field(default=0, ge=0)
+    defeated: list[Combatant] = Field(default_factory=list)  # fallen this combat
+    encounter_id: str | None = None  # the planned encounter being fought
     notes: str = ""
     updated_at: datetime = Field(default_factory=now)
 
@@ -109,6 +133,8 @@ class Campaign(GameModel):
     npcs: dict[str, NPC] = Field(default_factory=dict)
     locations: dict[str, Location] = Field(default_factory=dict)
     quests: dict[str, Quest] = Field(default_factory=dict)
+    monsters: dict[str, Monster] = Field(default_factory=dict)
+    encounters: dict[str, Encounter] = Field(default_factory=dict)
     sessions: list[SessionNote] = Field(default_factory=list)
     events: list[AdventureEvent] = Field(default_factory=list)
     game_state: GameState
@@ -116,7 +142,9 @@ class Campaign(GameModel):
     created_at: datetime = Field(default_factory=now)
     updated_at: datetime = Field(default_factory=now)
 
-    @field_validator("characters", "npcs", "locations", "quests", mode="after")
+    @field_validator(
+        "characters", "npcs", "locations", "quests", "monsters", "encounters", mode="after"
+    )
     @classmethod
     def _key_by_id(cls, value: dict[str, Any]) -> dict[str, Any]:
         # Entities are keyed by ID: names change and two spellings may collide.

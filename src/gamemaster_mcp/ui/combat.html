@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Combat tracker</title>
+    <!--gm:shared-->
+    <style>
+      .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+      .order { display: flex; flex-direction: column; gap: 6px; }
+      .fighter {
+        display: grid; grid-template-columns: 34px 1fr minmax(110px, 38%); gap: 4px 10px; align-items: center;
+        padding: 7px 10px; border-radius: 10px; background: var(--card-2); border: 1px solid transparent;
+        transition: background .4s, border-color .4s, transform .3s;
+      }
+      .fighter.pc { box-shadow: inset 3px 0 0 var(--gold); }
+      .fighter.current { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 14%, var(--card-2)); transform: scale(1.01); }
+      .fighter.hurt { animation: hurt .7s; }
+      .fighter.healed { animation: healed .7s; }
+      .init {
+        grid-row: span 2; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+        font: 700 13px var(--serif); background: var(--card); border: 1.5px solid var(--line); font-variant-numeric: tabular-nums;
+      }
+      .current .init { border-color: var(--gold); color: var(--gold-hi); }
+      .name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .name .arrow { color: var(--gold-hi); margin-right: 4px; }
+      .ac { font-size: 11px; color: var(--muted); margin-left: 6px; font-weight: 400; }
+      .fighter .chips { grid-column: 2 / 4; }
+      .down .name { color: var(--red); }
+      .defeated { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+      .defeated .gone { text-decoration: line-through; }
+      @keyframes hurt { 30% { background: color-mix(in srgb, var(--red) 35%, var(--card-2)); transform: translateX(-3px); } }
+      @keyframes healed { 30% { background: color-mix(in srgb, var(--green) 30%, var(--card-2)); } }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="head"><span class="title" id="title">⚔</span><span class="muted small" id="turn"></span></div>
+      <div class="order" id="order"></div>
+      <div class="defeated" id="defeated"></div>
+    </div>
+    <div id="status"></div>
+    <script>
+      const { h, fill, t } = GM;
+      const lastHp = new Map();
+
+      function fighter(f) {
+        const before = lastHp.get(f.name);
+        lastHp.set(f.name, f.hp);
+        const change = before === undefined || f.hp === null ? "" : f.hp < before ? " hurt" : f.hp > before ? " healed" : "";
+        const classes = "fighter" + (f.pc ? " pc" : "") + (f.current ? " current" : "") + (f.hp === 0 ? " down" : "") + change;
+        return h(
+          "div",
+          { class: classes },
+          h("div", { class: "init" }, f.initiative),
+          h("div", { class: "name" }, f.current ? h("span", { class: "arrow" }, "▶") : null, f.name,
+            f.ac !== null && f.ac !== undefined ? h("span", { class: "ac" }, `${t("ac")} ${f.ac}`) : null),
+          GM.hpBar(f.hp, f.hp_max, f.temp),
+          GM.conditions(f.conditions, f.exhaustion),
+        );
+      }
+
+      function render(data) {
+        const order = document.getElementById("order");
+        const current = data.order.find((f) => f.current);
+        document.getElementById("title").textContent =
+          data.in_combat ? `⚔ ${t("round")} ${data.round}` : "⚔";
+        document.getElementById("turn").textContent = current ? t("turnOf", { name: current.name }) : "";
+        fill(order, data.order.length ? data.order.map(fighter) : h("div", { class: "empty" }, t("noCombat")));
+        fill(document.getElementById("defeated"), data.defeated.length ? [
+          h("span", { class: "muted small" }, `${t("defeated")}:`),
+          data.defeated.map((name) => h("span", { class: "chip gone" }, name)),
+          data.xp ? h("span", { class: "chip warn" }, `${data.xp} ${t("xp")}`) : null,
+        ] : null);
+        GM.fit();
+      }
+
+      GM.start(() => GM.live("combat", null, render, 1500));
+    </script>
+  </body>
+</html>

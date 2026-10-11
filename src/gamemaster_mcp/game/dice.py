@@ -1,8 +1,12 @@
 """Dice notation: parse "2d6+1d4+3" or "d20 - 1" and roll it."""
 
+import itertools
 import random
 import re
 import secrets
+import threading
+import time
+from collections import deque
 from dataclasses import dataclass
 
 from gamemaster_mcp.errors import DiceError
@@ -25,12 +29,33 @@ class DiceTerm:
 
 
 @dataclass(frozen=True)
+class RolledTerm:
+    """One term as rolled: every die's face, or the constant (``sides`` 0).
+
+    With advantage or disadvantage the term holds both d20 and ``kept`` says
+    which value counts.
+    """
+
+    sign: int
+    sides: int
+    faces: tuple[int, ...]
+    kept: int | None = None
+
+    @property
+    def value(self) -> int:
+        """What the term adds to the total, before its sign."""
+        return self.kept if self.kept is not None else sum(self.faces)
+
+
+@dataclass(frozen=True)
 class RollResult:
-    """What was rolled and the total, as one line to read out."""
+    """What was rolled: the line to read out, and every die for an animation."""
 
     notation: str
     total: int
     detail: str
+    mode: str  # normal, advantage, disadvantage
+    terms: tuple[RolledTerm, ...]
 
 
 def parse(notation: str) -> list[DiceTerm]:
@@ -78,17 +103,23 @@ def roll(
     terms = parse(notation)
     rng = rng or _SYSTEM_RNG
     mode = _mode(terms, notation, advantage, disadvantage)
-    total = 0
+    rolled = tuple(_roll_term(term, rng, mode) for term in terms)
+    total = sum(term.sign * term.value for term in rolled)
     parts: list[str] = []
-    for term in terms:
-        value, shown = _roll_term(term, rng, mode)
-        total += term.sign * value
+    for term in rolled:
+        shown = _describe(term, mode)
         sign = "-" if term.sign < 0 else "+"
         parts.append(f"{sign} {shown}" if parts or term.sign < 0 else shown)
     detail = " ".join(parts)
     if advantage and disadvantage:
         detail += " (advantage and disadvantage cancel out)"
-    return RollResult(notation=notation.strip(), total=total, detail=f"{detail} = {total}")
+    return RollResult(
+        notation=notation.strip(),
+        total=total,
+        detail=f"{detail} = {total}",
+        mode=mode,
+        terms=rolled,
+    )
 
 
 def _mode(terms: list[DiceTerm], notation: str, advantage: bool, disadvantage: bool) -> str:
@@ -100,12 +131,42 @@ def _mode(terms: list[DiceTerm], notation: str, advantage: bool, disadvantage: b
     return "advantage" if advantage else "disadvantage"
 
 
-def _roll_term(term: DiceTerm, rng: random.Random, mode: str) -> tuple[int, str]:
+def _roll_term(term: DiceTerm, rng: random.Random, mode: str) -> RolledTerm:
     if not term.sides:
-        return term.count, str(term.count)
+        return RolledTerm(term.sign, 0, (term.count,))
     if mode != "normal":
-        first, second = rng.randint(1, 20), rng.randint(1, 20)
-        kept = max(first, second) if mode == "advantage" else min(first, second)
-        return kept, f"d20 {mode} [{first}, {second}] keeps {kept}"
-    rolls = [rng.randint(1, term.sides) for _ in range(term.count)]
-    return sum(rolls), f"{term.count}d{term.sides} [{', '.join(map(str, rolls))}]"
+        faces = (rng.randint(1, 20), rng.randint(1, 20))
+        kept = max(faces) if mode == "advantage" else min(faces)
+        return RolledTerm(term.sign, 20, faces, kept)
+    return RolledTerm(
+        term.sign, term.sides, tuple(rng.randint(1, term.sides) for _ in range(term.count))
+    )
+
+
+def _describe(term: RolledTerm, mode: str) -> str:
+    if not term.sides:
+        return str(term.faces[0])
+    if term.kept is not None:
+        return f"d20 {mode} [{term.faces[0]}, {term.faces[1]}] keeps {term.kept}"
+    return f"{len(term.faces)}d{term.sides} [{', '.join(map(str, term.faces))}]"
+
+
+class DiceLog:
+    """The last rolls of this session, for the dice app to show; never saved."""
+
+    def __init__(self, size: int = 20) -> None:
+        self._rolls: deque[tuple[int, float, RollResult]] = deque(maxlen=size)
+        self._counter = itertools.count(1)
+        self._lock = threading.Lock()
+
+    def record(self, result: RollResult) -> int:
+        """Keep *result*; returns its sequence number."""
+        with self._lock:
+            number = next(self._counter)
+            self._rolls.append((number, time.time(), result))
+            return number
+
+    def recent(self) -> list[tuple[int, float, RollResult]]:
+        """(number, unix time, result), oldest first."""
+        with self._lock:
+            return list(self._rolls)

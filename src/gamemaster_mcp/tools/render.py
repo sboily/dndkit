@@ -4,19 +4,19 @@ No emoji and little markup: a voice model reads these, then says what
 matters in its own words.
 """
 
-from gamemaster_mcp.game.resources import describe_slots
+from gamemaster_mcp.game.spellbook import describe_slots
 from gamemaster_mcp.models import (
     ABILITIES,
     NPC,
     AdventureEvent,
     Campaign,
     Character,
-    GameState,
     Location,
     Quest,
     SessionNote,
 )
 from gamemaster_mcp.storage import CampaignEntry
+from gamemaster_mcp.tools import render_combat
 
 
 def character_line(c: Character) -> str:
@@ -41,8 +41,11 @@ def character_sheet(c: Character) -> str:
         f"Alignment: {c.alignment or 'none'}.",
         f"Abilities: {scores}.",
         f"Temporary HP {c.temporary_hit_points}. Proficiency +{c.proficiency_bonus}. "
-        f"Inspiration: {'yes' if c.inspiration else 'no'}.",
+        f"Inspiration: {'yes' if c.inspiration else 'no'}. XP {c.experience_points}.",
     ]
+    if c.conditions or c.exhaustion:
+        exhaustion = [f"exhaustion {c.exhaustion}"] if c.exhaustion else []
+        lines.append(f"Conditions: {', '.join([*c.conditions, *exhaustion])}.")
     if c.hit_points_current == 0:
         lines.append(
             f"Death saves: {c.death_saves_success} successes, {c.death_saves_failure} failures."
@@ -52,7 +55,11 @@ def character_sheet(c: Character) -> str:
         "Bio": c.bio,
         "Inventory": ", ".join(f"{i.name} x{i.quantity}" for i in c.inventory),
         "Spell slots": describe_slots(c) if c.spell_slots else "",
-        "Spells": ", ".join(s.name for s in c.spells_known),
+        "Spells": ", ".join(
+            f"{s.name} ({'cantrip' if s.level == 0 else f'level {s.level}'}"
+            f"{', prepared' if s.prepared else ''})"
+            for s in sorted(c.spells_known, key=lambda s: (s.level, s.name))
+        ),
         "Skills": ", ".join(c.skill_proficiencies),
         "Saving throws": ", ".join(c.saving_throw_proficiencies),
         "Features": ", ".join(c.features_and_traits),
@@ -111,29 +118,25 @@ def quest(q: Quest) -> str:
     return "\n".join(lines)
 
 
-def initiative(state: GameState) -> str:
-    """The initiative order, the current combatant marked."""
-    current = state.current_combatant
-    rows = [
-        f"{n}. {c.name} ({c.initiative}){' <- now' if c is current else ''}"
-        for n, c in enumerate(state.initiative_order, 1)
-    ]
-    return f"Round {state.combat_round}.\n" + "\n".join(rows)
-
-
 def game_state(campaign: Campaign) -> str:
     """Where the party stands right now."""
     state = campaign.game_state
     active = [q.title for q in campaign.quests.values() if q.status == "active"]
+    party = sorted(campaign.characters.values(), key=lambda c: c.name)
     lines = [
         f"Campaign {campaign.name}, session {state.current_session}.",
         f"Location: {state.current_location or 'unknown'}. "
         f"In-game date: {state.current_date_in_game or 'unknown'}.",
         f"Party level {state.party_level}, funds {state.party_funds}.",
+        "Party: "
+        + (
+            ", ".join(f"{c.name} HP {c.hit_points_current}/{c.hit_points_max}" for c in party)
+            or "none"
+        ),
         f"Active quests: {', '.join(active) or 'none'}.",
     ]
     if state.in_combat:
-        lines.append("In combat. " + initiative(state))
+        lines.append("In combat. " + render_combat.initiative(campaign))
     if state.notes:
         lines.append(f"Notes: {state.notes}")
     return "\n".join(lines)

@@ -1,6 +1,6 @@
 """Creating, changing and removing player characters."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any
 
 from gamemaster_mcp.errors import InvalidChangeError
@@ -61,49 +61,8 @@ def _cap_hit_points(character: Character, edits: dict[str, Any]) -> None:
         )
 
 
-def adjust(
-    campaign: Campaign,
-    refs: Sequence[str],
-    *,
-    hp_change: int | None = None,
-    temp_hp_change: int | None = None,
-    ability_changes: Mapping[str, int] | None = None,
-) -> list[str]:
-    """Apply the same relative change to several characters; one line per character.
-
-    Every name is checked before anything changes, so a misheard name changes
-    no one.
-    """
-    targets = registry.find_many(campaign.characters, refs, KIND)
-    deltas = dict(ability_changes or {})
-    unknown = sorted(set(deltas) - set(ABILITIES))
-    if unknown:
-        raise InvalidChangeError(f"Unknown abilities: {', '.join(unknown)}.")
-    return [_adjust_one(c, hp_change, temp_hp_change, deltas) for c in targets]
-
-
-def _adjust_one(
-    character: Character,
-    hp_change: int | None,
-    temp_hp_change: int | None,
-    ability_changes: Mapping[str, int],
-) -> str:
-    notes: list[str] = []
-    if temp_hp_change:
-        character.temporary_hit_points = max(0, character.temporary_hit_points + temp_hp_change)
-        notes.append(f"temporary HP {character.temporary_hit_points}")
-    if hp_change:
-        notes.append(_change_hp(character, hp_change))
-    for ability, delta in ability_changes.items():
-        score = character.abilities[ability]
-        score.score = max(1, min(30, score.score + delta))
-        notes.append(f"{ability} {score.score}")
-    character.updated_at = now()
-    return f"{character.name}: {', '.join(notes) or 'no change'}"
-
-
-def _change_hp(character: Character, delta: int) -> str:
-    """Heal or damage one character, following the 0 HP rules."""
+def change_hp(character: Character, delta: int) -> str:
+    """Heal or damage one character, following the 0 HP rules (PHB ch. 9)."""
     was_down = character.hit_points_current == 0
     hp = rules.apply_hp_change(
         character.hit_points_current,
@@ -111,16 +70,35 @@ def _change_hp(character: Character, delta: int) -> str:
         character.temporary_hit_points,
         delta,
     )
+    overflow = -delta - (character.temporary_hit_points - hp.temporary)
+    overflow -= character.hit_points_current
     character.hit_points_current = hp.current
     character.temporary_hit_points = hp.temporary
-    status = f"HP {hp.current}/{character.hit_points_max}"
-    if was_down and hp.current > 0:
-        character.death_saves_success = 0
-        character.death_saves_failure = 0
-        return f"{status}, conscious again (death saves reset)"
-    if hp.current == 0 and delta < 0:
-        if not was_down:
-            return f"{status}, down and making death saving throws"
+    character.updated_at = now()
+    status = f"{character.name}: HP {hp.current}/{character.hit_points_max}"
+    if delta > 0:
+        return _healed(character, status) if was_down and hp.current > 0 else status
+    if hp.current > 0:
+        return status
+    if overflow >= character.hit_points_max:
+        character.death_saves_failure = 3
+        return f"{status}, killed outright by massive damage"
+    if was_down:
         character.death_saves_failure = min(3, character.death_saves_failure + 1)
         return f"{status}, hit while down: {character.death_saves_failure}/3 death save failures"
-    return status
+    _add_conditions(character, "unconscious", "prone")
+    return f"{status}, unconscious and prone: death saving throws from now on"
+
+
+def _healed(character: Character, status: str) -> str:
+    character.death_saves_success = 0
+    character.death_saves_failure = 0
+    character.conditions = [c for c in character.conditions if c != "unconscious"]
+    return f"{status}, conscious again (still prone; death saves reset)"
+
+
+def _add_conditions(character: Character, *names: str) -> None:
+    character.conditions = [
+        *character.conditions,
+        *(n for n in names if n not in character.conditions),
+    ]
