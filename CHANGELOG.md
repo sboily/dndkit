@@ -54,7 +54,9 @@ First release of the fork, rebuilt on FastMCP 4 for voice game masters
 - FastMCP 4.1 (MCP SDK 2.x). The 853-line `main.py` is split into `models/`,
   `storage/`, `game/` and `tools/` modules.
 - Tool answers are short plain text, without emoji, for voice models.
-- `start_combat` takes typed participants (`name`, `initiative`).
+- `start_combat` takes typed participants (`name`, `initiative`); `roll_dice`
+  takes `notation` (was `dice_notation`); `create_character` defaults to
+  level 1 and takes `hit_points_max` and `armor_class`.
 - `calculate_experience` drops the unused `party_level`; `update_game_state`
   drops `in_combat` (use `start_combat`/`end_combat`).
 - Configuration through environment variables only; `.env` loading and
