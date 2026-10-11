@@ -1,10 +1,10 @@
-"""
-D&D MCP Server - A comprehensive campaign management tool for D&D built with FastMCP 2.8.0+.
-"""
+"""Gamemaster MCP: a D&D 5e campaign server for voice and chat game masters."""
 
-from .main import mcp
-from .models import *
-from .storage import DnDStorage
+from importlib.metadata import PackageNotFoundError, version
 
-__version__ = "1.0.0"
-__all__ = ["mcp", "DnDStorage"]
+try:
+    __version__ = version("gamemaster-mcp")
+except PackageNotFoundError:  # running from a source tree that was never installed
+    __version__ = "0.0.0"
+
+__all__ = ["__version__"]

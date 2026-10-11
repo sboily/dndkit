@@ -4,54 +4,68 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gamemaster-mcp"
-version = "0.1.0"
-description = "A comprehensive D&D campaign management MCP server built with FastMCP 2.8.0+"
-authors = [{name = "Joel Casimir", email = "y9agf5y5@anonaddy.me"}]
+version = "0.2.0"
+description = "A D&D 5e campaign management MCP server, built for voice game masters"
+authors = [{ name = "Joel Casimir", email = "y9agf5y5@anonaddy.me" }]
 license = "MIT"
-urls = {Homepage = "https://github.com/study-flamingo/gamemaster-mcp"}
-
-license-files = ["LICENSE.md"]
+license-files = ["LICENSE"]
 readme = "README.md"
-
 requires-python = ">=3.12"
 dependencies = [
-    "fastmcp>=2.9.0",
-    "pydantic>=2.0.0",
-    "python-dotenv>=1.1.1",
+    "fastmcp>=4.1.0,<5",
+    "platformdirs>=4.0",
+    "pydantic>=2.11",
     "shortuuid>=1.0.13",
-    "typing-extensions>=4.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/sboily/gamemaster-mcp"
+Upstream = "https://github.com/study-flamingo/gamemaster-mcp"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "ruff>=0.1.0",
-    "mypy>=1.0.0",
-    "pre-commit>=3.0.0",
+    "bandit>=1.8",
+    "mypy>=1.15",
+    "pre-commit>=4.0",
+    "pytest>=8.0",
+    "ruff>=0.11",
 ]
 
 [project.scripts]
-gamemaster-mcp = "gamemaster_mcp.main:main"
+gamemaster-mcp = "gamemaster_mcp.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-dir]
-"" = "src"
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
 
 [tool.ruff]
 target-version = "py312"
-line-length = 100
-select = ["E", "F", "I", "N", "W"]
-ignore = [
-    "E501",
-    "F403",
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastMCP injects these defaults per call; they are markers, not shared state.
+extend-immutable-calls = [
+    "fastmcp.dependencies.CurrentContext",
+    "fastmcp.dependencies.Depends",
 ]
+
+[tool.ruff.lint.isort]
+known-first-party = ["gamemaster_mcp"]
 
 [tool.mypy]
 python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["shortuuid.*"]
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]

@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -9,22 +9,22 @@ repos:
       - id: check-merge-conflict
       - id: debug-statements
 
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    # uv version.
-    rev: 0.7.16
+  # The project's own tool versions, from uv.lock: no second pin to drift.
+  - repo: local
     hooks:
-      - id: uv-lock
-      - id: uv-export
-
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.270
-    hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.3.0
-    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
       - id: mypy
-        additional_dependencies: [types-all]
-        args: [--disable-error-code var-annotated, --ignore-missing-imports]
+        name: mypy
+        entry: uv run mypy src/
+        language: system
+        types: [python]
+        pass_filenames: false

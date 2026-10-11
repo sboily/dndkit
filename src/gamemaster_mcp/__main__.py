@@ -1,9 +1,6 @@
-#!/usr/bin/env python3
-"""
-Main entry point for the D&D MCP Server (FastMCP 2.8.0+ compatible).
-"""
+"""`python -m gamemaster_mcp` runs the server over stdio."""
 
-from .main import main
+from gamemaster_mcp.app import main
 
 if __name__ == "__main__":
     main()
