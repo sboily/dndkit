@@ -18,24 +18,36 @@ uv run bandit -r src/ -c pyproject.toml
 
 ```
 src/gamemaster_mcp/
-├── app.py        # build_server(): FastMCP + lifespan that opens the store; main()
+├── app.py        # build_server(): FastMCP, lifespan (store + dice log), tools, apps; main()
 ├── config.py     # Data dir (env, else platformdirs) and stderr logging
 ├── errors.py     # GameError hierarchy, subclasses of FastMCP's ToolError
-├── models/       # Pydantic models: base (GameModel), character, world, campaign
-├── storage/      # files.py (slugs, atomic JSON), catalog.py (file summaries),
-│                 # confirmations.py (one-time codes), store.py (CampaignStore)
+├── models/       # Pydantic models: base, character, world, bestiary, campaign
+├── storage/      # files (slugs, atomic JSON), catalog (summaries),
+│                 # confirmations (one-time codes), store (CampaignStore)
 ├── game/         # Game logic over a Campaign object: no MCP, no disk
-│   ├── registry.py   # Lookup by ID or spoken name, uniqueness, validated edits
-│   ├── characters.py # Create/update/remove, relative HP and score changes
-│   ├── resources.py  # Items, spell slots, death saves, long rest
-│   ├── world.py      # NPCs, locations, quests, remove_entity
-│   ├── combat.py     # Initiative order by index, rounds
-│   ├── journal.py    # Session notes, adventure log
-│   ├── dice.py       # Notation parser and roller
-│   └── rules.py      # HP change with temporary HP, XP split
-└── tools/        # MCP adapters, one module per area, each exporting TOOLS
-    ├── deps.py       # get_store dependency, shared annotations
-    └── render.py     # Plain-text views of game data
+│   ├── registry.py    # Lookup by ID / spoken name / unique part, uniqueness, edits
+│   ├── characters.py  # Create/update/remove, hit point changes and the 0 HP rules
+│   ├── effects.py     # HP, temporary HP, conditions on characters or combatants
+│   ├── resources.py   # Items, death saves, short and long rests
+│   ├── spellbook.py   # Spell slots and known spells
+│   ├── progression.py # XP awards and level up
+│   ├── combat.py      # Initiative order by index, rounds, defeated, summary
+│   ├── combatants.py  # Participants -> combatants (linked PCs, bestiary stats)
+│   ├── bestiary.py    # Monsters, planned encounters, difficulty
+│   ├── world.py       # NPCs, locations, quests, remove_entity
+│   ├── journal.py     # Session notes, adventure log
+│   ├── dice.py        # Notation parser, roller, in-memory DiceLog
+│   ├── rules.py       # HP, XP, levels, slots, encounter difficulty
+│   ├── tables.py      # 5e numbers: CR XP, thresholds, slots, hit dice, class aliases
+│   └── reference.py   # Short rule reminders, English and French names
+├── tools/        # MCP adapters, one module per area, each exporting TOOLS
+│   ├── deps.py        # get_store / get_dice_log dependencies, shared annotations
+│   ├── schema.py      # Compacts advertised schemas (drops the null alternative)
+│   ├── apps.py        # ui:// pages, app_meta(), register_apps()
+│   ├── screen.py      # get_screen_data, the widgets' data tool
+│   ├── screen_views.py# JSON views for the widgets
+│   └── render*.py     # Plain-text views of game data
+└── ui/           # MCP App pages: <name>.html + shared.css/shared.js, assembled by ui.page()
 ```
 
 Layers only call downwards: `tools` → `game` → `models`; `tools` → `storage`.
@@ -69,8 +81,7 @@ calls `game` functions on the campaign, and renders a short text answer.
   their own (`/` for a macOS app). Never resolve a path against the cwd.
 - **Schemas**: roomkit strips `additionalProperties` and Gemini refuses an
   object parameter without `properties`. Use a model (like `Combatant`) for
-  structured parameters, never `dict`. Keep descriptions short: the catalogue
-  must stay under roomkit's Tool Search threshold (~8,000 tokens, tested).
+  structured parameters, never `dict`. Keep descriptions short (see Schema budget).
 - **Validators**: models use `validate_assignment`; a validator must never
   assign to `self` (it would recurse). Invariants that old saves may break
   (current HP above max) are enforced in `game/`, not in the models, so those
@@ -83,5 +94,19 @@ calls `game` functions on the campaign, and renders a short text answer.
   must carry. A code serves once, for one campaign, for 5 minutes, and a wrong
   one cancels the request. Deleted files go to `trash/`, never unlinked. Reuse
   `Confirmations` for any new destructive tool.
+- **MCP Apps in roomkit-ui**: the page receives only the tool's text result
+  (no `structuredContent`), one widget per tool name is replaced at each call,
+  and the page cannot tell the model anything. So every page reads its data
+  with `tools/call get_screen_data` and polls it; pages never change the game
+  (the model would not know). Keep pages self-contained (relative URLs 404, and
+  sessions may be offline), never `console.error` (roomkit shows it under the
+  widget), never pass `null` to `replaceChildren` (it prints "null"; use
+  `GM.fill`), and avoid `body { height: 100% }` (it breaks auto-sizing).
+  roomkit-ui answers request ids as strings and may miss the first
+  `ui/initialize`; `shared.js` handles both. To see a page, render it in
+  roomkit-ui's own `MCPAppWidget` with `QT_QPA_PLATFORM=offscreen` and grab it.
+- **Schema budget**: `tests/test_tools.py` keeps the catalogue under roomkit's
+  Tool Search threshold. `tools/schema.compact` must also walk `$defs`: FastMCP
+  inlines model parameters (`Participant`) only after registration.
 - **Setting files** are read only from `<data dir>/settings/`, by bare file
   name; symlinks out of it are refused.

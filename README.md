@@ -15,17 +15,30 @@ See [CHANGELOG.md](CHANGELOG.md) for what changed.
 - **Campaigns**: several campaigns, one active at a time, each saved as one JSON
   file. Creating a campaign never overwrites an existing one; deleting one takes
   a confirmation code and moves its file to a trash folder.
-- **Characters**: full 5e sheets, damage and healing with temporary hit points
-  applied first, inventory that stacks, spell slots, death saves, long rests.
+- **Characters**: full 5e sheets; damage and healing with temporary hit points
+  applied first, unconsciousness and death saves at 0 HP, massive damage;
+  conditions and exhaustion; inventory that stacks; known spells and spell slots;
+  short and long rests; experience and levelling up (hit points, proficiency,
+  spell slots by class, French class names understood).
+- **Combat**: party characters and monsters in one initiative order, tracked by
+  position so three "Goblin"s become "Goblin 1/2/3"; monster hit points, AC and
+  conditions; a monster at 0 HP leaves the fight; newcomers mid-fight; the end of
+  the fight sums the XP of the defeated.
+- **Bestiary and encounters**: saved stat blocks fill monsters in; planned
+  encounters are rated easy to deadly against the party (DMG rules) and started
+  with one call, their initiative rolled.
 - **World**: NPCs (with private bios), locations and quests with numbered objectives.
-- **Combat**: initiative order tracked by position, so three "Goblin"s become
-  "Goblin 1/2/3" and each gets its turn; round counter; removing the fallen.
 - **Journal**: session notes and a per-campaign adventure log with search.
-- **Dice**: `d20`, `1d20+5`, `2d6+1d4+3`, advantage and disadvantage.
+- **Dice and rules**: `d20`, `1d20+5`, `2d6+1d4+3`, advantage and disadvantage;
+  short rule reminders (conditions, cover, grapple, death saves...) by English
+  or French name.
+- **On-screen widgets** (MCP Apps): rolling dice, a live combat tracker, a party
+  board and character sheets, in clients that show MCP Apps.
 
-Names are matched without case or accents ("elodie" finds "Élodie"), the way a
-speech transcript spells them. When a call fails, the error says why and lists
-the known names, so the model can correct itself instead of guessing.
+Names are matched without case or accents ("elodie" finds "Élodie"), and a part
+of a name is enough when only one name contains it ("phare" finds "Le phare
+éteint"), the way a speech transcript spells them. When a call fails, the error
+says why and lists the known names, so the model can correct itself.
 
 ## Install and run
 
@@ -77,9 +90,10 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 42 tool schemas weigh about 7,000 tokens, under the point where roomkit
-hides tools behind `find_tools`. Put the system prompt below in the assistant's
-personality.
+The 52 tool schemas weigh about 6,400 tokens by roomkit's own estimate, under
+the 8,000 at which roomkit hides tools behind `find_tools`; optional parameters
+are advertised without their `null` alternative to stay there. Put the system
+prompt below in the assistant's personality.
 
 ### With Claude Desktop
 
@@ -104,13 +118,16 @@ Speak the players' language, in short spoken sentences: no lists, no markdown.
 The Gamemaster tools hold the campaign. Trust them over your memory:
 - Before describing a character, place or quest, read it (get_character,
   get_location, get_quest, get_game_state).
-- Record every change as it happens: damage and healing with
-  bulk_update_characters, items with add_item_to_character and
-  remove_item_from_character, spell slots with use_spell_slot, the party's
-  location and date with update_game_state.
+- Record every change as it happens: damage and healing with change_hit_points
+  (characters and monsters), conditions with set_condition, items with
+  add_item_to_character and remove_item_from_character, spells with
+  use_spell_slot, the party's location and date with update_game_state.
 - Roll every die with roll_dice and say the result; never invent a roll.
-- In combat, start_combat with everyone's initiative, then next_turn after each
-  turn and remove_combatant when someone falls or flees.
+- In combat, start_combat with everyone's initiative (or a planned encounter),
+  then next_turn after each turn. Monsters at 0 HP leave the fight on their own.
+  At the end, end_combat, then award_experience with the XP it reports.
+- When you're unsure of a rule, lookup_rule.
+- Never call get_screen_data: it feeds the on-screen widgets.
 - Log notable moments with add_event, and summarise the session with
   add_session_note when the players stop.
 - When a tool reports an unknown name, pick the right one from the names it
@@ -130,24 +147,51 @@ and a first quest, creating each with its tool as soon as you have it.
 | Area | Tools |
 | --- | --- |
 | Campaign | `create_campaign`, `get_campaign_info`, `list_campaigns`, `load_campaign`, `update_campaign`, `delete_campaign`, `remove_from_campaign` |
-| Characters | `create_character`, `get_character`, `list_characters`, `update_character`, `bulk_update_characters` |
-| Resources | `add_item_to_character`, `remove_item_from_character`, `set_spell_slots`, `use_spell_slot`, `record_death_save`, `long_rest` |
+| Characters | `create_character`, `get_character` 🖥, `list_characters`, `update_character` |
+| Resources | `add_item_to_character`, `remove_item_from_character`, `record_death_save`, `rest` |
+| Spells | `set_spell_slots`, `use_spell_slot`, `set_known_spell` |
+| Progression | `award_experience`, `level_up` |
 | NPCs | `create_npc`, `get_npc`, `update_npc`, `list_npcs` |
 | Locations | `create_location`, `get_location`, `update_location`, `list_locations` |
 | Quests | `create_quest`, `get_quest`, `update_quest`, `list_quests` |
-| Table | `get_game_state`, `update_game_state`, `start_combat`, `next_turn`, `remove_combatant`, `end_combat` |
+| Table | `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition` |
+| Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `end_combat` |
+| Bestiary | `save_monster`, `get_monsters`, `plan_encounter`, `list_encounters` |
 | Journal | `add_session_note`, `get_sessions`, `add_event`, `get_events` |
-| Utility | `roll_dice`, `calculate_experience` |
+| Utility | `roll_dice` 🖥, `lookup_rule`, `get_screen_data` (for the widgets) |
 
-`update_character` sets absolute values; `bulk_update_characters` applies
-relative changes (damage, healing, ability score changes) to one or more
-characters, and changes nobody if one name is unknown. A tool that fails
-changes nothing, in memory or on disk.
+🖥 opens an on-screen widget in clients that support MCP Apps.
+
+`update_character` sets absolute values; `change_hit_points` applies damage or
+healing to characters and monsters alike, and changes nobody if one name is
+unknown. A tool that fails changes nothing, in memory or on disk.
 
 `delete_campaign` works in two calls. The first deletes nothing: it says what
 the campaign holds and returns a 4-digit code valid for 5 minutes. Only a
 second call with that code deletes, by moving the file to `<data dir>/trash/`,
 from where it can be put back by hand. A wrong code cancels the request.
+
+## On-screen widgets (MCP Apps)
+
+Four tools carry an MCP App (`_meta.ui.resourceUri`): the client opens their
+page next to the conversation.
+
+| Tool | Widget |
+| --- | --- |
+| `roll_dice` | Dice tray: each die tumbles and lands on its face; a natural 20 glows, a natural 1 shakes; with advantage the discarded d20 fades out; recent rolls below. |
+| `start_combat` | Combat tracker, live: initiative order, current turn, hit point bars that flash on damage or healing, AC, conditions, the defeated and their XP. |
+| `get_game_state` | Party board, live: location, date, funds, every character's hit points, spell slots, conditions and death saves, quest progress, combat banner. |
+| `get_character` | Character sheet, live: hit points, AC, proficiency, XP to next level, abilities, conditions, spell slots, spells, inventory. |
+
+Each page is self-contained (no network access), French or English after the
+system language, and reads its data with the `get_screen_data` tool, refreshing
+every couple of seconds: the combat tracker follows `change_hit_points` or
+`next_turn` calls made later in the conversation. The widgets only display; the
+game changes through the conversation, so the model always knows the state.
+
+roomkit-ui shows MCP Apps once its `MCPManager.read_resource` passes the
+resource URI as a string: with the `mcp` 2.x SDK, the `AnyUrl` it passes today
+fails validation and the widget falls back to a text line.
 
 ## Data
 

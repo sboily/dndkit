@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.3.0
+
+Monsters with hit points, the missing 5e rules, and on-screen widgets.
+
+### Added
+
+- **Monster hit points in combat.** Combatants carry hit points, AC and
+  conditions; party characters stay linked to their sheet. `change_hit_points`
+  damages or heals characters and monsters alike; a monster at 0 HP leaves the
+  initiative order, and `end_combat` lists the defeated and their total XP.
+  `add_combatant` brings newcomers into a running fight without moving the turn.
+- **Bestiary and encounters**: `save_monster` / `get_monsters` keep stat blocks
+  (XP from the challenge rating); `plan_encounter` / `list_encounters` prepare
+  fights rated easy to deadly against the party with the DMG multipliers;
+  `start_combat(encounter=...)` runs one, rolling the monsters' initiative.
+- **Conditions and exhaustion**: `set_condition` for characters and monsters;
+  dropping to 0 HP makes a character unconscious and prone; damage left over
+  past 0 HP that reaches the hit point maximum kills outright; a long rest
+  removes one exhaustion level.
+- **Experience and levels**: `award_experience` splits XP and says who can level
+  up; `level_up` adds hit points (hit die roll or average, plus Constitution),
+  proficiency, hit dice and the class's spell slots (full, half and pact
+  casters; French class names understood).
+- **Spells**: `set_known_spell` adds, changes or forgets a spell.
+- **Rules**: `lookup_rule` gives short reminders of conditions and core rules,
+  by English or French name.
+- **Rests**: `rest(kind="short"|"long")` replaces `long_rest`; a short rest gives
+  warlocks their pact slots back.
+- **On-screen widgets (MCP Apps)**: `roll_dice` (rolling dice), `start_combat`
+  (live combat tracker), `get_game_state` (party board) and `get_character`
+  (character sheet) open self-contained pages that read `get_screen_data`.
+- A part of a name finds an entity when no other name contains it.
+
+### Changed
+
+- `bulk_update_characters` is replaced by `change_hit_points`, and
+  `calculate_experience` by `award_experience`.
+- Optional parameters are advertised without their `null` alternative: 52 tools
+  now cost about as many schema tokens as 42 did.
+- `start_combat` takes participants with optional `hit_points` and
+  `armor_class`, and/or an `encounter`.
+- The FastMCP startup banner is off.
+
 ## 0.2.0 (fork)
 
 First release of the fork, rebuilt on FastMCP 4 for voice game masters

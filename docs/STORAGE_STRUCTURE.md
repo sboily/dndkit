@@ -20,8 +20,10 @@ Windows).
 ## campaigns/
 
 One file per campaign holding the whole `Campaign` model: characters, NPCs,
-locations and quests (each a map keyed by entity ID), session notes, the
-adventure log (`events`), the game state and world notes.
+locations, quests, bestiary monsters and planned encounters (each a map keyed by
+entity ID), session notes, the adventure log (`events`), the game state (with
+the running fight, if any) and world notes. Dice rolls are not saved: the
+dice widget's history lives in memory for the session.
 
 - **File name**: the campaign name reduced to letters, digits, spaces, `-`
   and `_` ("The Dragon's Curse!" → `The Dragons Curse.json`). Two names that
