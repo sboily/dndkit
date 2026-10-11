@@ -5,135 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dice tray</title>
     <!--gm:shared-->
-    <style>
-      .tray {
-        position: relative;
-        overflow: hidden;
-        background:
-          radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--gold) 10%, transparent), transparent 60%),
-          var(--card);
-      }
-      .head { display: flex; justify-content: space-between; align-items: baseline; }
-      .dice { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 14px 0 6px; min-height: 64px; }
-      .die { position: relative; width: 58px; height: 58px; animation: tumble 0.9s cubic-bezier(.2,.9,.3,1.2) both; }
-      .die svg { width: 100%; height: 100%; filter: drop-shadow(0 3px 4px rgba(0,0,0,.45)); }
-      .die .face {
-        position: absolute; inset: 0; display: grid; place-items: center;
-        font: 700 20px/1 var(--serif); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6);
-        font-variant-numeric: tabular-nums;
-      }
-      .die.d4 .face { padding-top: 12px; }
-      .die .kind { position: absolute; left: 0; bottom: -14px; width: 100%; text-align: center; font-size: 10px; color: var(--muted); }
-      .die.dropped { opacity: .35; transition: opacity .4s; }
-      .die.dropped .face { text-decoration: line-through; }
-      .die.crit svg { animation: glow 1.2s ease-in-out infinite alternate; }
-      .die.fumble { animation: tumble .9s cubic-bezier(.2,.9,.3,1.2) both, shake .5s .95s; }
-      .die.fumble svg { filter: drop-shadow(0 0 8px rgba(227,88,79,.9)); }
-      .const { align-self: center; font: 600 18px var(--serif); color: var(--muted); }
-      .total { text-align: center; padding-top: 14px; }
-      .total b { display: block; font: 700 40px/1 var(--serif); color: var(--gold-hi); font-variant-numeric: tabular-nums; }
-      .total.crit b { color: var(--gold-hi); text-shadow: 0 0 18px rgba(245,216,137,.8); }
-      .total.fumble b { color: var(--red); }
-      .history { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; }
-      @keyframes tumble {
-        0% { transform: translate(-60px, -40px) rotate(-280deg) scale(.4); opacity: 0; }
-        55% { transform: translate(0, 6px) rotate(18deg) scale(1.08); opacity: 1; }
-        75% { transform: translate(0, -5px) rotate(-8deg) scale(.97); }
-        100% { transform: none; }
-      }
-      @keyframes glow { from { filter: drop-shadow(0 0 4px rgba(245,216,137,.5)); } to { filter: drop-shadow(0 0 16px rgba(245,216,137,1)); } }
-      @keyframes shake { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
-      @media (prefers-reduced-motion: reduce) { .die, .die.fumble, .die.crit svg { animation: none; } }
-    </style>
   </head>
   <body>
-    <div class="card tray">
-      <div class="head"><span class="title" id="notation">🎲</span><span class="muted small" id="mode"></span></div>
-      <div class="dice" id="dice"></div>
-      <div class="total" id="total"><span class="muted">…</span></div>
-    </div>
-    <div class="history" id="history"></div>
+    <div id="app"></div>
     <div id="status"></div>
     <script>
-      const { h, fill, t } = GM;
-      const MAX_SHOWN = 24;
-      const COLORS = { 4: ["#d9674c", "#8f2f1d"], 6: ["#4f8fdc", "#1f4f8f"], 8: ["#5fb57a", "#226b3c"],
-        10: ["#9a73dc", "#55308f"], 12: ["#dc9a4f", "#8f5520"], 20: ["#d8b45c", "#7d5a14"] };
-      const SHAPES = {
-        4: '<polygon points="50,6 95,90 5,90"/>',
-        6: '<rect x="10" y="10" width="80" height="80" rx="14"/>',
-        8: '<polygon points="50,3 96,50 50,97 4,50"/><polyline points="4,50 96,50" class="edge"/>',
-        10: '<polygon points="50,3 94,40 78,92 22,92 6,40"/><path d="M6,40 L50,58 L94,40 M50,58 L50,92" class="edge"/>',
-        12: '<polygon points="50,3 95,35 78,92 22,92 5,35"/><polygon points="50,24 72,40 64,66 36,66 28,40" class="edge"/>',
-        20: '<polygon points="50,3 92,27 92,73 50,97 8,73 8,27"/><polygon points="50,22 76,66 24,66" class="edge"/>',
-      };
-
-      function svgDie(sides) {
-        const [light, dark] = COLORS[sides] || ["#8d8a96", "#4a4752"];
-        const shape = SHAPES[sides] || '<circle cx="50" cy="50" r="46"/>';
-        return `<svg viewBox="0 0 100 100"><defs><linearGradient id="g${sides}" x1="0" y1="0" x2="1" y2="1">` +
-          `<stop offset="0" stop-color="${light}"/><stop offset="1" stop-color="${dark}"/></linearGradient></defs>` +
-          `<g fill="url(#g${sides})" stroke="rgba(255,255,255,.35)" stroke-width="2">${shape}</g></svg>`;
-      }
-
-      function dieElement(sides, face, delay, classes) {
-        const die = h("div", { class: `die d${sides} ${classes}`, style: `animation-delay:${delay}ms` });
-        die.innerHTML = svgDie(sides); // static markup from SHAPES only, no outside text
-        die.querySelectorAll(".edge").forEach((edge) => edge.setAttribute("fill", "none"));
-        const number = h("span", { class: "face" }, "?");
-        die.append(number, h("span", { class: "kind" }, `d${sides}`));
-        const settleAt = performance.now() + delay + 750;
-        const spin = () => {
-          if (performance.now() >= settleAt) { number.textContent = face; return; }
-          number.textContent = 1 + Math.floor(Math.random() * sides);
-          setTimeout(spin, 70);
-        };
-        setTimeout(spin, delay);
-        return die;
-      }
-
-      function show(roll) {
-        const tray = document.getElementById("dice");
-        tray.replaceChildren();
-        let delay = 0;
-        let shown = 0;
-        let crit = false;
-        let fumble = false;
-        roll.terms.forEach((term, index) => {
-          if (index > 0 || term.sign < 0) tray.append(h("span", { class: "const" }, term.sign < 0 ? "−" : "+"));
-          if (!term.sides) { tray.append(h("span", { class: "const" }, term.faces[0])); return; }
-          term.faces.forEach((face, i) => {
-            if (shown >= MAX_SHOWN) return;
-            const kept = term.kept === null || term.kept === undefined || (face === term.kept && i === term.faces.indexOf(term.kept));
-            const natural = term.sides === 20 && kept ? (face === 20 ? "crit" : face === 1 ? "fumble" : "") : "";
-            crit = crit || natural === "crit";
-            fumble = fumble || natural === "fumble";
-            tray.append(dieElement(term.sides, face, delay, (kept ? "" : "dropped ") + natural));
-            delay += 110;
-            shown += 1;
-          });
-        });
-        const hidden = roll.terms.reduce((n, term) => n + (term.sides ? term.faces.length : 0), 0) - shown;
-        if (hidden > 0) tray.append(h("span", { class: "chip" }, `+${hidden}`));
-        document.getElementById("notation").textContent = roll.notation;
-        document.getElementById("mode").textContent = roll.mode === "normal" ? "" : t(roll.mode);
-        const total = document.getElementById("total");
-        total.className = "total";
-        fill(total, h("span", { class: "muted small" }, t("waiting")));
-        setTimeout(() => {
-          total.className = "total" + (crit ? " crit" : fumble ? " fumble" : "");
-          fill(total, h("span", { class: "muted small" }, t("total")), h("b", {}, roll.total));
-          GM.fit();
-        }, delay + 800);
-        GM.fit();
-      }
-
-      function showHistory(rolls, current) {
-        const older = rolls.filter((roll) => roll.n !== current.n).slice(-5).reverse();
-        fill(document.getElementById("history"),
-          older.map((roll) => h("span", { class: "chip" }, `${roll.notation} → ${roll.total}`)));
-      }
-
+      const tray = Views.dice();
+      document.getElementById("app").append(tray.el);
       const normalize = (text) => String(text || "").toLowerCase().replace(/\s+/g, "");
       const loadedAt = Date.now() / 1000;
 
@@ -141,6 +19,7 @@
         if (result.isError) GM.status(((result.content || [])[0] || {}).text || "error");
       });
 
+      // This widget shows the roll its own call made, not merely the latest one.
       GM.start(async () => {
         const args = await GM.toolInput();
         const wanted = normalize(args.notation);
@@ -154,9 +33,8 @@
           if (!roll) await GM.sleep(250);
         }
         roll = roll || rolls[rolls.length - 1];
-        if (!roll) return GM.status(t("waiting"));
-        show(roll);
-        showHistory(rolls, roll);
+        if (!roll) return GM.status(GM.t("waiting"));
+        tray.show(roll, rolls);
       });
     </script>
   </body>

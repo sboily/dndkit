@@ -7,6 +7,7 @@ import secrets
 import threading
 import time
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from gamemaster_mcp.errors import DiceError
@@ -154,17 +155,19 @@ def _describe(term: RolledTerm, mode: str) -> str:
 class DiceLog:
     """The last rolls of this session, for the dice app to show; never saved."""
 
-    def __init__(self, size: int = 20) -> None:
+    def __init__(self, size: int = 20, on_record: Callable[[], None] | None = None) -> None:
         self._rolls: deque[tuple[int, float, RollResult]] = deque(maxlen=size)
         self._counter = itertools.count(1)
         self._lock = threading.Lock()
+        self._on_record = on_record or (lambda: None)
 
     def record(self, result: RollResult) -> int:
         """Keep *result*; returns its sequence number."""
         with self._lock:
             number = next(self._counter)
             self._rolls.append((number, time.time(), result))
-            return number
+        self._on_record()
+        return number
 
     def recent(self) -> list[tuple[int, float, RollResult]]:
         """(number, unix time, result), oldest first."""

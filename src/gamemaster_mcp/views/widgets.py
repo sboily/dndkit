@@ -1,4 +1,8 @@
-"""JSON-ready views of the game for the MCP Apps widgets."""
+"""The game as the game master sees it: the MCP widgets and the web backstage.
+
+Everything shows here, monsters' exact hit points included; what the players
+may see is built separately, field by field, in ``views.public``.
+"""
 
 from typing import Any
 
@@ -45,9 +49,9 @@ def combat(campaign: Campaign) -> Json:
 def _combatant(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
     character = campaign.characters.get(combatant.character_id or "")
     if character is not None:
-        vitals = _vitals(character)
+        stats = vitals(character)
     else:
-        vitals = {
+        stats = {
             "hp": combatant.hit_points,
             "hp_max": combatant.hit_points_max,
             "temp": 0,
@@ -59,7 +63,7 @@ def _combatant(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
         "initiative": combatant.initiative,
         "pc": character is not None,
         "current": current,
-        **vitals,
+        **stats,
     }
 
 
@@ -77,7 +81,7 @@ def party(campaign: Campaign) -> Json:
         "round": state.combat_round,
         "current": current.name if current else None,
         "characters": [
-            {"name": c.name, "summary": _summary(c), **_vitals(c)}
+            {"name": c.name, "summary": _summary(c), **vitals(c)}
             for c in sorted(campaign.characters.values(), key=lambda c: c.name)
         ],
         "quests": [
@@ -111,7 +115,7 @@ def character(campaign: Campaign, ref: str) -> Json:
             for s in sorted(c.spells_known, key=lambda s: (s.level, s.name))
         ],
         "features": c.features_and_traits,
-        **_vitals(c),
+        **vitals(c),
     }
 
 
@@ -119,7 +123,8 @@ def _summary(c: Character) -> str:
     return f"{c.race.name} {c.character_class.name} {c.character_class.level}"
 
 
-def _vitals(c: Character) -> Json:
+def vitals(c: Character) -> Json:
+    """Hit points, defenses and resources: what the whole table may see of a character."""
     return {
         "hp": c.hit_points_current,
         "hp_max": c.hit_points_max,

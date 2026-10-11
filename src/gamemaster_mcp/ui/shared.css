@@ -1,8 +1,9 @@
-/* Gamemaster MCP widgets: shared look. Dark by default (roomkit-ui says
-   "dark" whatever its theme); the body stays transparent so the host's own
-   background shows around the cards. */
+/* Gamemaster MCP pages: shared look. Dark by default (roomkit-ui says
+   "dark" whatever its theme); a widget's body stays transparent so the
+   host's own background shows around the cards, a web page uses --page. */
 :root {
   color-scheme: dark;
+  --page: #17151b;
   --card: #25222b;
   --card-2: #312d39;
   --line: #3d3747;
@@ -22,6 +23,7 @@
 @media (prefers-color-scheme: light) {
   :root {
     color-scheme: light;
+    --page: #efe7d8;
     --card: #fbf6ec;
     --card-2: #efe6d4;
     --line: #dccfb6;

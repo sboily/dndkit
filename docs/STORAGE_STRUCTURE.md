@@ -13,8 +13,9 @@ Windows).
 │   └── The Dragons Curse.json
 ├── settings/
 │   └── forgotten-realms.md
-└── trash/
-    └── Old Campaign 2026-10-11 174223.json
+├── trash/
+│   └── Old Campaign 2026-10-11 174223.json
+└── player-links.key
 ```
 
 ## campaigns/
@@ -50,6 +51,13 @@ Optional world documents (`.md` or `.txt`, up to 200 KB) for `create_campaign`
 and `update_campaign`'s `setting_file`. The text is copied into the campaign,
 so editing the file later does not change an existing campaign. Only files
 directly in this folder are read; paths and symlinks leading out are refused.
+
+## player-links.key
+
+Created the first time the web pages start (`GAMEMASTER_WEB_PORT`): 32 random
+bytes, readable by the owner only. Each player's link carries a code derived
+from it, the campaign and the character. Delete the file to change every link;
+a new key is made at the next start.
 
 ## Files from the upstream server
 

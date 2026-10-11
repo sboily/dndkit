@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gamemaster-mcp"
-version = "0.3.0"
+version = "0.4.0"
 description = "A D&D 5e campaign management MCP server, built for voice game masters"
 authors = [{ name = "Joel Casimir", email = "y9agf5y5@anonaddy.me" }]
 license = "MIT"
@@ -15,7 +15,10 @@ dependencies = [
     "fastmcp>=4.1.0,<5",
     "platformdirs>=4.0",
     "pydantic>=2.11",
+    "segno>=1.6",
     "shortuuid>=1.0.13",
+    "starlette>=0.46",
+    "uvicorn>=0.34",
 ]
 
 [project.urls]
@@ -25,6 +28,7 @@ Upstream = "https://github.com/study-flamingo/gamemaster-mcp"
 [project.optional-dependencies]
 dev = [
     "bandit>=1.8",
+    "httpx>=0.28",
     "mypy>=1.15",
     "pre-commit>=4.0",
     "pytest>=8.0",

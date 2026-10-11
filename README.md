@@ -63,6 +63,9 @@ The server speaks MCP over stdio: an MCP client starts it, you don't keep it run
 | --- | --- | --- |
 | `GAMEMASTER_STORAGE_DIR` | the per-user data directory (below) | Where campaigns are stored |
 | `GAMEMASTER_LOG_LEVEL` | `INFO` | Log level; logs go to stderr |
+| `GAMEMASTER_WEB_PORT` | unset: no web pages | Serve the [live web pages](#live-web-pages) on this port |
+| `GAMEMASTER_WEB_HOST` | `127.0.0.1` | `0.0.0.0` lets phones on the same network open them |
+| `GAMEMASTER_WEB_URL` | guessed | The address phones should use, when the server cannot tell (a DNS name, Tailscale) |
 
 Default data directory:
 
@@ -85,7 +88,7 @@ In **Settings → Integrations → MCP**, add a server:
 | Transport | `stdio` |
 | Command | `uvx` |
 | Arguments | `--from git+https://github.com/sboily/gamemaster-mcp gamemaster-mcp` |
-| Environment variables | `GAMEMASTER_STORAGE_DIR=/Users/you/Games/dnd` (optional) |
+| Environment variables | `GAMEMASTER_STORAGE_DIR=/Users/you/Games/dnd` (optional)<br>`GAMEMASTER_WEB_PORT=8765` and `GAMEMASTER_WEB_HOST=0.0.0.0` for the web pages (optional) |
 
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
@@ -189,9 +192,45 @@ every couple of seconds: the combat tracker follows `change_hit_points` or
 `next_turn` calls made later in the conversation. The widgets only display; the
 game changes through the conversation, so the model always knows the state.
 
-roomkit-ui shows MCP Apps once its `MCPManager.read_resource` passes the
-resource URI as a string: with the `mcp` 2.x SDK, the `AnyUrl` it passes today
-fails validation and the widget falls back to a text line.
+roomkit-ui shows MCP Apps since its `MCPManager.read_resource` passes the
+resource URI as a string (with the `mcp` 2.x SDK, an `AnyUrl` fails validation
+and the widget falls back to a text line).
+
+## Live web pages
+
+With `GAMEMASTER_WEB_PORT` set, the server also serves web pages that follow
+the game as it happens: every change made through a tool, and every roll, is
+pushed to the open pages at once (server-sent events). The pages run inside
+the MCP server's process, so they are up while roomkit-ui runs the server and
+reconnect by themselves when it restarts. A taken port only logs a warning;
+the game goes on without the pages.
+
+| Address | For | Shows |
+| --- | --- | --- |
+| `/table/` | a shared screen (TV, laptop) | Initiative order, the party's hit points and conditions, the dice tray, active quests, the adventure log, and a QR code per character |
+| `/p/<code>/` | each player's phone | Their full character sheet, the fight, the dice, quests and log, the party; "Your turn!" and a buzz when their turn comes |
+| `/gm/` | you, on the computer running the game | Everything, to follow what the model does: exact monster hit points and AC, planned encounters and their difficulty, NPC secrets and notes, every quest, the bestiary |
+
+- **Joining**: players scan their character's code on the table screen. Each
+  link carries a code derived from the campaign, the character and a key kept
+  in the data directory (`player-links.key`): it cannot be guessed, survives
+  restarts, and belongs to the active campaign. Delete the key file to change
+  every link.
+- **What players see** is built field by field from what they may know: their
+  party in full, but a monster only as *unhurt*, *hurt*, *bloodied* or *down*,
+  and never an NPC's biography or notes, a planned encounter, a monster's
+  statistics or the game master's notes.
+- **The backstage** opens only from the computer running the server (a
+  loopback peer). A reverse proxy or tunnel running on that computer would make
+  every visitor look local: do not put one in front of the pages.
+- **Read-only**: the pages never change the game; it changes through the
+  conversation, so the model always knows the state.
+- **Phones** need `GAMEMASTER_WEB_HOST=0.0.0.0` and the same network. The table
+  screen then puts this computer's network address in the codes, even when it
+  is open at `127.0.0.1`. For players elsewhere, put a private network such as
+  Tailscale between you and set `GAMEMASTER_WEB_URL`; the pages carry no other
+  authentication.
+- The log names the addresses at startup: `Table screen: http://127.0.0.1:8765/table/`.
 
 ## Data
 

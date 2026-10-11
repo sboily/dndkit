@@ -11,8 +11,8 @@ from pydantic import Field
 from gamemaster_mcp.errors import InvalidChangeError
 from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.storage import CampaignStore
-from gamemaster_mcp.tools import screen_views
 from gamemaster_mcp.tools.deps import READ_ONLY, get_dice_log, get_store
+from gamemaster_mcp.views import widgets
 
 View = Literal["dice", "combat", "party", "character"]
 
@@ -26,15 +26,15 @@ def get_screen_data(
 ) -> str:
     """JSON for the on-screen widgets. Never needed in conversation."""
     if view == "dice":
-        data = screen_views.dice(log)
+        data = widgets.dice(log)
     else:
         with store.reading() as campaign:
             if view == "combat":
-                data = screen_views.combat(campaign)
+                data = widgets.combat(campaign)
             elif view == "party":
-                data = screen_views.party(campaign)
+                data = widgets.party(campaign)
             elif name:
-                data = screen_views.character(campaign, name)
+                data = widgets.character(campaign, name)
             else:
                 raise InvalidChangeError("The character view needs a name.")
     return json.dumps(data, ensure_ascii=False, separators=(",", ":"))

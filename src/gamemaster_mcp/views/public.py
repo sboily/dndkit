@@ -1,0 +1,77 @@
+"""What the players may see: the table screen and each player's phone.
+
+Built field by field from what is allowed, never by trimming the game
+master's views, so a field added to a model stays hidden until it is added
+here. Players see their party in full, but never an NPC's biography or notes,
+a planned encounter, or a monster's statistics: a monster's hit points show
+as how hurt it looks.
+"""
+
+from gamemaster_mcp.models import Campaign, Combatant
+from gamemaster_mcp.views.widgets import Json, vitals
+
+JOURNAL_EVENTS = 8
+
+
+def combat(campaign: Campaign) -> Json:
+    """The initiative order; monsters without their numbers."""
+    state = campaign.game_state
+    current = state.current_combatant
+    return {
+        "in_combat": state.in_combat,
+        "round": state.combat_round,
+        "order": [_fighter(campaign, c, c is current) for c in state.initiative_order],
+        "defeated": [c.name for c in state.defeated],
+        "xp": sum(c.xp for c in state.defeated),
+    }
+
+
+def _fighter(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
+    seen = {"name": combatant.name, "initiative": combatant.initiative, "current": current}
+    character = campaign.characters.get(combatant.character_id or "")
+    if character is not None:
+        return {**seen, "pc": True, **vitals(character)}
+    return {
+        **seen,
+        "pc": False,
+        "health": health(combatant.hit_points, combatant.hit_points_max),
+        "conditions": list(combatant.conditions),
+    }
+
+
+def health(hit_points: int | None, maximum: int | None) -> str | None:
+    """How hurt a creature looks: unhurt, hurt, bloodied (half or less) or down."""
+    if hit_points is None or not maximum:
+        return None
+    if hit_points <= 0:
+        return "down"
+    if hit_points >= maximum:
+        return "unhurt"
+    return "bloodied" if hit_points * 2 <= maximum else "hurt"
+
+
+def journal(campaign: Campaign, limit: int = JOURNAL_EVENTS) -> Json:
+    """Active quests with their objectives, and the latest moments of the adventure log."""
+    return {
+        "quests": [
+            {
+                "title": q.title,
+                "giver": q.giver,
+                "description": q.description,
+                "objectives": [
+                    {"text": text, "done": text in q.completed_objectives} for text in q.objectives
+                ],
+            }
+            for q in campaign.quests.values()
+            if q.status == "active"
+        ],
+        "events": [
+            {
+                "title": e.title,
+                "description": e.description,
+                "type": e.event_type.value,
+                "location": e.location,
+            }
+            for e in reversed(campaign.events[-limit:])
+        ],
+    }

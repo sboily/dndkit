@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Backstage</title>
+    <!--gm:shared-->
+  </head>
+  <body class="web">
+    <div class="board three">
+      <div class="col" id="play"></div>
+      <div class="col" id="plans"></div>
+      <div class="col" id="side"></div>
+    </div>
+    <div id="status"></div>
+    <script>
+      // The game master's backstage: exact numbers, plans and secrets, to
+      // follow what the model does. Opens only on the machine running the game.
+      const combat = Views.combat();
+      const party = Views.party();
+      const backstage = Views.backstage();
+      const dice = Views.dice();
+      const journal = Views.journal();
+
+      document.getElementById("play").append(combat.el, party.el);
+      document.getElementById("plans").append(backstage.el);
+      document.getElementById("side").append(dice.el, journal.el);
+
+      GM.start(() => {
+        GM.live("combat", null, (data) => { combat.el.hidden = !data.in_combat; combat.render(data); });
+        GM.live("party", null, (data) => { document.title = `${GM.t("backstage")} — ${data.campaign}`; party.render(data); });
+        GM.live("backstage", null, backstage.render);
+        GM.live("dice", null, dice.render);
+        GM.live("journal", null, journal.render);
+      });
+    </script>
+  </body>
+</html>

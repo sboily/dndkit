@@ -3,6 +3,7 @@
 Nothing touches the disk at import: the campaign store opens in the server's
 lifespan, so importing the package (tests, ``fastmcp inspect``) has no side
 effect, and a bad data directory fails the start with one clear log line.
+The web pages, when configured, run in the same lifespan.
 """
 
 import logging
@@ -14,13 +15,19 @@ from typing import Any
 from fastmcp import FastMCP
 
 from gamemaster_mcp import __version__
-from gamemaster_mcp.config import configure_logging, resolve_data_dir
+from gamemaster_mcp.config import (
+    WebSettings,
+    configure_logging,
+    resolve_data_dir,
+    resolve_web_settings,
+)
 from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import ALL_TOOLS
 from gamemaster_mcp.tools.apps import register_apps
 from gamemaster_mcp.tools.deps import DICE_LOG_KEY, STORE_KEY
 from gamemaster_mcp.tools.schema import compact
+from gamemaster_mcp.web import Changes, web_pages
 
 logger = logging.getLogger(__name__)
 
@@ -34,14 +41,21 @@ damage and healing (characters and monsters alike), roll_dice for every roll,
 and log notable moments with add_event."""
 
 
-def build_server(data_dir: Path | None = None) -> FastMCP:
-    """The MCP server; campaigns live in *data_dir*, else the configured directory."""
+def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -> FastMCP:
+    """The MCP server; campaigns live in *data_dir*, else the configured directory.
+
+    With *web*, the server also serves the live web pages (``web/``).
+    """
 
     @asynccontextmanager
     async def lifespan(_server: FastMCP) -> AsyncIterator[dict[str, Any]]:
         directory = data_dir or resolve_data_dir()
         logger.info("Gamemaster MCP %s, data in %s", __version__, directory)
-        yield {STORE_KEY: CampaignStore(directory), DICE_LOG_KEY: DiceLog()}
+        changes = Changes()
+        store = CampaignStore(directory, on_change=changes.notify)
+        dice_log = DiceLog(on_record=changes.notify)
+        async with web_pages(web, store, dice_log, changes):
+            yield {STORE_KEY: store, DICE_LOG_KEY: dice_log}
 
     server = FastMCP(
         name="gamemaster-mcp",
@@ -62,4 +76,4 @@ def build_server(data_dir: Path | None = None) -> FastMCP:
 def main() -> None:
     """Run the server over stdio, the transport MCP clients launch."""
     configure_logging()
-    build_server().run(show_banner=False)
+    build_server(web=resolve_web_settings()).run(show_banner=False)

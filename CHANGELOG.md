@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.4.0
+
+Live web pages: a table screen, each player's phone, the game master's backstage.
+
+### Added
+
+- **Web pages** (`GAMEMASTER_WEB_PORT`, `GAMEMASTER_WEB_HOST`,
+  `GAMEMASTER_WEB_URL`), served from the MCP server's process and updated at
+  every change through server-sent events:
+  - `/table/`: initiative order, the party, the dice tray, active quests with
+    their objectives, the adventure log, and a QR code per character.
+  - `/p/<code>/`: one player's character sheet with the fight, the dice, quests
+    and log; "Your turn!" and a vibration when their turn comes.
+  - `/gm/`, from the computer running the game only: exact monster numbers,
+    planned encounters and their difficulty, NPC secrets and notes, every
+    quest, the bestiary.
+- Players' links are unguessable codes derived from `player-links.key` in the
+  data directory. Players never see NPC secrets, notes, planned encounters or
+  monster statistics; a monster shows as unhurt, hurt, bloodied or down.
+
+### Changed
+
+- The widgets and the web pages share their renderers (`ui/components.js`,
+  `ui/dicetray.js`) and words (`ui/words.js`); the JSON views moved from
+  `tools/screen_views.py` to the `views` package.
+- `CampaignStore` and `DiceLog` take a change callback.
+- New dependencies: `starlette` and `uvicorn` (already installed with FastMCP),
+  `segno` for the QR codes; `httpx` for the tests.
+
 ## 0.3.0
 
 Monsters with hit points, the missing 5e rules, and on-screen widgets.

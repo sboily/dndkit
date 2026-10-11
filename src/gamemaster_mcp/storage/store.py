@@ -2,7 +2,7 @@
 
 import logging
 import threading
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -31,9 +31,16 @@ class CampaignStore:
 
     FastMCP runs synchronous tools in a thread pool, and voice models often
     call several tools at once, so every access goes through one lock.
+    *on_change* is called, from the changing thread, after every saved change
+    and every switch of campaign: the web pages wait on it.
     """
 
-    def __init__(self, data_dir: Path, confirmations: Confirmations | None = None) -> None:
+    def __init__(
+        self,
+        data_dir: Path,
+        confirmations: Confirmations | None = None,
+        on_change: Callable[[], None] | None = None,
+    ) -> None:
         self.data_dir = data_dir
         self.campaigns_dir = data_dir / "campaigns"
         self.settings_dir = data_dir / "settings"
@@ -41,6 +48,7 @@ class CampaignStore:
         self.confirmations = confirmations or Confirmations()
         self.campaigns_dir.mkdir(parents=True, exist_ok=True)
         self.settings_dir.mkdir(parents=True, exist_ok=True)
+        self._on_change = on_change or (lambda: None)
         self._lock = threading.RLock()
         self._current: Campaign | None = None
         self._current_path: Path | None = None
@@ -86,7 +94,8 @@ class CampaignStore:
             self._write(campaign, path)
             self._current, self._current_path = campaign, path
             logger.info("Created campaign %r in %s", title, path)
-            return campaign
+        self._on_change()
+        return campaign
 
     def load(self, name: str) -> Campaign:
         """Open a campaign by name and make it active."""
@@ -95,7 +104,8 @@ class CampaignStore:
             campaign = self._read(path)
             path.touch()  # the most recently opened campaign reopens at the next start
             self._current, self._current_path = campaign, path
-            return campaign
+        self._on_change()
+        return campaign
 
     def request_deletion(self, name: str) -> tuple[CampaignEntry, str]:
         """What deleting *name* would remove, and the code that confirms it."""
@@ -123,7 +133,8 @@ class CampaignStore:
             if self._current_path == path:
                 self._current, self._current_path = None, None
             logger.info("Moved campaign %r to %s", entry.name, target)
-            return entry, target
+        self._on_change()
+        return entry, target
 
     def read_setting_file(self, file_name: str) -> str:
         """Text of a .md/.txt file placed directly in the settings directory."""
@@ -160,6 +171,7 @@ class CampaignStore:
             except BaseException:
                 self._current = snapshot
                 raise
+        self._on_change()
 
     @contextmanager
     def reading(self) -> Iterator[Campaign]:

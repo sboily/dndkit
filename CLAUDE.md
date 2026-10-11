@@ -12,14 +12,15 @@ uv run pytest -q                     # Tests
 uv run ruff check . && uv run ruff format --check .
 uv run mypy src/                     # Strict
 uv run bandit -r src/ -c pyproject.toml
+GAMEMASTER_WEB_PORT=8765 uv run gamemaster-mcp   # Also serve the web pages
 ```
 
 ## Architecture
 
 ```
 src/gamemaster_mcp/
-├── app.py        # build_server(): FastMCP, lifespan (store + dice log), tools, apps; main()
-├── config.py     # Data dir (env, else platformdirs) and stderr logging
+├── app.py        # build_server(): FastMCP, lifespan (store, dice log, web pages), tools, apps
+├── config.py     # Data dir (env, else platformdirs), stderr logging, WebSettings
 ├── errors.py     # GameError hierarchy, subclasses of FastMCP's ToolError
 ├── models/       # Pydantic models: base, character, world, bestiary, campaign
 ├── storage/      # files (slugs, atomic JSON), catalog (summaries),
@@ -45,12 +46,20 @@ src/gamemaster_mcp/
 │   ├── schema.py      # Compacts advertised schemas (drops the null alternative)
 │   ├── apps.py        # ui:// pages, app_meta(), register_apps()
 │   ├── screen.py      # get_screen_data, the widgets' data tool
-│   ├── screen_views.py# JSON views for the widgets
 │   └── render*.py     # Plain-text views of game data
-└── ui/           # MCP App pages: <name>.html + shared.css/shared.js, assembled by ui.page()
+├── views/        # JSON views for screens: widgets (GM, everything), public
+│                 # (what players may see, allow-listed), backstage (GM secrets)
+├── web/          # Live web pages, inside the MCP process: changes (notices from
+│                 # tool threads), access (player links, QR), audiences (views
+│                 # per page), feed (SSE), routes (Starlette), server (uvicorn)
+└── ui/           # Pages: widgets and web pages (<name>.html), shared.css,
+                  # components.css, words.js, shared.js (transports), dicetray.js,
+                  # components.js (renderers), assembled by ui.page()
 ```
 
-Layers only call downwards: `tools` → `game` → `models`; `tools` → `storage`.
+Layers only call downwards: `tools` → `game` → `models`; `tools` → `storage`;
+`tools` and `web` → `views` → `game`. `storage` and `game.dice` report changes
+through plain callbacks and know nothing of the web.
 A tool opens `store.transaction()` (changes) or `store.reading()` (reads),
 calls `game` functions on the campaign, and renders a short text answer.
 
@@ -105,6 +114,21 @@ calls `game` functions on the campaign, and renders a short text answer.
   roomkit-ui answers request ids as strings and may miss the first
   `ui/initialize`; `shared.js` handles both. To see a page, render it in
   roomkit-ui's own `MCPAppWidget` with `QT_QPA_PLATFORM=offscreen` and grab it.
+- **Web pages**: they run in the MCP server's process, on its event loop. stdout
+  is the MCP protocol and Ctrl-C belongs to the MCP server, hence uvicorn with
+  `log_config=None` and no signal capture, and a socket bound by us (uvicorn
+  exits the process when it cannot bind). Nothing on the web side may stop the
+  game. A new way for `CampaignStore` to change the game must call
+  `self._on_change()`, or the pages stay stale.
+- **Player views** (`views/public.py`) list every field they send; never pass
+  a model or a GM view through. `tests/test_web_views.py` fills every private
+  field with `SECRET` and checks the table and player feeds. The backstage is
+  local-only by peer address: keep `proxy_headers=False`.
+- **Pages share renderers**: a widget and a web page show the same
+  `Views.*` component; only the transport differs (`window.GM_WEB` set by the
+  server: one EventSource per page, since browsers allow few connections per
+  host). Style a component under its root class (`.combat`, `.party`...): a web
+  page shows several at once.
 - **Schema budget**: `tests/test_tools.py` keeps the catalogue under roomkit's
   Tool Search threshold. `tools/schema.compact` must also walk `$defs`: FastMCP
   inlines model parameters (`Participant`) only after registration.
