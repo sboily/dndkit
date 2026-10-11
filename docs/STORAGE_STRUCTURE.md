@@ -11,8 +11,10 @@ Windows).
 ├── campaigns/
 │   ├── Ghost Coast.json
 │   └── The Dragons Curse.json
-└── settings/
-    └── forgotten-realms.md
+├── settings/
+│   └── forgotten-realms.md
+└── trash/
+    └── Old Campaign 2026-10-11 174223.json
 ```
 
 ## campaigns/
@@ -33,6 +35,12 @@ adventure log (`events`), the game state and world notes.
   never overwritten.
 - **Changes** happen inside `CampaignStore.transaction()`: the campaign is
   saved when the tool succeeds and restored when it fails.
+
+## trash/
+
+`delete_campaign` moves a campaign file here, with the date and time of the
+deletion added to its name; nothing is erased. To bring one back, move it into
+`campaigns/` and remove the date from its name. Empty the folder by hand.
 
 ## settings/
 

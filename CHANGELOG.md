@@ -40,6 +40,11 @@ First release of the fork, rebuilt on FastMCP 4 for voice game masters
 
 ### Added
 
+- `delete_campaign`, confirmed in two calls: the first returns what would be
+  lost and a one-time code (5 minutes); the second, with the code, moves the
+  campaign file to `<data dir>/trash/`.
+- `list_campaigns` gives each campaign's pitch, size, session and last use,
+  most recent first.
 - Tools: `update_campaign`, `remove_from_campaign`, `update_npc`,
   `update_location`, `get_quest`, `remove_item_from_character`,
   `set_spell_slots`, `use_spell_slot`, `record_death_save`, `long_rest`,

@@ -16,6 +16,7 @@ from gamemaster_mcp.models import (
     Quest,
     SessionNote,
 )
+from gamemaster_mcp.storage import CampaignEntry
 
 
 def character_line(c: Character) -> str:
@@ -136,6 +137,28 @@ def game_state(campaign: Campaign) -> str:
     if state.notes:
         lines.append(f"Notes: {state.notes}")
     return "\n".join(lines)
+
+
+def campaign_contents(entry: CampaignEntry) -> str:
+    """What a campaign holds, e.g. "3 characters, 5 NPCs, ... and 12 log events"."""
+    return (
+        f"{entry.characters} characters, {entry.npcs} NPCs, {entry.locations} locations, "
+        f"{entry.quests} quests, {entry.session_notes} session notes "
+        f"and {entry.events} log events"
+    )
+
+
+def campaign_entry(entry: CampaignEntry, active: bool) -> str:
+    """One saved campaign: pitch, size, session and when it was last used."""
+    marker = " (active)" if active else ""
+    if not entry.readable:
+        return f"{entry.name}{marker}: the file cannot be read."
+    pitch = f" {_short(entry.description, 100)}." if entry.description else ""
+    return (
+        f"{entry.name}{marker}:{pitch} {entry.characters} characters, "
+        f"{entry.quests} quests, at session {entry.current_session}, "
+        f"last used {entry.modified:%Y-%m-%d %H:%M}."
+    )
 
 
 def session_line(note: SessionNote) -> str:

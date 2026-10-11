@@ -13,7 +13,8 @@ See [CHANGELOG.md](CHANGELOG.md) for what changed.
 ## What it does
 
 - **Campaigns**: several campaigns, one active at a time, each saved as one JSON
-  file. Creating a campaign never overwrites an existing one.
+  file. Creating a campaign never overwrites an existing one; deleting one takes
+  a confirmation code and moves its file to a trash folder.
 - **Characters**: full 5e sheets, damage and healing with temporary hit points
   applied first, inventory that stacks, spell slots, death saves, long rests.
 - **World**: NPCs (with private bios), locations and quests with numbered objectives.
@@ -76,7 +77,7 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 41 tool schemas weigh about 7,000 tokens, under the point where roomkit
+The 42 tool schemas weigh about 7,000 tokens, under the point where roomkit
 hides tools behind `find_tools`. Put the system prompt below in the assistant's
 personality.
 
@@ -114,7 +115,9 @@ The Gamemaster tools hold the campaign. Trust them over your memory:
   add_session_note when the players stop.
 - When a tool reports an unknown name, pick the right one from the names it
   lists, or ask the players; never create a duplicate.
-- Ask before removing anything with remove_from_campaign.
+- Ask before removing anything with remove_from_campaign. To delete a
+  campaign, call delete_campaign, tell the players what would be lost, and call
+  it again with the code only after a clear yes.
 
 Starting a new campaign, run a short session zero, one question at a time:
 the campaign's name and pitch, then each player's character (name, race,
@@ -126,7 +129,7 @@ and a first quest, creating each with its tool as soon as you have it.
 
 | Area | Tools |
 | --- | --- |
-| Campaign | `create_campaign`, `get_campaign_info`, `list_campaigns`, `load_campaign`, `update_campaign`, `remove_from_campaign` |
+| Campaign | `create_campaign`, `get_campaign_info`, `list_campaigns`, `load_campaign`, `update_campaign`, `delete_campaign`, `remove_from_campaign` |
 | Characters | `create_character`, `get_character`, `list_characters`, `update_character`, `bulk_update_characters` |
 | Resources | `add_item_to_character`, `remove_item_from_character`, `set_spell_slots`, `use_spell_slot`, `record_death_save`, `long_rest` |
 | NPCs | `create_npc`, `get_npc`, `update_npc`, `list_npcs` |
@@ -140,6 +143,11 @@ and a first quest, creating each with its tool as soon as you have it.
 relative changes (damage, healing, ability score changes) to one or more
 characters, and changes nobody if one name is unknown. A tool that fails
 changes nothing, in memory or on disk.
+
+`delete_campaign` works in two calls. The first deletes nothing: it says what
+the campaign holds and returns a 4-digit code valid for 5 minutes. Only a
+second call with that code deletes, by moving the file to `<data dir>/trash/`,
+from where it can be put back by hand. A wrong code cancels the request.
 
 ## Data
 

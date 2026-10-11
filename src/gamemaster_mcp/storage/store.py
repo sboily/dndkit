@@ -4,7 +4,6 @@ import logging
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -17,20 +16,14 @@ from gamemaster_mcp.errors import (
     NotFoundError,
 )
 from gamemaster_mcp.models import Campaign, GameState, now
+from gamemaster_mcp.storage.catalog import CampaignEntry, read_entry
+from gamemaster_mcp.storage.confirmations import Confirmations
 from gamemaster_mcp.storage.files import campaign_slug, read_json, same_slug, write_json_atomic
 
 logger = logging.getLogger(__name__)
 
 SETTING_SUFFIXES = (".md", ".txt")
 MAX_SETTING_BYTES = 200_000
-
-
-@dataclass(frozen=True)
-class CampaignEntry:
-    """A campaign file and the campaign name stored in it."""
-
-    name: str
-    path: Path
 
 
 class CampaignStore:
@@ -40,10 +33,12 @@ class CampaignStore:
     call several tools at once, so every access goes through one lock.
     """
 
-    def __init__(self, data_dir: Path) -> None:
+    def __init__(self, data_dir: Path, confirmations: Confirmations | None = None) -> None:
         self.data_dir = data_dir
         self.campaigns_dir = data_dir / "campaigns"
         self.settings_dir = data_dir / "settings"
+        self.trash_dir = data_dir / "trash"
+        self.confirmations = confirmations or Confirmations()
         self.campaigns_dir.mkdir(parents=True, exist_ok=True)
         self.settings_dir.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
@@ -58,10 +53,10 @@ class CampaignStore:
             return self._current
 
     def list_campaigns(self) -> list[CampaignEntry]:
-        """Every campaign file, by the name stored inside it."""
+        """A summary of every campaign file, most recently used first."""
         with self._lock:
-            paths = sorted(self.campaigns_dir.glob("*.json"))
-            return [CampaignEntry(self._stored_name(path), path) for path in paths]
+            entries = [read_entry(path) for path in self.campaigns_dir.glob("*.json")]
+        return sorted(entries, key=lambda entry: entry.modified, reverse=True)
 
     def create(
         self,
@@ -76,7 +71,7 @@ class CampaignStore:
             existing = self._file_for_slug(slug)
             if existing is not None:
                 raise AlreadyExistsError(
-                    f"A campaign named '{self._stored_name(existing)}' already exists. "
+                    f"A campaign named '{read_entry(existing).name}' already exists. "
                     "Open it with load_campaign or pick another name."
                 )
             title = name.strip()
@@ -96,14 +91,39 @@ class CampaignStore:
     def load(self, name: str) -> Campaign:
         """Open a campaign by name and make it active."""
         with self._lock:
-            path = self._file_for_slug(campaign_slug(name))
-            if path is None:
-                known = ", ".join(entry.name for entry in self.list_campaigns()) or "none yet"
-                raise NotFoundError(f"No campaign named '{name}'. Known campaigns: {known}.")
+            path = self._require_file(name)
             campaign = self._read(path)
             path.touch()  # the most recently opened campaign reopens at the next start
             self._current, self._current_path = campaign, path
             return campaign
+
+    def request_deletion(self, name: str) -> tuple[CampaignEntry, str]:
+        """What deleting *name* would remove, and the code that confirms it."""
+        with self._lock:
+            path = self._require_file(name)
+            return read_entry(path), self.confirmations.issue(str(path))
+
+    def delete(self, name: str, code: str) -> tuple[CampaignEntry, Path]:
+        """Move a campaign to the trash, given the code ``request_deletion`` issued.
+
+        Returns what was deleted and where its file went. Deleting the active
+        campaign leaves none active.
+        """
+        with self._lock:
+            path = self._require_file(name)
+            if not self.confirmations.consume(str(path), code):
+                raise InvalidChangeError(
+                    "That confirmation code is wrong or expired, so nothing was deleted. "
+                    "Call delete_campaign without a code to get a new one."
+                )
+            entry = read_entry(path)
+            self.trash_dir.mkdir(parents=True, exist_ok=True)
+            target = self._trash_path(path.stem)
+            path.replace(target)
+            if self._current_path == path:
+                self._current, self._current_path = None, None
+            logger.info("Moved campaign %r to %s", entry.name, target)
+            return entry, target
 
     def read_setting_file(self, file_name: str) -> str:
         """Text of a .md/.txt file placed directly in the settings directory."""
@@ -153,6 +173,22 @@ class CampaignStore:
             raise NoActiveCampaignError()
         return self._current, self._current_path
 
+    def _require_file(self, name: str) -> Path:
+        path = self._file_for_slug(campaign_slug(name))
+        if path is None:
+            known = ", ".join(entry.name for entry in self.list_campaigns()) or "none yet"
+            raise NotFoundError(f"No campaign named '{name}'. Known campaigns: {known}.")
+        return path
+
+    def _trash_path(self, stem: str) -> Path:
+        stamp = now().strftime("%Y-%m-%d %H%M%S")
+        target = self.trash_dir / f"{stem} {stamp}.json"
+        number = 2
+        while target.exists():
+            target = self.trash_dir / f"{stem} {stamp} {number}.json"
+            number += 1
+        return target
+
     def _file_for_slug(self, slug: str) -> Path | None:
         for path in self.campaigns_dir.glob("*.json"):
             if same_slug(path.stem, slug):
@@ -183,14 +219,6 @@ class CampaignStore:
                 first = exc.errors()[0]
                 detail = f"{'.'.join(map(str, first['loc']))}: {first['msg']}"
             raise GameError(f"Campaign file {path.name} cannot be read: {detail}") from exc
-
-    @staticmethod
-    def _stored_name(path: Path) -> str:
-        try:
-            name = read_json(path).get("name")
-        except (OSError, ValueError, AttributeError):
-            return f"{path.stem} (unreadable)"
-        return name if isinstance(name, str) and name else path.stem
 
     @staticmethod
     def _write(campaign: Campaign, path: Path) -> None:

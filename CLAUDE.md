@@ -22,7 +22,8 @@ src/gamemaster_mcp/
 ├── config.py     # Data dir (env, else platformdirs) and stderr logging
 ├── errors.py     # GameError hierarchy, subclasses of FastMCP's ToolError
 ├── models/       # Pydantic models: base (GameModel), character, world, campaign
-├── storage/      # files.py (slugs, atomic JSON), store.py (CampaignStore)
+├── storage/      # files.py (slugs, atomic JSON), catalog.py (file summaries),
+│                 # confirmations.py (one-time codes), store.py (CampaignStore)
 ├── game/         # Game logic over a Campaign object: no MCP, no disk
 │   ├── registry.py   # Lookup by ID or spoken name, uniqueness, validated edits
 │   ├── characters.py # Create/update/remove, relative HP and score changes
@@ -77,5 +78,10 @@ calls `game` functions on the campaign, and renders a short text answer.
 - **Legacy saves**: upstream files keyed entities by name and stored a global
   adventure log. `Campaign._key_by_id` re-keys on load; keep
   `tests/fixtures/legacy_campaign.json` loading.
+- **Destructive actions**: `delete_campaign` deletes nothing on its first call;
+  it issues a one-time code (`storage/confirmations.py`) that a second call
+  must carry. A code serves once, for one campaign, for 5 minutes, and a wrong
+  one cancels the request. Deleted files go to `trash/`, never unlinked. Reuse
+  `Confirmations` for any new destructive tool.
 - **Setting files** are read only from `<data dir>/settings/`, by bare file
   name; symlinks out of it are refused.

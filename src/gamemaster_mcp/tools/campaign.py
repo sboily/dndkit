@@ -1,4 +1,4 @@
-"""Campaign tools: create, open, list, describe and edit campaigns."""
+"""Campaign tools: create, open, list, describe, edit and delete campaigns."""
 
 from collections.abc import Callable
 from typing import Annotated
@@ -11,6 +11,7 @@ from gamemaster_mcp.errors import InvalidChangeError
 from gamemaster_mcp.game import world
 from gamemaster_mcp.game.world import EntityKind
 from gamemaster_mcp.storage import CampaignStore
+from gamemaster_mcp.tools import render
 from gamemaster_mcp.tools.deps import DESTRUCTIVE, READ_ONLY, NameOrId, get_store, provided
 
 Setting = Annotated[str | None, Field(description="World and tone, in prose or markdown")]
@@ -62,13 +63,13 @@ def get_campaign_info(store: CampaignStore = Depends(get_store)) -> str:
 
 @tool(annotations=READ_ONLY)
 def list_campaigns(store: CampaignStore = Depends(get_store)) -> str:
-    """List saved campaigns; the active one is marked."""
+    """List saved campaigns, most recently used first, with their size and session."""
     entries = store.list_campaigns()
     if not entries:
         return f"No campaign saved yet in {store.campaigns_dir}."
     active = store.current.name if store.current else None
     return "Campaigns:\n" + "\n".join(
-        f"- {e.name}{' (active)' if e.name == active else ''}" for e in entries
+        f"- {render.campaign_entry(e, e.name == active)}" for e in entries
     )
 
 
@@ -118,11 +119,37 @@ def remove_from_campaign(
     return f"Removed {kind} '{name}'."
 
 
+@tool(annotations=DESTRUCTIVE)
+def delete_campaign(
+    name: Annotated[str, Field(min_length=1, description="Campaign name")],
+    confirmation_code: Annotated[
+        str | None,
+        Field(description="Code from the first call, once the user has said yes"),
+    ] = None,
+    store: CampaignStore = Depends(get_store),
+) -> str:
+    """Delete a campaign in two calls. The first only returns a code and what would be lost:
+    ask the user out loud, and call again with the code only after a clear yes."""
+    if confirmation_code is None:
+        entry, code = store.request_deletion(name)
+        return (
+            f"Nothing deleted yet. Campaign '{entry.name}' holds "
+            f"{render.campaign_contents(entry)}. Ask the user to confirm the deletion. "
+            f"Only if they clearly say yes, call delete_campaign again with "
+            f"confirmation_code '{code}' (valid {store.confirmations.ttl_minutes} minutes)."
+        )
+    entry, moved_to = store.delete(name, confirmation_code)
+    active = store.current.name if store.current else None
+    after = f" '{active}' is still active." if active else " No campaign is active now."
+    return f"Campaign '{entry.name}' deleted (file moved to {moved_to}).{after}"
+
+
 TOOLS: list[Callable[..., str]] = [
     create_campaign,
     get_campaign_info,
     list_campaigns,
     load_campaign,
     update_campaign,
+    delete_campaign,
     remove_from_campaign,
 ]
