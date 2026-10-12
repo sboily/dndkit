@@ -1,5 +1,7 @@
 """The table: who plays which character, who is present, and what follows from it."""
 
+from datetime import UTC, datetime
+
 import pytest
 from fastmcp import Client
 
@@ -24,7 +26,8 @@ def test_without_a_roll_call_everyone_is_present() -> None:
     campaign = party_of_three()
     assert len(seating.present_characters(campaign)) == 4
     text = render.table(campaign)
-    assert text.startswith("Nobody seated yet") and "Sylvain plays Élodie" in text
+    assert text.startswith("Nobody is seated yet: once tonight's players have said who")
+    assert "call seat_players with start_over" in text and "Sylvain plays Élodie" in text
 
 
 def test_the_roll_call_seats_players_with_their_characters() -> None:
@@ -78,7 +81,7 @@ def test_experience_and_difficulty_count_the_characters_at_the_table() -> None:
 async def test_seat_players_through_the_tool(client: Client) -> None:
     await call(client, "create_campaign", name="Ghost", description="d")
     await call(client, "create_character", name="Élodie", character_class="Rogue", race="Elf")
-    assert (await call(client, "seat_players")).startswith("Nobody seated yet")
+    assert (await call(client, "seat_players")).startswith("Nobody is seated yet")
     seated = await call(
         client,
         "seat_players",
@@ -93,3 +96,13 @@ async def test_seat_players_through_the_tool(client: Client) -> None:
     assert "Known characters" in await call_error(
         client, "seat_players", players=[{"player": "Marc", "character": "Borin"}]
     )
+
+
+def test_last_session_s_table_asks_for_tonight_s_roll_call() -> None:
+    campaign = party_of_three()
+    seating.seat(campaign, "Sylvain", "Élodie")
+    campaign.game_state.roll_call_at = datetime(2026, 1, 1, tzinfo=UTC)
+    started = datetime(2026, 2, 1, tzinfo=UTC)  # this server's start, after it
+    assert render.table(campaign, started).startswith("This was last session's table:")
+    campaign.game_state.roll_call_at = datetime(2026, 2, 1, 20, tzinfo=UTC)
+    assert render.table(campaign, started).startswith("At the table: Sylvain plays Élodie")

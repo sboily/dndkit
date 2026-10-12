@@ -5,6 +5,7 @@ A voice transcript rarely spells a name the way it was typed ("aria",
 nothing matches, the error lists the known names so the model can retry.
 """
 
+import difflib
 from collections.abc import Iterable, Mapping, MutableMapping
 from typing import Any, Protocol, cast
 
@@ -34,7 +35,7 @@ def known_names(entities: Iterable[Named]) -> str:
     return ", ".join(names) if names else "none yet"
 
 
-def find[E: Named](items: Mapping[str, E], ref: str, kind: str) -> E:
+def find[E: Named](items: Mapping[str, E], ref: str, kind: str, hint: str = "") -> E:
     """The entity whose ID or name is *ref*, or the only one whose name contains it.
 
     Spoken names get shortened ("the lighthouse" for "The Dark Lighthouse"): a
@@ -46,7 +47,29 @@ def find[E: Named](items: Mapping[str, E], ref: str, kind: str) -> E:
     partial = partial_matches(items.values(), ref)
     if len(partial) == 1:
         return partial[0]
-    raise NotFoundError(f"No {kind} named '{ref}'. Known {kind}s: {known_names(items.values())}.")
+    near = did_you_mean([e.name for e in items.values()], ref)
+    known = known_names(items.values())
+    raise NotFoundError(f"No {kind} named '{ref}'.{near} Known {kind}s: {known}.{hint}")
+
+
+def closest(names: Iterable[str], ref: str) -> str | None:
+    """The name *ref* reads like a slip for (a translated name, a misheard one), if
+    one is close enough. Only ever a hint: the model chooses, nothing is guessed."""
+    by_key = {normalize(name): name for name in names}
+    close = difflib.get_close_matches(normalize(ref), list(by_key), n=1, cutoff=0.75)
+    return by_key[close[0]] if close else None
+
+
+def did_you_mean(names: Iterable[str], ref: str) -> str:
+    """ " Did you mean 'Gobelin'?", or nothing."""
+    near = closest(names, ref)
+    return f" Did you mean '{near}'?" if near else ""
+
+
+def quoted(names: Iterable[str], ref: str) -> str:
+    """ "'Goblin' (did you mean 'Gobelin'?)", or "'Goblin'": an unknown name in a list."""
+    near = closest(names, ref)
+    return f"'{ref}' (did you mean '{near}'?)" if near else f"'{ref}'"
 
 
 def find_exact[E: Named](items: Mapping[str, E], ref: str) -> E | None:
@@ -66,7 +89,9 @@ def partial_matches[E: Spoken](entities: Iterable[E], ref: str) -> list[E]:
     return [e for e in entities if wanted in normalize(e.name)]
 
 
-def find_many[E: Named](items: Mapping[str, E], refs: Iterable[str], kind: str) -> list[E]:
+def find_many[E: Named](
+    items: Mapping[str, E], refs: Iterable[str], kind: str, hint: str = ""
+) -> list[E]:
     """Every entity in *refs*, or one error naming all the unknown ones."""
     found: list[E] = []
     missing: list[str] = []
@@ -79,9 +104,10 @@ def find_many[E: Named](items: Mapping[str, E], refs: Iterable[str], kind: str) 
         if entity not in found:
             found.append(entity)
     if missing:
-        unknown = ", ".join(f"'{ref}'" for ref in missing)
+        names = [e.name for e in items.values()]
+        unknown = ", ".join(quoted(names, ref) for ref in missing)
         raise NotFoundError(
-            f"Unknown {kind}s: {unknown}. Known {kind}s: {known_names(items.values())}."
+            f"Unknown {kind}s: {unknown}. Known {kind}s: {known_names(items.values())}.{hint}"
         )
     return found
 

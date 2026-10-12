@@ -28,7 +28,7 @@ Condition = Literal[
 def get_game_state(store: CampaignStore = Depends(get_store)) -> str:
     """Where the party is: session, location, date, funds, party HP, quests, combat."""
     with store.reading() as campaign:
-        return render.game_state(campaign)
+        return render.game_state(campaign, store.opened_at)
 
 
 @tool

@@ -41,7 +41,7 @@ def resolve(campaign: Campaign, refs: Sequence[str]) -> list[Target]:
             targets.append(target)
     if missing:
         known = [c.name for c in fighters] + [c.name for c in campaign.characters.values()]
-        unknown = ", ".join(f"'{ref}'" for ref in missing)
+        unknown = ", ".join(registry.quoted(known, ref) for ref in missing)
         raise NotFoundError(f"Unknown: {unknown}. Known: {', '.join(sorted(set(known)))}.")
     return targets
 

@@ -124,6 +124,12 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   `<data dir>/.lock`, and the active campaign is read again when its file
   changed elsewhere (a hand edit too). Three processes making 200 changes
   each kept 600; before, 200.
+- Answers that say the next step, for small models that read a tool's answer
+  more closely than their prompt: an unknown name suggests the closest one
+  ("Did you mean 'Gobelin'?", never chosen for the model); a monster missing
+  from the bestiary says to add it with `save_monster`; until `seat_players`
+  has run since the server started, `get_game_state`, `list_characters` and
+  `seat_players` say to take tonight's roll call.
 - **CI**: GitHub Actions run ruff, mypy, bandit and the tests on Python 3.12
   and 3.13, and knip on the pages' scripts, now ES modules.
 

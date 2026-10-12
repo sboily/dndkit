@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.game import seating
-from gamemaster_mcp.models import Seat
+from gamemaster_mcp.models import Seat, now
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render
 from gamemaster_mcp.tools.apps import SEATING_APP, app_meta
@@ -30,13 +30,14 @@ def seat_players(
     Without arguments, just shows it."""
     if not (players or leaving or start_over):
         with store.reading() as campaign:
-            return render.table(campaign)
+            return render.table(campaign, store.opened_at)
     with store.transaction() as campaign:
         if start_over:
             seating.clear(campaign)
         notes = [seating.seat(campaign, s.player, s.character) for s in players or []]
         for player in leaving or []:
             seating.leave(campaign, player)
+        campaign.game_state.roll_call_at = now()
         return "\n".join([*(note for note in notes if note), render.table(campaign)])
 
 

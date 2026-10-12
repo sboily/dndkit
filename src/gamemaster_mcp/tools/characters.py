@@ -103,7 +103,8 @@ def list_characters(store: CampaignStore = Depends(get_store)) -> str:
         party = sorted(campaign.characters.values(), key=lambda c: c.name)
         if not party:
             return "No characters yet."
-        return "Characters:\n" + "\n".join(f"- {render.character_line(c)}" for c in party)
+        lines = [f"- {render.character_line(c)}" for c in party]
+        return "\n".join(["Characters:", *lines, render.table(campaign, store.opened_at)])
 
 
 @tool

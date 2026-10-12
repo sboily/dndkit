@@ -87,8 +87,11 @@ def find(state: GameState, name: str) -> Combatant:
     _require_combat(state)
     found = find_optional(state, name)
     if found is None:
-        listed = ", ".join(c.name for c in state.initiative_order)
-        raise NotFoundError(f"No combatant named '{name}'. In the fight: {listed}.")
+        names = [c.name for c in state.initiative_order]
+        near = registry.did_you_mean(names, name)
+        raise NotFoundError(
+            f"No combatant named '{name}'.{near} In the fight: {', '.join(names)}."
+        )
     return found
 
 

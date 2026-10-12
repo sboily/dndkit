@@ -12,10 +12,13 @@ MONSTER_KIND = "monster"
 ENCOUNTER_KIND = "encounter"
 _NUMBER_SUFFIX = re.compile(r"\s+\d+$")
 
+# What to do when the bestiary lacks a monster: a small model otherwise stops there.
+NEW_MONSTER = " To add it: save_monster (in the dnd-monsters skill), with its book numbers."
+
 
 def find_monster(campaign: Campaign, ref: str) -> Monster:
     """The bestiary entry *ref* names."""
-    return registry.find(campaign.monsters, ref, MONSTER_KIND)
+    return registry.find(campaign.monsters, ref, MONSTER_KIND, NEW_MONSTER)
 
 
 def monster_for(campaign: Campaign, name: str) -> Monster | None:
@@ -112,7 +115,9 @@ def plan_encounter(
     values = {key: value for key, value in fields.items() if value is not None}
     if groups is not None:
         # One error naming every unknown monster, then the bestiary's own spelling.
-        registry.find_many(campaign.monsters, [g.monster for g in groups], MONSTER_KIND)
+        registry.find_many(
+            campaign.monsters, [g.monster for g in groups], MONSTER_KIND, NEW_MONSTER
+        )
         values["monsters"] = [
             {**g.model_dump(), "monster": find_monster(campaign, g.monster).name} for g in groups
         ]

@@ -4,6 +4,8 @@ No emoji and little markup: a voice model reads these, then says what
 matters in its own words.
 """
 
+from datetime import datetime
+
 from gamemaster_mcp.game import characters, effects, proficiencies, seating
 from gamemaster_mcp.game.spellbook import describe_slots
 from gamemaster_mcp.models import (
@@ -146,7 +148,13 @@ def quest(q: Quest) -> str:
     return "\n".join(lines)
 
 
-def game_state(campaign: Campaign) -> str:
+ROLL_CALL = (
+    "{what}: once tonight's players have said who they are, call seat_players with "
+    "start_over and each player with their character."
+)
+
+
+def game_state(campaign: Campaign, session_start: datetime | None = None) -> str:
     """Where the party stands right now."""
     state = campaign.game_state
     active = [q.title for q in campaign.quests.values() if q.status == "active"]
@@ -166,7 +174,7 @@ def game_state(campaign: Campaign) -> str:
             or "none"
         ),
         f"Active quests: {', '.join(active) or 'none'}.",
-        table(campaign),
+        table(campaign, session_start),
     ]
     if state.in_combat:
         lines.append("In combat. " + render_combat.initiative(campaign))
@@ -189,20 +197,30 @@ def spellcasting_line(c: Character) -> str:
     )
 
 
-def table(campaign: Campaign) -> str:
-    """Who plays which character tonight, so the model knows whom it speaks to."""
+def table(campaign: Campaign, session_start: datetime | None = None) -> str:
+    """Who plays which character tonight, so the model knows whom it speaks to.
+
+    Until seat_players has run since *session_start* (this server's start), it
+    says what to call: a small model reads a tool's answer, not always its prompt.
+    """
     party = sorted(campaign.characters.values(), key=lambda c: c.name)
-    present = campaign.game_state.players_present
+    state = campaign.game_state
+    present = state.players_present
     if not present:
         known = [f"{c.player_name} plays {c.name}" for c in party if c.player_name]
-        return "Nobody seated yet: ask who is playing, then seat_players." + (
-            f" Known players: {', '.join(known)}." if known else ""
+        return ROLL_CALL.format(what="Nobody is seated yet") + (
+            f" Players seen before: {', '.join(known)}." if known else ""
         )
+    stale = session_start is not None and (
+        state.roll_call_at is None or state.roll_call_at < session_start
+    )
     seats = []
     for player in present:
         played = " and ".join(c.name for c in seating.characters_of(campaign, player))
         seats.append(f"{player} plays {played}" if played else f"{player} has no character yet")
     lines = [f"At the table: {'; '.join(seats)}."]
+    if stale:
+        lines.insert(0, ROLL_CALL.format(what="This was last session's table"))
     away = [
         f"{c.name} ({c.player_name})"
         for c in party

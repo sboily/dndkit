@@ -97,6 +97,7 @@ class GameState(GameModel):
     defeated: list[Combatant] = Field(default_factory=list)  # fallen this combat
     encounter_id: str | None = None  # the planned encounter being fought
     players_present: list[str] = Field(default_factory=list)  # the roll call, in seat order
+    roll_call_at: datetime | None = None  # when seat_players last changed it
     battlefield: Battlefield | None = None
     last_combat: CombatRecord | None = None
     notes: str = ""

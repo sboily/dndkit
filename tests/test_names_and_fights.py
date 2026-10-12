@@ -113,3 +113,16 @@ async def test_a_fight_started_with_its_foes_only_brings_the_party(client: Clien
     assert "d20+2" in rolls
     refused = await call_error(client, "save_monster", name="Gob", boss=True)
     assert "give its full name: Goblin" in refused
+
+
+def test_a_slip_of_a_name_gets_a_hint_never_a_guess() -> None:
+    campaign = make_campaign()
+    combat.start(campaign.game_state, [Combatant(name="Gobelin", initiative=5, hit_points=7)])
+    with pytest.raises(NotFoundError, match=r"Unknown: 'Goblin' \(did you mean 'Gobelin'\?\)"):
+        effects.change_hit_points(campaign, ["Goblin"], -3)
+    with pytest.raises(NotFoundError, match="No combatant named 'Goblin'. Did you mean 'Gobelin'"):
+        combat.find(campaign.game_state, "Goblin")
+    with pytest.raises(NotFoundError, match=r"No monster named 'Owl Bear'\. Known monsters"):
+        bestiary.find_monster(campaign, "Owl Bear")
+    with pytest.raises(NotFoundError, match="To add it: save_monster"):
+        bestiary.find_monster(campaign, "Owl Bear")

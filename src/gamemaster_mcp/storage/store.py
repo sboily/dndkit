@@ -58,6 +58,8 @@ class CampaignStore:
         self._current: Campaign | None = None
         self._current_path: Path | None = None
         self._stamp: Stamp | None = None  # the active file as we last read or wrote it
+        # When this server started: a roll call older than that was another session's.
+        self.opened_at = now()
         self._open_most_recent()
 
     @property
