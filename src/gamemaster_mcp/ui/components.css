@@ -237,6 +237,10 @@
 .world .chip.hostile { color: var(--red); }
 .world .crown { color: var(--gold-hi); }
 
+.combat .lastfight { margin-top: 8px; padding: 6px 8px; border-radius: 8px; background: var(--card-2); }
+.journal .stars { color: var(--gold); font-size: 11px; }
+.backstage .entry.done { opacity: .6; }
+
 /* The desk, on the backstage */
 .activity .calls { display: flex; flex-direction: column; max-height: 62vh; overflow-y: auto; }
 .activity .call { border-top: 1px solid var(--line); padding: 3px 0; }

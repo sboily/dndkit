@@ -53,6 +53,11 @@ const Views = (() => {
         legendary(f));
     }
 
+    /** The fight that ended last, when none is running (the game master's views send it). */
+    const lastFight = (last) => h("div", { class: "lastfight small" },
+      h("b", {}, t("lastFight", { rounds: last.rounds })), " ", last.fighters.join(", "),
+      last.defeated.length ? h("div", { class: "muted" }, `${t("defeated")}: ${last.defeated.join(", ")} · ${last.xp} ${t("xp")}`) : null);
+
     /** The game master's count of legendary actions and resistances. */
     function legendary(f) {
       if (!f.legendary || !(f.legendary[1] || f.resistances)) return null;
@@ -67,7 +72,8 @@ const Views = (() => {
       turn.textContent = current ? t("turnOf", { name: current.name }) : "";
       fill(map, data.map ? BattleMap(data.map, me()) : null);
       map.hidden = !data.map;
-      fill(order, data.order.length ? data.order.map(fighter) : h("div", { class: "empty" }, t("noCombat")));
+      fill(order, data.order.length ? data.order.map(fighter) : h("div", { class: "empty" }, t("noCombat")),
+        data.last ? lastFight(data.last) : null);
       fill(defeated, data.defeated.length ? [
         h("span", { class: "muted small" }, `${t("defeated")}:`),
         data.defeated.map((name) => h("span", { class: "chip gone" }, name)),
@@ -195,10 +201,15 @@ const Views = (() => {
       h("div", {}, h("b", {}, q.title), q.giver ? h("span", { class: "muted small" }, ` — ${t("from", { name: q.giver })}`) : null),
       q.objectives.length ? h("ul", {}, q.objectives.map((o) => h("li", { class: o.done ? "done" : "" }, o.text))) : null);
 
+    // The game master's log adds the session, importance (1-5), who and tags.
     const event = (e) => h("div", { class: "event" },
       h("div", {}, h("span", { class: "chip" }, t(e.type)), " ", h("b", {}, e.title),
+        e.importance ? h("span", { class: "stars", title: `${e.importance}/5` }, " " + "★".repeat(e.importance)) : null,
         e.location ? h("span", { class: "muted small" }, ` — ${e.location}`) : null),
-      e.description ? h("div", { class: "muted small" }, e.description) : null);
+      e.description ? h("div", { class: "muted small" }, e.description) : null,
+      e.characters && (e.characters.length || e.tags.length || e.session) ? h("div", { class: "muted small" },
+        [e.session ? `${t("session")} ${e.session}` : "", e.characters.join(", "), e.tags.map((tag) => `#${tag}`).join(" ")]
+          .filter(Boolean).join(" · ")) : null);
 
     function render(data) {
       fill(quests, data.quests.length ? data.quests.map(quest) : empty("noQuest"));

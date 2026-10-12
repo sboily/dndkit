@@ -24,7 +24,7 @@ function World() {
     [h("b", {}, n.name), n.attitude ? h("span", { class: `chip ${n.attitude}` }, t(n.attitude)) : null,
       h("span", { class: "muted small" }, line(n.race, n.occupation, n.location))],
     n.description ? h("p", { class: "small" }, n.description) : null,
-    fact(t("ties"), n.ties.length ? n.ties : null),
+    fact(t("ties"), n.ties.length ? n.ties : null), fact(t("stats"), n.stats.length ? n.stats : null),
     secret(`🔒 ${t("secret")}`, n.bio), secret(t("notes"), n.notes));
 
   const place = (p) => entry(

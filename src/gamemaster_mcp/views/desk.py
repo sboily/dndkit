@@ -47,7 +47,16 @@ def notebook(campaign: Campaign, saved_in: Path | None, data_dir: Path) -> Json:
         "dm": campaign.dm_name,
         "party_level": state.party_level,
         "sessions": [
-            {"number": s.session_number, "title": s.title, "summary": s.summary}
+            {
+                "number": s.session_number,
+                "title": s.title,
+                "summary": s.summary,
+                "moments": s.events,
+                "present": s.characters_present,
+                "xp": s.experience_gained,
+                "treasure": s.treasure_found,
+                "notes": s.notes,
+            }
             for s in sorted(campaign.sessions, key=lambda s: s.session_number)[-SHOWN_SESSIONS:]
         ],
         "server": {

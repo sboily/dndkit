@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from gamemaster_mcp.errors import InvalidChangeError, NotFoundError
 from gamemaster_mcp.game import registry
 from gamemaster_mcp.game.combatants import number_duplicates, unique_name
-from gamemaster_mcp.models import Combatant, GameState
+from gamemaster_mcp.models import Combatant, CombatRecord, GameState
 
 
 @dataclass(frozen=True)
@@ -130,6 +130,12 @@ def end(state: GameState) -> CombatSummary:
         rounds=state.combat_round,
         defeated=list(state.defeated),
         xp=sum(c.xp for c in state.defeated),
+    )
+    state.last_combat = CombatRecord(
+        rounds=summary.rounds,
+        fighters=[c.name for c in [*state.initiative_order, *state.defeated]],
+        defeated=[c.name for c in summary.defeated],
+        xp=summary.xp,
     )
     state.in_combat = False
     state.initiative_order = []

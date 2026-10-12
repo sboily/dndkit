@@ -19,7 +19,9 @@ function CharacterSheet() {
     s.description ? h("p", { class: "small" }, s.description) : null);
 
   const item = (i) => h("div", { class: "item" },
+    i.slot ? h("span", { class: "chip" }, i.slot) : null, " ",
     h("b", {}, i.qty > 1 ? `${i.name} ×${i.qty}` : i.name),
+    i.details ? h("span", { class: "muted small" }, ` (${i.details})`) : null,
     i.description ? h("span", { class: "muted small" }, ` — ${i.description}`) : null);
 
   function render(c) {
@@ -48,7 +50,10 @@ function CharacterSheet() {
       c.slots.length ? section(t("slots"), h("div", { class: "list" }, c.slots.map(([level, left, max]) =>
         h("span", { class: "slot" }, `${t("lvl")} ${level} `, GM.pips(left, max))))) : null,
       c.spells.length ? section(t("spells"), h("div", { class: "spells" }, c.spells.map(spell))) : null,
+      c.equipment.length ? section(t("equipped"), h("div", {}, c.equipment.map(item))) : null,
       c.inventory.length ? section(t("inventory"), h("div", {}, c.inventory.map(item))) : null,
+      c.race.subrace || c.race.traits.length ? section(c.race.subrace ? `${c.race.name} · ${c.race.subrace}` : c.race.name,
+        chips(c.race.traits)) : null,
       c.features.length ? section(t("features"), chips(c.features)) : null,
       c.skills.length || c.saves.length ? section(t("proficiencies"),
         chips([...c.skills, ...c.saves.map((save) => `${t("save")} ${save}`)])) : null,

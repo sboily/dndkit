@@ -49,7 +49,7 @@ def _fighter(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
     }
 
 
-def journal(campaign: Campaign, limit: int = JOURNAL_EVENTS) -> Json:
+def journal(campaign: Campaign, limit: int = JOURNAL_EVENTS, full: bool = False) -> Json:
     """Active quests with their objectives, and the latest moments of the adventure log."""
     return {
         "quests": [
@@ -70,7 +70,19 @@ def journal(campaign: Campaign, limit: int = JOURNAL_EVENTS) -> Json:
                 "description": e.description,
                 "type": e.event_type.value,
                 "location": e.location,
+                # The game master's own log adds what the players do not need.
+                **(
+                    {
+                        "session": e.session_number,
+                        "importance": e.importance,
+                        "characters": e.characters_involved,
+                        "tags": e.tags,
+                    }
+                    if full
+                    else {}
+                ),
             }
             for e in reversed(campaign.events[-limit:])
         ],
+        "total": len(campaign.events),
     }

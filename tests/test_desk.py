@@ -9,6 +9,8 @@ from fastmcp import Client, FastMCP
 from fastmcp.exceptions import ToolError
 
 from gamemaster_mcp.activity import ActivityLog
+from gamemaster_mcp.game import combat
+from gamemaster_mcp.models import AdventureEvent, Item
 from gamemaster_mcp.tools.recorder import Recorder
 from gamemaster_mcp.views import desk
 from gamemaster_mcp.web import audiences
@@ -71,3 +73,26 @@ def test_the_desk_is_the_game_masters_alone(tmp_path: Path) -> None:
         audiences.player(sources, aria_token(sources)),
     ):
         assert not {"notebook", "sheets", "activity"} & set(views)
+
+
+def test_the_backstage_keeps_the_last_fight_and_the_whole_log(tmp_path: Path) -> None:
+    sources = make_sources(tmp_path)
+    with sources.store.transaction() as campaign:
+        goblin = campaign.game_state.initiative_order[1]
+        combat.remove(campaign.game_state, goblin.name)
+        combat.end(campaign.game_state)
+        campaign.encounters[next(iter(campaign.encounters))].status = "done"
+        campaign.events = [
+            AdventureEvent(event_type="combat", title="Ambush", description="d", importance=5)
+        ]
+        aria = next(iter(campaign.characters.values()))
+        aria.equipment = {"main hand": Item(name="Staff", item_type="weapon", weight=4)}
+    gm = rendered(audiences.game_master(sources, "http://127.0.0.1:8765/"))
+    assert gm["combat"]["last"]["defeated"] == ["Goblin"]
+    assert gm["combat"]["last"]["fighters"] == ["Aria", "Goblin"]
+    assert gm["backstage"]["encounters"][0]["status"] == "done"
+    assert gm["journal"]["events"][0]["importance"] == 5
+    equipped = gm["sheets"]["sheets"][0]["equipment"][0]
+    assert (equipped["slot"], equipped["details"]) == ("main hand", "weapon · 4 lb")
+    table = rendered(audiences.table(sources, "http://127.0.0.1:8765/"))
+    assert "importance" not in table["journal"]["events"][0]

@@ -14,7 +14,7 @@ function Backstage() {
   const note = (label, text) => (text ? h("div", { class: "note small" }, h("b", {}, `${label} `), text) : null);
   const line = (...parts) => parts.filter(Boolean).join(" — ");
 
-  const encounter = (e) => h("div", { class: "entry" },
+  const encounter = (e) => h("div", { class: "entry" + (e.status === "done" ? " done" : "") },
     h("div", { class: "row" }, h("b", {}, e.name), h("span", { class: "chip" }, t(e.status)),
       e.difficulty ? h("span", { class: `chip rating ${e.difficulty}` }, `${t(e.difficulty)} · ${e.xp} ${t("xp")}`) : null),
     h("div", { class: "muted small" }, line(e.monsters.join(", "), e.location)),

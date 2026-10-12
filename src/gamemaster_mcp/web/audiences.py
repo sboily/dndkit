@@ -22,6 +22,7 @@ from gamemaster_mcp.web.changes import Changes
 from gamemaster_mcp.web.feed import Render
 
 Views = dict[str, Render]
+GM_EVENTS = 40  # of the adventure log, on the backstage
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,7 @@ def game_master(sources: Sources, base_url: str) -> Views:
             lambda c: desk.notebook(c, store.current_file, store.data_dir)
         ),
         "activity": lambda: desk.activity(sources.activity),
+        "journal": sources.reading(lambda c: public.journal(c, limit=GM_EVENTS, full=True)),
     }
 
 

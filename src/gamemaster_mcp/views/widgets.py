@@ -9,7 +9,7 @@ from typing import Any
 from gamemaster_mcp.game import characters, seating
 from gamemaster_mcp.game.dice import DiceLog, RollResult
 from gamemaster_mcp.game.tables import XP_FOR_LEVEL
-from gamemaster_mcp.models import ABILITIES, Campaign, Character, Combatant, Spell
+from gamemaster_mcp.models import ABILITIES, Campaign, Character, Combatant, Item, Spell
 from gamemaster_mcp.views.battle import battle_map, unseen
 
 Json = dict[str, Any]
@@ -45,6 +45,11 @@ def combat(campaign: Campaign) -> Json:
         "defeated": [c.name for c in state.defeated],
         "xp": sum(c.xp for c in state.defeated),
         "map": battle_map(campaign, public=False),
+        "last": (
+            state.last_combat.model_dump(mode="json")
+            if state.last_combat and not state.in_combat
+            else None
+        ),
     }
 
 
@@ -165,8 +170,10 @@ def character(campaign: Campaign, ref: str) -> Json:
         "xp": c.experience_points,
         "next_level_xp": XP_FOR_LEVEL.get(level + 1),
         "inspiration": c.inspiration,
-        "inventory": [
-            {"name": i.name, "qty": i.quantity, "description": i.description} for i in c.inventory
+        "race": {"name": c.race.name, "subrace": c.race.subrace, "traits": c.race.traits},
+        "inventory": [_item(i) for i in c.inventory],
+        "equipment": [
+            {"slot": slot, **_item(item)} for slot, item in c.equipment.items() if item is not None
         ],
         "spells": [_spell(s) for s in sorted(c.spells_known, key=lambda s: (s.level, s.name))],
         "features": c.features_and_traits,
@@ -177,8 +184,23 @@ def character(campaign: Campaign, ref: str) -> Json:
     }
 
 
+def _item(i: Item) -> Json:
+    details = [i.item_type if i.item_type != "misc" else "", i.value or ""]
+    if i.weight:
+        details.append(f"{i.weight:g} lb")
+    return {
+        "name": i.name,
+        "qty": i.quantity,
+        "description": i.description,
+        "details": " · ".join(d for d in details if d),
+    }
+
+
 def _spell(s: Spell) -> Json:
-    details = [s.casting_time, str(s.range) if s.range else "", s.duration]
+    components = ", ".join(s.components)
+    if s.material_components:
+        components += f" ({s.material_components})"
+    details = [s.school, s.casting_time, str(s.range) if s.range else "", s.duration, components]
     return {
         "name": s.name,
         "level": s.level,

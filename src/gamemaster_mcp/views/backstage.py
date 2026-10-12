@@ -7,11 +7,11 @@ from gamemaster_mcp.views.widgets import Json
 
 
 def backstage(campaign: Campaign) -> Json:
-    """The plans: encounters still to fight, and every quest with its notes."""
+    """The plans: every encounter (running, planned, then done) and quest, notes included."""
+    order = {"running": 0, "planned": 1, "done": 2}
+    encounters = sorted(campaign.encounters.values(), key=lambda e: order[e.status])
     return {
-        "encounters": [
-            _encounter(campaign, e) for e in campaign.encounters.values() if e.status != "done"
-        ],
+        "encounters": [_encounter(campaign, e) for e in encounters],
         "quests": [_quest(q) for q in campaign.quests.values()],
     }
 

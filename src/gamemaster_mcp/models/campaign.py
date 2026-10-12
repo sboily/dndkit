@@ -67,6 +67,16 @@ class Seat(GameModel):
     character: str | None = Field(default=None, description="Character they play")
 
 
+class CombatRecord(GameModel):
+    """What the last fight was, kept once it ends."""
+
+    rounds: int = 0
+    fighters: list[str] = Field(default_factory=list)
+    defeated: list[str] = Field(default_factory=list)
+    xp: int = 0
+    ended: datetime = Field(default_factory=now)
+
+
 class GameState(GameModel):
     """Where the party is and what is happening right now."""
 
@@ -84,6 +94,7 @@ class GameState(GameModel):
     encounter_id: str | None = None  # the planned encounter being fought
     players_present: list[str] = Field(default_factory=list)  # the roll call, in seat order
     battlefield: Battlefield | None = None
+    last_combat: CombatRecord | None = None
     notes: str = ""
     updated_at: datetime = Field(default_factory=now)
 

@@ -45,7 +45,11 @@ function Notebook() {
       n.setting ? section(t("setting"), h("details", {}, h("summary", { class: "small" }, t("show")), text(n.setting))) : null,
       n.sessions.length ? section(t("sessions"), n.sessions.map((s) => h("details", { class: "session" },
         h("summary", {}, h("b", {}, `${t("session")} ${s.number}`), s.title ? ` — ${s.title}` : ""),
-        text(s.summary)))) : null,
+        text(s.summary),
+        s.moments.length ? h("ul", { class: "small" }, s.moments.map((m) => h("li", {}, m))) : null,
+        h("div", { class: "muted small" }, [s.present.join(", "), s.xp ? `${s.xp} ${t("xp")}` : "",
+          s.treasure.length ? `${t("treasure")}: ${s.treasure.join(", ")}` : ""].filter(Boolean).join(" · ")),
+        s.notes ? text(s.notes) : null))) : null,
       !n.situation && !n.world_notes && !n.setting && !n.sessions.length
         ? h("div", { class: "empty small" }, t("noNotes")) : null,
       h("div", { class: "server muted small" },

@@ -77,6 +77,13 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   world notes, setting, past sessions, version, campaign file, last save,
   published skills), every full sheet with the game master's notes, and the
   join codes. All of it stays off the players' screens.
+- The backstage shows all the game master holds: the combat card stays up
+  between fights with the last one (rounds, who fought, who fell, XP; kept in
+  the campaign as `last_combat`), finished encounters (faded), the adventure
+  log's last 40 entries with session, importance, characters and tags,
+  sessions in full (moments, who was there, XP, treasure, notes), equipped
+  items, item type, value and weight, race traits, spell school and
+  components, and NPC statistics.
 - The backstage (`/gm/`) gains a world section: NPCs (secrets, notes, ties),
   locations (the party's marked, notes) and the bestiary's full stat blocks
   (boss, legendary uses, actions, how many are fighting); quests show their

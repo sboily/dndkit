@@ -77,6 +77,8 @@ const I18N = (() => {
     setting: ["Setting", "Univers"], show: ["Show", "Afficher"], sessions: ["Past sessions", "Sessions passées"],
     noNotes: ["No notes yet.", "Pas encore de notes."], dm: ["GM", "MJ"], saved: ["saved", "enregistré"],
     skills: ["skills", "skills"],
+    lastFight: ["Last fight ({rounds} rounds):", "Dernier combat ({rounds} rounds) :"], treasure: ["Treasure", "Butin"],
+    equipped: ["Equipped", "Équipé"], stats: ["Statistics", "Statistiques"], done: ["done", "terminée"],
     // Backstage.
     backstage: ["Backstage", "Régie"], encounters: ["Planned encounters", "Rencontres prévues"],
     noEncounter: ["Nothing planned.", "Rien de prévu."], npcs: ["NPCs", "PNJ"], noNpc: ["No NPC yet.", "Aucun PNJ."],

@@ -33,6 +33,7 @@ def _npc(npc: NPC) -> Json:
         "bio": npc.bio,
         "notes": npc.notes,
         "ties": [f"{who}: {what}" for who, what in npc.relationships.items()],
+        "stats": [f"{key}: {value}" for key, value in (npc.stats or {}).items()],
     }
 
 
