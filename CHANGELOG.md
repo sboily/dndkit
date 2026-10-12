@@ -60,6 +60,10 @@ Live web pages: a table screen, each player's phone, the game master's backstage
 - `create_character` without hit points or armor class uses the PHB's: hit
   die and Constitution by level, 10 + Dexterity.
 - Combatants are found by a unique part of their name, as with characters.
+- `remove_combatant` takes a `reason`: `defeated` or `fled` foes count for XP,
+  a `withdrawn` one (a mistake, a change of plan) leaves no trace on the
+  defeated list or the map. The map skill and the monsters skill say how to
+  take a creature back.
 - Model parameters lose their docstring in the advertised schemas (the
   parameter's description says it): fewer tokens.
 
