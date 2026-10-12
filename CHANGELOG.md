@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-A server of its own: dndkit over HTTP, in Docker.
+A server of its own: dndkit over HTTP, in Docker; the players' QR codes in
+roomkit-ui.
 
 ### Added
 
