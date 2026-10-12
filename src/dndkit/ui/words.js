@@ -55,6 +55,8 @@ export const I18N = (() => {
       "Scanne le code de ton personnage pour le suivre sur ton téléphone."],
     unreachable: ["Phones cannot reach this server: start it with DNDKIT_WEB_HOST=0.0.0.0.",
       "Les téléphones ne peuvent pas joindre ce serveur : lance-le avec DNDKIT_WEB_HOST=0.0.0.0."],
+    webOff: ["The web pages are off: start the server with DNDKIT_WEB_PORT (and DNDKIT_WEB_HOST=0.0.0.0).",
+      "Les pages web sont éteintes : démarre le serveur avec DNDKIT_WEB_PORT (et DNDKIT_WEB_HOST=0.0.0.0)."],
     noCampaign: ["No active campaign.", "Aucune campagne active."],
     unknownLink: ["This link no longer matches a character of the active campaign.",
       "Ce lien ne correspond plus à un personnage de la campagne active."],

@@ -229,7 +229,8 @@ export const Views = (() => {
     return { el, render };
   }
 
-  /** The players' links as QR codes, for the table screen; they fold away once scanned. */
+  /** The players' links as QR codes, for the table screen and the join widget; they fold
+      away once scanned. */
   function join() {
     const hint = h("div", { class: "muted small" });
     const codes = h("div", { class: "codes" });
@@ -246,7 +247,7 @@ export const Views = (() => {
     unfold(remembered() !== "hidden");
 
     function render(data) {
-      hint.textContent = t(data.reachable ? "scanToJoin" : "unreachable");
+      hint.textContent = t(data.off ? "webOff" : data.reachable ? "scanToJoin" : "unreachable");
       fill(codes, data.players.length ? data.players.map((p) =>
         h("a", { class: "code", href: p.url, target: "_blank", rel: "noopener" },
           h("img", { src: p.qr, alt: p.name }), h("b", {}, p.name),

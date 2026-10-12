@@ -20,7 +20,7 @@ from dndkit.activity import ActivityLog
 from dndkit.config import WebSettings
 from dndkit.game.dice import DiceLog
 from dndkit.storage import CampaignStore
-from dndkit.web.access import PlayerLinks, lan_address
+from dndkit.web.access import Invitations, PlayerLinks, lan_address
 from dndkit.web.audiences import Sources
 from dndkit.web.changes import Changes
 from dndkit.web.routes import create_app
@@ -38,10 +38,11 @@ async def web_pages(
     dice: DiceLog,
     activity: ActivityLog,
     changes: Changes,
-) -> AsyncIterator[None]:
-    """Serve the pages while the context is open; nothing when *settings* is None."""
+) -> AsyncIterator[Invitations | None]:
+    """Serve the pages while the context is open, and yield the players' join codes
+    for the MCP widget; nothing when *settings* is None or the port is taken."""
     if settings is None:
-        yield
+        yield None
         return
     links = PlayerLinks.open(store.data_dir)
     app = create_app(Sources(store, dice, changes, links, settings, activity))
@@ -50,7 +51,7 @@ async def web_pages(
             elsewhere = settings.public_url or url
             logger.info("Backstage from anywhere: %s/gm/%s/", elsewhere, links.backstage_token())
         try:
-            yield
+            yield Invitations(links, settings, url) if url else None
         finally:
             changes.close()  # ends the open feeds, so the server stops at once
 

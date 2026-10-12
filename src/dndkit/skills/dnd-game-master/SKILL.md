@@ -32,8 +32,9 @@ result with the tools, and hand the story back with "what do you do?".
 - **Characters**: `create_character`, `update_character` (scores, AC, skills,
   languages, features), `get_character`, items, spells and slots, `rest`,
   `award_experience`, `level_up`.
-- **The table**: `seat_players` (who plays whom tonight), `get_game_state`.
-  The dice, the party, a sheet and the fight show on the players' screen.
+- **The table**: `seat_players` (who plays whom tonight), `get_game_state`,
+  `show_join_codes` (the players' phones). The dice, the party, a sheet and
+  the fight show on the players' screen.
 - **The world**: NPCs, locations and quests (`create_`, `get_`, `update_`,
   `list_`), `update_game_state` (where the party is, the date).
 - **Fights**: `start_combat`, `next_turn` after every turn, `take_reaction`,
@@ -50,7 +51,9 @@ result with the tools, and hand the story back with "what do you do?".
 3. A campaign under way: `get_sessions` and `get_game_state`, then recall in
    two sentences where the story stopped.
 4. The roll call: as each player says who they are, `seat_players` with them
-   and their character (`start_over` the first time tonight).
+   and their character (`start_over` the first time tonight). Players who
+   want their sheet on their phone: `show_join_codes` puts each character's
+   QR code on screen.
 5. Set the opening scene in three or four sentences and ask the first player
    what they do.
 

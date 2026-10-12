@@ -17,6 +17,7 @@ import os
 import re
 import secrets
 import socket
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -69,6 +70,20 @@ class PlayerLinks:
             if hmac.compare_digest(self.token(campaign, character), token):
                 return character
         return None
+
+
+@dataclass(frozen=True)
+class Invitations:
+    """The join codes away from any page (the MCP widget), at the address phones use:
+    the configured one, else this computer's on the network, else none they reach."""
+
+    links: PlayerLinks
+    settings: WebSettings
+    local_url: str  # where the pages answer on this machine
+
+    def view(self, campaign: Campaign) -> Json:
+        phones, reachable = phone_base_url(self.settings, self.local_url)
+        return join(campaign, self.links, phones, reachable)
 
 
 def join(campaign: Campaign, links: PlayerLinks, base_url: str, reachable: bool) -> Json:
