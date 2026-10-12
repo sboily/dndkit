@@ -93,6 +93,19 @@ def test_leaving_a_foes_reach_provokes_unless_disengaging() -> None:
     assert go(calm, "Aria", to="A2", disengage=True).provoked == []
 
 
+def test_a_reaction_spent_provokes_no_more_until_its_turn() -> None:
+    campaign = arena()
+    state = campaign.game_state
+    goblin = state.initiative_order[1]
+    goblin.position = "C2"
+    combat.use_reaction(state, "goblin", able=True)
+    assert go(campaign, "Aria", to="A2").provoked == []
+    with pytest.raises(InvalidChangeError, match="used its reaction this round"):
+        combat.use_reaction(state, "goblin", able=True)
+    combat.next_turn(state)  # the goblin's turn: its reaction comes back
+    assert not goblin.reaction_used
+
+
 def test_standing_up_and_conditions_limit_movement() -> None:
     campaign = arena()
     aria = next(iter(campaign.characters.values()))

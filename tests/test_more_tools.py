@@ -83,6 +83,11 @@ async def test_the_fight_s_edges(client: Client) -> None:
     assert "has no legendary actions" in await call_error(
         client, "use_legendary", name="Bog Horror"
     )
+    reacted = await call(client, "take_reaction", name="rat", reaction="opportunity attack")
+    assert reacted == (
+        "Rat uses its reaction (opportunity attack); it comes back at the start of its turn."
+    )
+    assert "used its reaction this round" in await call_error(client, "take_reaction", name="Rat")
     await call(client, "change_hit_points", names=["Aria"], amount=-6)
     await call(client, "next_turn")
     await call(client, "next_turn")

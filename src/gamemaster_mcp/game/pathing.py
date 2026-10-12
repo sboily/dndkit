@@ -141,7 +141,7 @@ def _meet(
 ) -> Other:
     hostile = battlefield.is_party(other) != battlefield.is_party(mover)
     apart = abs(grid.SIZE_RANK[other.size] - grid.SIZE_RANK[mover.size]) >= 2
-    reacts = provokes and hostile and can_react(campaign, other)
+    reacts = provokes and hostile and not other.reaction_used and can_react(campaign, other)
     return Other(other, frozenset(held), not hostile or apart, other.reach if reacts else None)
 
 

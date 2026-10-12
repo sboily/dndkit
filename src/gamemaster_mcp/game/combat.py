@@ -156,11 +156,12 @@ def end(state: GameState) -> CombatSummary:
 
 
 def _begin_turn(combatant: Combatant) -> Combatant:
-    """A turn starts with the full movement, no Dash or Disengage yet, and the
-    legendary actions back (MM, "Legendary Creatures")."""
+    """A turn starts with the full movement, no Dash or Disengage yet, the reaction
+    and the legendary actions back (MM, "Legendary Creatures")."""
     combatant.movement_used = 0
     combatant.dashed = False
     combatant.disengaged = False
+    combatant.reaction_used = False
     combatant.legendary_actions_left = combatant.legendary_actions
     return combatant
 
@@ -183,6 +184,20 @@ def use_legendary(state: GameState, name: str, resistance: bool, cost: int) -> C
             "this round; they come back at the start of its turn."
         )
     creature.legendary_actions_left -= cost
+    return creature
+
+
+def use_reaction(state: GameState, name: str, able: bool) -> Combatant:
+    """Spend a combatant's reaction for the round; *able*: it can react at all."""
+    creature = find(state, name)
+    if creature.reaction_used:
+        raise InvalidChangeError(
+            f"{creature.name} has used its reaction this round; it comes back at the "
+            "start of its turn."
+        )
+    if not able:
+        raise InvalidChangeError(f"{creature.name} cannot react: down or incapacitated.")
+    creature.reaction_used = True
     return creature
 
 

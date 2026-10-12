@@ -25,6 +25,8 @@ def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
         parts.append(f"concentrating on {held}")
     if combatant.position:
         parts.append(f"at {combatant.position}")
+    if combatant.reaction_used:
+        parts.append("reaction used")
     if combatant.hidden:
         parts.append("hidden from the players")
     if combatant.boss:

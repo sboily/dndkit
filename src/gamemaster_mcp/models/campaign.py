@@ -51,6 +51,7 @@ class Combatant(GameModel):
     movement_used: int = Field(default=0, ge=0)
     dashed: bool = False
     disengaged: bool = False
+    reaction_used: bool = False  # one a round, back at the start of its turn
 
 
 class Participant(GameModel):

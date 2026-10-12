@@ -55,7 +55,8 @@ export const Views = (() => {
           f.boss ? h("span", { class: "crown", title: t("boss") }, "♛") : null, f.name,
           f.ac !== null && f.ac !== undefined ? h("span", { class: "ac" }, `${t("ac")} ${f.ac}`) : null,
           f.position ? h("span", { class: "pos" }, f.position) : null,
-          f.hidden ? h("span", { class: "chip away" }, t("hidden")) : null),
+          f.hidden ? h("span", { class: "chip away" }, t("hidden")) : null,
+          f.reaction_used ? h("span", { class: "chip", title: t("reactionUsed") }, "↺") : null),
         vitals(f),
         GM.conditions(f.conditions, f.exhaustion, f.concentration),
         legendary(f));

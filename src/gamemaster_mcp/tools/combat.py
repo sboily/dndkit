@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import battlefield, bestiary, combat, combatants
+from gamemaster_mcp.game import battlefield, bestiary, combat, combatants, pathing
 from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.models import Participant
 from gamemaster_mcp.storage import CampaignStore
@@ -128,6 +128,22 @@ def use_legendary(
 
 
 @tool
+def take_reaction(
+    name: Annotated[str, Field(min_length=1, description="Who reacts")],
+    reaction: Annotated[str, Field(description="e.g. opportunity attack, Shield")] = "",
+    store: CampaignStore = Depends(get_store),
+) -> str:
+    """Spend a creature's reaction: one a round, back at the start of its turn. One that
+    has reacted provokes no more opportunity attacks this round."""
+    with store.transaction() as campaign:
+        state = campaign.game_state
+        able = pathing.can_react(campaign, combat.find(state, name))
+        creature = combat.use_reaction(state, name, able)
+    what = f" ({reaction})" if reaction else ""
+    return f"{creature.name} uses its reaction{what}; it comes back at the start of its turn."
+
+
+@tool
 def end_combat(store: CampaignStore = Depends(get_store)) -> str:
     """End the combat: says who was overcome and the XP they are worth."""
     with store.transaction() as campaign:
@@ -146,5 +162,6 @@ TOOLS: list[Callable[..., str]] = [
     next_turn,
     remove_combatant,
     use_legendary,
+    take_reaction,
     end_combat,
 ]

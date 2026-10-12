@@ -49,6 +49,7 @@ def _combatant(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
         "current": current,
         "position": combatant.position,
         "hidden": combatant.hidden,
+        "reaction_used": combatant.reaction_used,
         "boss": combatant.boss,
         "legendary": [combatant.legendary_actions_left, combatant.legendary_actions],
         "resistances": combatant.legendary_resistances_left,
