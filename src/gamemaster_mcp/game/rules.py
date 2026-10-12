@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 
-from gamemaster_mcp.game.registry import normalize
 from gamemaster_mcp.game.tables import (
     CASTING_ABILITY,
     CLASS_ALIASES,
@@ -16,6 +15,7 @@ from gamemaster_mcp.game.tables import (
     XP_BY_CHALLENGE,
     XP_FOR_LEVEL,
 )
+from gamemaster_mcp.text import normalize
 
 
 @dataclass(frozen=True)

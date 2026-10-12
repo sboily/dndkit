@@ -8,8 +8,8 @@ present; until there is one, the whole party counts as present.
 
 from gamemaster_mcp.errors import InvalidChangeError, NotFoundError
 from gamemaster_mcp.game import characters
-from gamemaster_mcp.game.registry import normalize
 from gamemaster_mcp.models import Campaign, Character, now
+from gamemaster_mcp.text import normalize
 
 
 def same_person(a: str | None, b: str | None) -> bool:

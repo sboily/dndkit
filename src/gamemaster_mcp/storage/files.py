@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from gamemaster_mcp.errors import InvalidChangeError
+from gamemaster_mcp.text import normalize
 
 _NAME_CHARS = (" ", "-", "_")
 
@@ -24,8 +25,9 @@ def campaign_slug(name: str) -> str:
 
 
 def same_slug(a: str, b: str) -> bool:
-    """Two stems that name one file on a case-insensitive disk (macOS, Windows)."""
-    return a.casefold() == b.casefold()
+    """Two stems that name one campaign: case and accents aside, as spoken names go
+    ("le phare eteint" opens "Le Phare Éteint")."""
+    return normalize(a) == normalize(b)
 
 
 def write_json_atomic(path: Path, data: Any) -> None:

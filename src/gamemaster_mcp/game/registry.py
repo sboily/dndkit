@@ -5,13 +5,13 @@ A voice transcript rarely spells a name the way it was typed ("aria",
 nothing matches, the error lists the known names so the model can retry.
 """
 
-import unicodedata
 from collections.abc import Iterable, Mapping, MutableMapping
 from typing import Any, Protocol, cast
 
 from pydantic import BaseModel, ValidationError
 
 from gamemaster_mcp.errors import AlreadyExistsError, InvalidChangeError, NotFoundError
+from gamemaster_mcp.text import normalize as normalize  # callers use registry.normalize
 
 
 class Spoken(Protocol):
@@ -26,13 +26,6 @@ class Named(Spoken, Protocol):
 
     @property
     def id(self) -> str: ...
-
-
-def normalize(name: str) -> str:
-    """Casefolded, accent-free, single-spaced: how two spellings of a name compare."""
-    decomposed = unicodedata.normalize("NFKD", name)
-    bare = "".join(c for c in decomposed if not unicodedata.combining(c))
-    return " ".join(bare.casefold().split())
 
 
 def known_names(entities: Iterable[Named]) -> str:

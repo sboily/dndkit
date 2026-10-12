@@ -36,10 +36,17 @@ class WebSettings:
 
 
 def resolve_data_dir(env: Mapping[str, str] = os.environ) -> Path:
-    """The data directory: ``$GAMEMASTER_STORAGE_DIR``, else the per-user data dir."""
+    """The data directory: ``$GAMEMASTER_STORAGE_DIR``, else the per-user data dir.
+
+    A relative path would depend on the client's working directory: it is
+    refused, and the per-user data dir used instead.
+    """
     configured = env.get(ENV_DATA_DIR, "").strip()
     if configured:
-        return Path(configured).expanduser().resolve()
+        path = Path(configured).expanduser()
+        if path.is_absolute():
+            return path.resolve()
+        logger.warning("Ignoring %s=%r: give an absolute path.", ENV_DATA_DIR, configured)
     return user_data_path(APP_NAME, appauthor=False)
 
 

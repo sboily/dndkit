@@ -1,7 +1,7 @@
 """The world as the game master knows it: NPCs, places and the bestiary, secrets included."""
 
-from gamemaster_mcp.game.registry import normalize
 from gamemaster_mcp.models import NPC, Campaign, Location, Monster
+from gamemaster_mcp.text import normalize
 from gamemaster_mcp.views.widgets import Json
 
 

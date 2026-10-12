@@ -16,7 +16,7 @@ from gamemaster_mcp.errors import (
     NotFoundError,
 )
 from gamemaster_mcp.models import Campaign, GameState, now
-from gamemaster_mcp.storage.catalog import CampaignEntry, read_entry
+from gamemaster_mcp.storage.catalog import CampaignEntry, modified_at, read_entry
 from gamemaster_mcp.storage.confirmations import Confirmations
 from gamemaster_mcp.storage.files import campaign_slug, read_json, same_slug, write_json_atomic
 
@@ -151,14 +151,18 @@ class CampaignStore:
                 f"A setting file is a .md or .txt file directly inside {folder}."
             )
         if not candidate.is_file():
-            available = sorted(p.name for p in folder.iterdir() if p.suffix in SETTING_SUFFIXES)
+            files = [p for p in folder.iterdir() if p.is_file()]
+            available = sorted(p.name for p in files if p.suffix.lower() in SETTING_SUFFIXES)
             raise NotFoundError(
                 f"No setting file '{file_name}' in {folder}. "
                 f"Available: {', '.join(available) or 'none'}."
             )
         if candidate.stat().st_size > MAX_SETTING_BYTES:
             raise InvalidChangeError(f"'{file_name}' is over {MAX_SETTING_BYTES} bytes.")
-        return candidate.read_text(encoding="utf-8")
+        try:
+            return candidate.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            raise InvalidChangeError(f"'{file_name}' is not UTF-8: save it as UTF-8.") from exc
 
     @contextmanager
     def transaction(self) -> Iterator[Campaign]:
@@ -214,9 +218,7 @@ class CampaignStore:
         return None
 
     def _open_most_recent(self) -> None:
-        paths = sorted(
-            self.campaigns_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
-        )
+        paths = sorted(self.campaigns_dir.glob("*.json"), key=modified_at, reverse=True)
         for path in paths:
             try:
                 self._current, self._current_path = self._read(path), path
@@ -231,7 +233,8 @@ class CampaignStore:
     def _read(path: Path) -> Campaign:
         try:
             return Campaign.model_validate(read_json(path))
-        except (OSError, ValueError) as exc:  # JSONDecodeError and ValidationError included
+        # JSONDecodeError and ValidationError are ValueErrors; absurdly deep JSON recurses.
+        except (OSError, ValueError, RecursionError) as exc:
             detail = str(exc)
             if isinstance(exc, ValidationError):
                 first = exc.errors()[0]

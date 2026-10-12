@@ -39,7 +39,7 @@ def _setting_text(
 
 @tool
 def create_campaign(
-    name: Annotated[str, Field(min_length=1, description="Campaign name")],
+    name: Annotated[str, Field(min_length=1, max_length=100, description="Campaign name")],
     description: Annotated[str, Field(description="Pitch shown to the players, no spoilers")],
     dm_name: Annotated[str | None, Field(description="Game master's name")] = None,
     setting: Setting = None,

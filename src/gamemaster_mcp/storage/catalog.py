@@ -32,10 +32,10 @@ class CampaignEntry:
 
 def read_entry(path: Path) -> CampaignEntry:
     """The summary of one campaign file; never raises for a bad file."""
-    modified = datetime.fromtimestamp(path.stat().st_mtime)
+    modified = datetime.fromtimestamp(modified_at(path))
     try:
         data = read_json(path)
-    except (OSError, ValueError):
+    except (OSError, ValueError, RecursionError):
         data = None
     if not isinstance(data, dict):
         return CampaignEntry(
@@ -62,3 +62,11 @@ def read_entry(path: Path) -> CampaignEntry:
 def _count(data: dict[str, Any], key: str) -> int:
     value = data.get(key)
     return len(value) if isinstance(value, dict | list) else 0
+
+
+def modified_at(path: Path) -> float:
+    """When *path* last changed; 0 for a file gone or a dangling link."""
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return 0.0

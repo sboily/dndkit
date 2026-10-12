@@ -102,10 +102,38 @@ def test_data_dir_comes_from_env_else_user_data_dir(tmp_path: Path) -> None:
     assert resolve_data_dir({ENV_DATA_DIR: "~/campaigns"}) == Path.home() / "campaigns"
     default = resolve_data_dir({})
     assert default.is_absolute() and default.name == "gamemaster-mcp"
+    assert resolve_data_dir({ENV_DATA_DIR: "dnd_data"}) == default  # never against the cwd
 
 
 def test_importing_the_server_touches_no_disk(tmp_path: Path) -> None:
     code = "import gamemaster_mcp.app, gamemaster_mcp.models; gamemaster_mcp.app.build_server()"
+    home = tmp_path / "home"
     env = {k: v for k, v in os.environ.items() if k != ENV_DATA_DIR}
-    subprocess.run([sys.executable, "-c", code], cwd=tmp_path, env=env, check=True)
-    assert list(tmp_path.iterdir()) == []
+    env |= {"HOME": str(home), "XDG_DATA_HOME": str(home / "data")}  # the default data dir too
+    work = tmp_path / "work"
+    work.mkdir()
+    subprocess.run([sys.executable, "-c", code], cwd=work, env=env, check=True)
+    assert list(work.iterdir()) == [] and not home.exists()
+
+
+def test_bad_files_in_the_campaigns_folder_are_skipped(tmp_path: Path) -> None:
+    folder = tmp_path / "campaigns"
+    folder.mkdir()
+    (folder / "gone.json").symlink_to(tmp_path / "nowhere.json")
+    (folder / "deep.json").write_text("[" * 100_000 + "]" * 100_000, encoding="utf-8")
+    store = CampaignStore(tmp_path)
+    assert store.current is None
+    assert sorted(e.readable for e in store.list_campaigns()) == [False, False]
+    store.create("Le Phare Éteint", "d")
+    assert store.load("le phare eteint").name == "Le Phare Éteint"
+    with pytest.raises(AlreadyExistsError):
+        store.create("LE PHARE ETEINT", "again")
+
+
+def test_a_setting_file_must_be_utf8_text(store: CampaignStore) -> None:
+    (store.settings_dir / "Latin.MD").write_bytes("Forêt".encode("latin-1"))
+    (store.settings_dir / "folder.md").mkdir()
+    with pytest.raises(InvalidChangeError, match="not UTF-8"):
+        store.read_setting_file("Latin.MD")
+    with pytest.raises(NotFoundError, match=r"Available: Latin\.MD\.$"):
+        store.read_setting_file("missing.md")

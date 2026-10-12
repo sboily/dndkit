@@ -1,7 +1,7 @@
 """Short rules reminders (D&D 5e 2014), paraphrased, findable by English or French name."""
 
 from gamemaster_mcp.errors import NotFoundError
-from gamemaster_mcp.game.registry import normalize
+from gamemaster_mcp.text import normalize
 
 RULES: dict[str, str] = {
     "blinded": "Can't see; fails any check that needs sight. Attacks against it have "

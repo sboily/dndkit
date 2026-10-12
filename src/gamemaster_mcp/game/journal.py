@@ -1,6 +1,7 @@
 """Session notes and the campaign's adventure log."""
 
 from gamemaster_mcp.models import AdventureEvent, Campaign, EventType, SessionNote
+from gamemaster_mcp.text import normalize
 
 
 def add_session_note(campaign: Campaign, note: SessionNote) -> SessionNote:
@@ -34,13 +35,13 @@ def find_events(
     if event_type is not None:
         events = [e for e in events if e.event_type == event_type]
     if search:
-        needle = search.casefold()
+        needle = normalize(search)
         events = [
             e
             for e in events
-            if needle in e.title.casefold()
-            or needle in e.description.casefold()
-            or any(needle in tag.casefold() for tag in e.tags)
+            if needle in normalize(e.title)
+            or needle in normalize(e.description)
+            or any(needle in normalize(tag) for tag in e.tags)
         ]
     events = sorted(events, key=lambda e: e.timestamp, reverse=True)
     return events[:limit] if limit else events
