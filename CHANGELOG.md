@@ -112,6 +112,11 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   for every page showing it, in threads of its own, and a read-only call only
   refreshes the backstage's activity. With 50 pages open, a tool answers in
   2 ms as with none (7 ms before); past 64 connections the server answers 503.
+- Two processes on one data directory (two clients, an overlapping restart)
+  no longer overwrite each other's changes: changes take turns through
+  `<data dir>/.lock`, and the active campaign is read again when its file
+  changed elsewhere (a hand edit too). Three processes making 200 changes
+  each kept 600; before, 200.
 - **CI**: GitHub Actions run ruff, mypy, bandit and the tests on Python 3.12
   and 3.13, and knip on the pages' scripts, now ES modules.
 

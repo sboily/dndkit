@@ -102,7 +102,10 @@ calls `game` functions on the campaign, and renders a short text answer.
   as a success. Say what is known ("Known characters: ...") so the model retries.
 - **Transactions**: every change goes through `CampaignStore.transaction()`,
   which restores the campaign if anything raises and saves it otherwise.
-  Never mutate the campaign outside one.
+  Never mutate the campaign outside one. Another process may share the data
+  dir (`storage/sharing.py`): a transaction holds `<data dir>/.lock` and both
+  it and `reading()` reread the active file when its stamp changed. A new
+  way to write a campaign file must hold the lock and update `_stamp`.
 - **Threads**: FastMCP runs sync tools in a thread pool and voice models call
   tools in parallel, hence the store's lock. Keep tools synchronous.
 - **No import side effects**: the store opens in the lifespan. Importing the

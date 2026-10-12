@@ -53,6 +53,16 @@ and `update_campaign`'s `setting_file`. The text is copied into the campaign,
 so editing the file later does not change an existing campaign. Only files
 directly in this folder are read; paths and symlinks leading out are refused.
 
+## .lock
+
+An empty file whose advisory lock (`flock`, on macOS and Linux) makes changes
+from several processes take turns: two MCP clients on the same data directory,
+or a server restarting while the old one still runs. Before each look and each
+change, the server reads the active campaign again if its file changed since
+it last read or wrote it, so neither overwrites the other's changes, and a
+campaign file edited by hand is picked up. On Windows there is no lock; the
+file check alone remains.
+
 ## player-links.key
 
 Created the first time the web pages start (`GAMEMASTER_WEB_PORT`): 32 random

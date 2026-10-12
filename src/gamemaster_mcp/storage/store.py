@@ -1,4 +1,5 @@
-"""The campaign store: one active campaign, saved as JSON, safe across threads."""
+"""The campaign store: one active campaign, saved as JSON, safe across threads
+and across processes sharing the data directory (``sharing``)."""
 
 import logging
 import threading
@@ -19,6 +20,7 @@ from gamemaster_mcp.models import Campaign, GameState, now
 from gamemaster_mcp.storage.catalog import CampaignEntry, modified_at, read_entry
 from gamemaster_mcp.storage.confirmations import Confirmations
 from gamemaster_mcp.storage.files import campaign_slug, read_json, same_slug, write_json_atomic
+from gamemaster_mcp.storage.sharing import DiskLock, Stamp, stamp
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,9 @@ class CampaignStore:
     FastMCP runs synchronous tools in a thread pool, and voice models often
     call several tools at once, so every access goes through one lock.
     *on_change* is called, from the changing thread, after every saved change
-    and every switch of campaign: the web pages wait on it.
+    and every switch of campaign: the web pages wait on it. Another process
+    may share the data directory: changes take turns with it, and the active
+    campaign is read again when its file changed elsewhere.
     """
 
     def __init__(
@@ -50,8 +54,10 @@ class CampaignStore:
         self.settings_dir.mkdir(parents=True, exist_ok=True)
         self._on_change = on_change or (lambda: None)
         self._lock = threading.RLock()
+        self._disk = DiskLock(data_dir)
         self._current: Campaign | None = None
         self._current_path: Path | None = None
+        self._stamp: Stamp | None = None  # the active file as we last read or wrote it
         self._open_most_recent()
 
     @property
@@ -81,7 +87,7 @@ class CampaignStore:
     ) -> Campaign:
         """Create a campaign and make it active; an existing one is never replaced."""
         slug = campaign_slug(name)
-        with self._lock:
+        with self._lock, self._disk.held():
             existing = self._file_for_slug(slug)
             if existing is not None:
                 raise AlreadyExistsError(
@@ -98,7 +104,7 @@ class CampaignStore:
             )
             path = self.campaigns_dir / f"{slug}.json"
             self._write(campaign, path)
-            self._current, self._current_path = campaign, path
+            self._open(campaign, path)
             logger.info("Created campaign %r in %s", title, path)
         self._on_change()
         return campaign
@@ -109,7 +115,7 @@ class CampaignStore:
             path = self._require_file(name)
             campaign = self._read(path)
             path.touch()  # the most recently opened campaign reopens at the next start
-            self._current, self._current_path = campaign, path
+            self._open(campaign, path)
         self._on_change()
         return campaign
 
@@ -125,7 +131,7 @@ class CampaignStore:
         Returns what was deleted and where its file went. Deleting the active
         campaign leaves none active.
         """
-        with self._lock:
+        with self._lock, self._disk.held():
             path = self._require_file(name)
             if not self.confirmations.consume(str(path), code):
                 raise InvalidChangeError(
@@ -137,7 +143,7 @@ class CampaignStore:
             target = self._trash_path(path.stem)
             path.replace(target)
             if self._current_path == path:
-                self._current, self._current_path = None, None
+                self._open(None, None)
             logger.info("Moved campaign %r to %s", entry.name, target)
         self._on_change()
         return entry, target
@@ -171,13 +177,15 @@ class CampaignStore:
         A tool that fails halfway leaves nothing behind, in memory or on disk,
         so the model can retry without doubling an item or a hit.
         """
-        with self._lock:
+        with self._lock, self._disk.held():
+            self._catch_up()
             campaign, path = self._require_current()
             snapshot = campaign.model_copy(deep=True)
             try:
                 yield campaign
                 campaign.updated_at = now()
                 self._write(campaign, path)
+                self._stamp = stamp(path)
             except BaseException:
                 self._current = snapshot
                 raise
@@ -187,8 +195,30 @@ class CampaignStore:
     def reading(self) -> Iterator[Campaign]:
         """The active campaign, to read while no tool changes it."""
         with self._lock:
+            self._catch_up()
             campaign, _ = self._require_current()
             yield campaign
+
+    def close(self) -> None:
+        """Let go of the lock file."""
+        self._disk.close()
+
+    def _open(self, campaign: Campaign | None, path: Path | None) -> None:
+        self._current, self._current_path = campaign, path
+        self._stamp = stamp(path) if path else None
+
+    def _catch_up(self) -> None:
+        """Read the active campaign again if its file changed in another process."""
+        path = self._current_path
+        if path is None or stamp(path) == self._stamp:
+            return
+        if not path.exists():
+            logger.warning("Campaign file %s was removed by another program.", path)
+            self._open(None, None)
+        else:
+            logger.info("Campaign file %s changed in another program: read again.", path)
+            self._open(self._read(path), path)
+        self._on_change()
 
     def _require_current(self) -> tuple[Campaign, Path]:
         if self._current is None or self._current_path is None:
@@ -221,11 +251,11 @@ class CampaignStore:
         paths = sorted(self.campaigns_dir.glob("*.json"), key=modified_at, reverse=True)
         for path in paths:
             try:
-                self._current, self._current_path = self._read(path), path
+                self._open(self._read(path), path)
             except GameError as exc:
                 logger.error("Skipping campaign file %s: %s", path, exc)
                 continue
-            logger.info("Opened campaign %r from %s", self._current.name, path)
+            logger.info("Opened campaign %r from %s", path.stem, path)
             return
         logger.info("No campaign to open in %s", self.campaigns_dir)
 

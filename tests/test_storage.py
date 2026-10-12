@@ -138,3 +138,30 @@ def test_a_setting_file_must_be_utf8_text(store: CampaignStore) -> None:
         store.read_setting_file("Latin.MD")
     with pytest.raises(NotFoundError, match=r"Available: Latin\.MD\.$"):
         store.read_setting_file("missing.md")
+
+
+def test_two_processes_sharing_a_campaign_keep_each_other_s_changes(tmp_path: Path) -> None:
+    first = CampaignStore(tmp_path)
+    first.create("Shared", "d")
+    second = CampaignStore(tmp_path)  # another client, on the same data dir
+    with first.transaction() as campaign:
+        characters.create(campaign, make_character("Aria"))
+    with second.transaction() as campaign:  # reads Aria first, then adds Borin
+        characters.create(campaign, make_character("Borin"))
+    with first.reading() as campaign:
+        assert sorted(c.name for c in campaign.characters.values()) == ["Aria", "Borin"]
+    assert sorted(c.name for c in CampaignStore(tmp_path).load("Shared").characters.values()) == [
+        "Aria",
+        "Borin",
+    ]
+    assert (tmp_path / ".lock").exists()
+
+
+def test_a_campaign_deleted_elsewhere_is_no_longer_active(tmp_path: Path) -> None:
+    first = CampaignStore(tmp_path)
+    first.create("Gone", "d")
+    second = CampaignStore(tmp_path)
+    second.delete("Gone", second.request_deletion("Gone")[1])
+    with pytest.raises(NoActiveCampaignError), first.transaction():
+        pass
+    assert not list((tmp_path / "campaigns").glob("*.json"))  # not written back
