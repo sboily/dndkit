@@ -24,6 +24,13 @@ def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
         parts.append(f"at {combatant.position}")
     if combatant.hidden:
         parts.append("hidden from the players")
+    if combatant.boss:
+        parts.append("boss")
+    if combatant.legendary_actions or combatant.legendary_resistances_left:
+        parts.append(
+            f"legendary actions {combatant.legendary_actions_left}/"
+            f"{combatant.legendary_actions}, resistances {combatant.legendary_resistances_left}"
+        )
     return "; ".join(parts)
 
 
@@ -41,11 +48,17 @@ def initiative(campaign: Campaign) -> str:
 def monster(m: Monster) -> str:
     """A saved stat block."""
     challenge = f", CR {m.challenge_rating}" if m.challenge_rating else ""
+    speed = f", speed {m.speed.rstrip('. ')}" if m.speed else ""
+    size = f", {m.size}" if m.size != "medium" else ""
     lines = [
-        f"{m.name}: AC {m.armor_class}, HP {m.hit_points}{challenge}, {m.xp} XP, "
-        f"initiative {m.initiative_bonus:+d}{f', speed {m.speed}' if m.speed else ''}"
-        f"{f', {m.size}' if m.size != 'medium' else ''}."
+        f"{m.name}{' (boss)' if m.boss else ''}: AC {m.armor_class}, HP {m.hit_points}"
+        f"{challenge}, {m.xp} XP, initiative {m.initiative_bonus:+d}{speed}{size}."
     ]
+    if m.legendary_actions or m.legendary_resistances:
+        lines.append(
+            f"Legendary: {m.legendary_actions} actions a round, "
+            f"{m.legendary_resistances} resistances a day."
+        )
     lines += [
         f"{label}: {value}"
         for label, value in (("Actions", m.actions), ("Notes", m.notes))

@@ -75,12 +75,16 @@ def next_turn(state: GameState) -> Combatant:
 
 
 def find(state: GameState, name: str) -> Combatant:
-    """The combatant *name* names (case and accents ignored)."""
+    """The combatant *name* names (case and accents ignored), or the only one whose
+    name holds it ("gardien" for "Gardien de Magma"), as spoken names go."""
     _require_combat(state)
     wanted = registry.normalize(name)
     for combatant in state.initiative_order:
         if registry.normalize(combatant.name) == wanted:
             return combatant
+    partial = [c for c in state.initiative_order if wanted in registry.normalize(c.name)]
+    if len(wanted) >= 3 and len(partial) == 1:
+        return partial[0]
     listed = ", ".join(c.name for c in state.initiative_order)
     raise NotFoundError(f"No combatant named '{name}'. In the fight: {listed}.")
 
@@ -128,11 +132,32 @@ def end(state: GameState) -> CombatSummary:
 
 
 def _begin_turn(combatant: Combatant) -> Combatant:
-    """A turn starts with the full movement, no Dash and no Disengage yet."""
+    """A turn starts with the full movement, no Dash or Disengage yet, and the
+    legendary actions back (MM, "Legendary Creatures")."""
     combatant.movement_used = 0
     combatant.dashed = False
     combatant.disengaged = False
+    combatant.legendary_actions_left = combatant.legendary_actions
     return combatant
+
+
+def use_legendary(state: GameState, name: str, resistance: bool, cost: int) -> Combatant:
+    """Spend a legendary action (*cost* of them) or a legendary resistance."""
+    creature = find(state, name)
+    if resistance:
+        if creature.legendary_resistances_left < 1:
+            raise InvalidChangeError(f"{creature.name} has no legendary resistance left.")
+        creature.legendary_resistances_left -= 1
+        return creature
+    if creature is state.current_combatant:
+        raise InvalidChangeError("Legendary actions come at the end of another creature's turn.")
+    if creature.legendary_actions_left < cost:
+        raise InvalidChangeError(
+            f"{creature.name} has {creature.legendary_actions_left} legendary action(s) left "
+            "this round; they come back at the start of its turn."
+        )
+    creature.legendary_actions_left -= cost
+    return creature
 
 
 def _require_combat(state: GameState) -> None:

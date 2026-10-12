@@ -86,6 +86,27 @@ def remove_combatant(
 
 
 @tool
+def use_legendary(
+    name: Annotated[str, Field(min_length=1, description="The legendary creature")],
+    resistance: Annotated[bool, Field(description="Turn a failed save into a success")] = False,
+    cost: Annotated[int, Field(ge=1, le=3, description="Actions the option costs")] = 1,
+    store: CampaignStore = Depends(get_store),
+) -> str:
+    """Spend a legendary action (at the end of another creature's turn) or resistance."""
+    with store.transaction() as campaign:
+        creature = combat.use_legendary(campaign.game_state, name, resistance, cost)
+    if resistance:
+        return (
+            f"{creature.name} succeeds instead; "
+            f"{creature.legendary_resistances_left} legendary resistance(s) left."
+        )
+    return (
+        f"{creature.name} takes a legendary action; "
+        f"{creature.legendary_actions_left} left until its turn."
+    )
+
+
+@tool
 def end_combat(store: CampaignStore = Depends(get_store)) -> str:
     """End the combat: says who was overcome and the XP they are worth."""
     with store.transaction() as campaign:
@@ -103,5 +124,6 @@ TOOLS: list[Callable[..., str]] = [
     add_combatant,
     next_turn,
     remove_combatant,
+    use_legendary,
     end_combat,
 ]

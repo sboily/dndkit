@@ -25,6 +25,9 @@ class Monster(GameModel):
     size: Size = "medium"
     actions: str = ""  # free text: attacks, damage, special abilities
     notes: str = ""
+    boss: bool = False
+    legendary_actions: int = Field(default=0, ge=0, le=5)  # a round's worth
+    legendary_resistances: int = Field(default=0, ge=0, le=5)  # a day's worth
 
 
 class EncounterGroup(GameModel):

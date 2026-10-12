@@ -32,6 +32,7 @@ def test_the_table_and_the_players_see_no_secret(tmp_path: Path) -> None:
             "initiative": 12,
             "current": False,
             "position": None,
+            "boss": False,
             "pc": False,
             "health": "bloodied",
             "conditions": [],

@@ -26,8 +26,12 @@ def create_character(
     character_class: Annotated[str, Field(min_length=1, description="Class, e.g. Wizard")],
     race: Annotated[str, Field(min_length=1, description="Race or species, e.g. Elf")],
     class_level: Annotated[int, Field(ge=1, le=20, description="Class level")] = 1,
-    hit_points_max: Annotated[int, Field(ge=1, description="Maximum hit points")] = 10,
-    armor_class: Annotated[int, Field(ge=0, description="Armor class")] = 10,
+    hit_points_max: Annotated[
+        int | None, Field(ge=1, description="Max HP; from class and CON if omitted")
+    ] = None,
+    armor_class: Annotated[
+        int | None, Field(ge=0, description="AC; 10 + DEX (no armor) if omitted")
+    ] = None,
     speed: Annotated[int | None, Field(ge=0, description="Feet; from race if omitted")] = None,
     player_name: Annotated[str | None, Field(description="Player controlling it")] = None,
     description: Annotated[str | None, Field(description="Appearance and demeanor")] = None,
@@ -51,6 +55,13 @@ def create_character(
         wisdom=wisdom,
         charisma=charisma,
     )
+    mods = {key: (value - 10) // 2 for key, value in scores.items()}
+    if hit_points_max is None:
+        hit_points_max = rules.starting_hit_points(
+            character_class, class_level, mods["constitution"]
+        )
+    if armor_class is None:
+        armor_class = 10 + mods["dexterity"]
     character = Character(
         name=name.strip(),
         player_name=player_name,

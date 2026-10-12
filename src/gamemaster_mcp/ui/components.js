@@ -43,12 +43,22 @@ const Views = (() => {
       const classes = "fighter" + (f.pc ? " pc" : "") + (f.current ? " current" : "") + (down ? " down" : "") + change;
       return h("div", { class: classes },
         h("div", { class: "init" }, f.initiative),
-        h("div", { class: "name" }, f.current ? h("span", { class: "arrow" }, "▶") : null, f.name,
+        h("div", { class: "name" }, f.current ? h("span", { class: "arrow" }, "▶") : null,
+          f.boss ? h("span", { class: "crown", title: t("boss") }, "♛") : null, f.name,
           f.ac !== null && f.ac !== undefined ? h("span", { class: "ac" }, `${t("ac")} ${f.ac}`) : null,
           f.position ? h("span", { class: "pos" }, f.position) : null,
           f.hidden ? h("span", { class: "chip away" }, t("hidden")) : null),
         vitals(f),
-        GM.conditions(f.conditions, f.exhaustion));
+        GM.conditions(f.conditions, f.exhaustion),
+        legendary(f));
+    }
+
+    /** The game master's count of legendary actions and resistances. */
+    function legendary(f) {
+      if (!f.legendary || !(f.legendary[1] || f.resistances)) return null;
+      return h("div", { class: "legendary small muted" },
+        f.legendary[1] ? h("span", {}, `${t("legendaryActions")} `, GM.pips(f.legendary[0], f.legendary[1])) : null,
+        f.resistances ? h("span", {}, `${t("legendaryResistances")} `, GM.pips(f.resistances, f.resistances)) : null);
     }
 
     function render(data) {

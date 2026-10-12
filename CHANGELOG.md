@@ -44,6 +44,16 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   and encounters planned with their map and their monsters' squares.
 - `skills/dnd-battle-map`, an Agent Skill for roomkit-ui that teaches the map
   and keeps its five tools out of the catalogue until a fight needs them.
+- **Bosses**: `save_monster` takes `boss`, `legendary_actions` and
+  `legendary_resistances` (a boss gets 3 and 3 unless told); `use_legendary`
+  spends them in combat, actions coming back at the start of the boss's turn.
+  The screens crown the boss; the game master's show what it has left.
+- `save_monster` with only a challenge rating fills armor class, hit points
+  and attack, damage and save DC guidance from the DMG table; the server
+  instructions tell the model to invent the monsters its story needs.
+- `create_character` without hit points or armor class uses the PHB's: hit
+  die and Constitution by level, 10 + Dexterity.
+- Combatants are found by a unique part of their name, as with characters.
 - Model parameters lose their docstring in the advertised schemas (the
   parameter's description says it): fewer tokens.
 

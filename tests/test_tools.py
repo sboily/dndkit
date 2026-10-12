@@ -50,7 +50,7 @@ def schema_tokens(tools: list[Any]) -> int:
 
 async def test_tool_catalogue_suits_voice_clients(client: Client) -> None:
     tools = await client.list_tools()
-    assert len(tools) == 58
+    assert len(tools) == 59
     assert all(TOOL_NAME.fullmatch(t.name) for t in tools)
     gated = skill_gated_tools()
     assert gated <= {t.name for t in tools}, "a skill gates a tool that does not exist"
@@ -88,7 +88,7 @@ async def test_character_changes_by_name_and_by_id(client: Client) -> None:
     await call(client, "add_item_to_character", character_name_or_id="ARIA", item_name="Staff")
     await call(client, "change_hit_points", names=["Aria"], amount=-4)
     sheet = await call(client, "get_character", name_or_id=character_id.group(1))
-    assert "level 2 Elf Wizard, HP 6/10, AC 13" in sheet
+    assert "level 2 Elf Wizard, HP 2/6, AC 13" in sheet  # a d6 wizard, CON 10
     assert "STR 18 (+4)" in sheet and "Inventory: Staff x1" in sheet
 
 
@@ -97,7 +97,7 @@ async def test_failed_call_changes_nothing(client: Client) -> None:
     await call(client, "create_character", name="Aria", character_class="Wizard", race="Elf")
     await call_error(client, "change_hit_points", names=["Aria", "Arya"], amount=-9)
     await call_error(client, "update_character", name_or_id="Aria", hit_points_current=99)
-    assert "HP 10/10" in await call(client, "get_character", name_or_id="Aria")
+    assert "HP 6/6" in await call(client, "get_character", name_or_id="Aria")
 
 
 async def test_combat_round_trip(client: Client) -> None:

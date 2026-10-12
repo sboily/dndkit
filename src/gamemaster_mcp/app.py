@@ -42,7 +42,9 @@ Characters, NPCs, locations and quests are found by name (case and accents do
 not matter) or by ID. A failed call says why and lists the known names: retry
 with one of them rather than inventing a new entity. Use change_hit_points for
 damage and healing (characters and monsters alike), roll_dice for every roll,
-and log notable moments with add_event."""
+and log notable moments with add_event. You run the monsters: one the story
+needs and the bestiary lacks is yours to create with save_monster (a challenge
+rating sets its stats; mark the boss), then plan_encounter rates the fight."""
 
 
 def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -> FastMCP:

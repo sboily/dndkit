@@ -36,6 +36,7 @@ def _fighter(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
         "initiative": combatant.initiative,
         "current": current,
         "position": combatant.position,
+        "boss": combatant.boss,
     }
     character = campaign.characters.get(combatant.character_id or "")
     if character is not None:

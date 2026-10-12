@@ -42,6 +42,10 @@ class Combatant(GameModel):
     reach: int = Field(default=5, ge=5)
     position: str | None = None
     hidden: bool = False  # unseen by the players: kept off their screens
+    boss: bool = False
+    legendary_actions: int = Field(default=0, ge=0)  # a round's worth, from the stat block
+    legendary_actions_left: int = Field(default=0, ge=0)  # back at the start of its turn
+    legendary_resistances_left: int = Field(default=0, ge=0)
     movement_used: int = Field(default=0, ge=0)
     dashed: bool = False
     disengaged: bool = False

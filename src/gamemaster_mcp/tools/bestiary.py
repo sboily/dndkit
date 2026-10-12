@@ -29,9 +29,14 @@ def save_monster(
     size: Annotated[Size | None, Field(description="Size")] = None,
     actions: Annotated[str | None, Field(description="Attacks and abilities")] = None,
     notes: Text = None,
+    boss: Annotated[bool | None, Field(description="The fight's boss")] = None,
+    legendary_actions: Annotated[int | None, Field(ge=0, le=5, description="Per round")] = None,
+    legendary_resistances: Annotated[int | None, Field(ge=0, le=5, description="Per day")] = None,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Save or update a monster stat block; combatants named after it get its stats."""
+    """Save or update a monster stat block; combatants named after it get its stats.
+    Invent the monsters your story needs: a challenge rating alone sets AC, HP and
+    attacks (DMG). A boss gets 3 legendary actions and resistances unless told."""
     fields = provided(
         armor_class=armor_class,
         hit_points=hit_points,
@@ -42,6 +47,9 @@ def save_monster(
         size=size,
         actions=actions,
         notes=notes,
+        boss=boss,
+        legendary_actions=legendary_actions,
+        legendary_resistances=legendary_resistances,
     )
     with store.transaction() as campaign:
         monster, created = bestiary.save_monster(campaign, name, fields)

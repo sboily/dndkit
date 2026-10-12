@@ -59,6 +59,11 @@
 .battlemap .token.me circle { stroke: var(--text); stroke-width: 3; stroke-dasharray: 5 3; }
 .battlemap .token.down { opacity: .35; }
 .battlemap .token.hidden { opacity: .5; }
+.battlemap .token.boss circle { stroke: var(--gold-hi); stroke-width: 3.5; }
+.battlemap .token text.crown { fill: var(--gold-hi); font-size: 16px; paint-order: stroke; stroke: #1d1a22; stroke-width: 2px; }
+.combat .crown { color: var(--gold-hi); margin-right: 4px; }
+.combat .legendary { grid-column: 2 / 4; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.combat .legendary:empty { display: none; }
 .battlemap .token.hidden circle { stroke-dasharray: 3 3; stroke: var(--text); }
 .battlemap .area { fill: color-mix(in srgb, #ff7a2f 32%, transparent); stroke: #ff7a2f; stroke-width: .5; }
 .battlemap .life { fill: rgba(0,0,0,.35); }

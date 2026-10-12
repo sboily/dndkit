@@ -93,11 +93,11 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 58 tool schemas weigh about 7,980 tokens by roomkit's own estimate, under
-the 8,000 at which roomkit hides tools behind `find_tools` by default, and
-about 7,160 with the battle map skill enabled (its tools wait for it);
-optional parameters are advertised without their `null` alternative to stay
-there. roomkit's threshold can be raised (`tool_search_threshold_tokens`).
+The 59 tool schemas weigh about 8,200 tokens by roomkit's own estimate, just
+over the 8,000 at which roomkit hides tools behind `find_tools` by default:
+enable the battle map skill (its tools then wait for it, about 7,400 tokens)
+or raise roomkit's threshold (`tool_search_threshold_tokens`). Optional
+parameters are advertised without their `null` alternative to save room.
 Put the system prompt below in the assistant's personality.
 
 #### Skills
@@ -161,6 +161,10 @@ The Gamemaster tools hold the campaign. Trust them over your memory:
   add_session_note when the players stop.
 - When a tool reports an unknown name, pick the right one from the names it
   lists, or ask the players; never create a duplicate.
+- You run the monsters. One the story needs and the bestiary lacks is yours
+  to create: save_monster with a challenge rating fitting the party (and
+  boss for the boss), then plan_encounter to check the fight's difficulty.
+  Spend a boss's legendary actions and resistances with use_legendary.
 - Ask before removing anything with remove_from_campaign. To delete a
   campaign, call delete_campaign, tell the players what would be lost, and call
   it again with the code only after a clear yes.
@@ -184,7 +188,7 @@ and a first quest, creating each with its tool as soon as you have it.
 | Locations | `create_location`, `get_location`, `update_location`, `list_locations` |
 | Quests | `create_quest`, `get_quest`, `update_quest`, `list_quests` |
 | Table | `seat_players` 🖥, `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition` |
-| Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `end_combat` |
+| Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `use_legendary`, `end_combat` |
 | Battle map | `set_battlefield` 🖥, `place_tokens`, `move_token`, `area_of_effect`, `check_target` |
 | Bestiary | `save_monster`, `get_monsters`, `plan_encounter`, `list_encounters` |
 | Journal | `add_session_note`, `get_sessions`, `add_event`, `get_events` |
@@ -195,6 +199,23 @@ and a first quest, creating each with its tool as soon as you have it.
 `update_character` sets absolute values; `change_hit_points` applies damage or
 healing to characters and monsters alike, and changes nobody if one name is
 unknown. A tool that fails changes nothing, in memory or on disk.
+
+### Monsters and bosses
+
+The game master invents the monsters its story needs: `save_monster` with a
+challenge rating alone fills armor class, hit points and a line of attack
+bonus, damage a round and save DC from the DMG's "Monster Statistics by
+Challenge Rating", for the model to flesh out. `boss` marks the fight's boss,
+a legendary creature with 3 legendary actions a round and 3 legendary
+resistances a day unless told otherwise. In combat, `use_legendary` spends
+them (actions at the end of another creature's turn, back at the start of
+its own); the screens crown the boss, and the game master's show what it has
+left. Combatants are found by a unique part of their name ("gardien" for
+"Gardien de Magma").
+
+Characters created without hit points or armor class get the PHB's: the
+class hit die at level 1 and its average after, plus Constitution each level;
+10 + Dexterity without armor.
 
 ### Battle map
 

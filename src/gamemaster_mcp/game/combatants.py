@@ -4,9 +4,10 @@ import random
 import secrets
 from collections import Counter
 from collections.abc import Sequence
+from typing import Any
 
 from gamemaster_mcp.game import bestiary, registry
-from gamemaster_mcp.models import Campaign, Combatant, Encounter, Participant
+from gamemaster_mcp.models import Campaign, Combatant, Encounter, Monster, Participant
 
 _SYSTEM_RNG = secrets.SystemRandom()
 
@@ -39,7 +40,18 @@ def build(campaign: Campaign, participant: Participant) -> Combatant:
         xp=monster.xp if monster else 0,
         size=monster.size if monster else "medium",
         speed=bestiary.walking_speed(monster) if monster else None,
+        **(legendary(monster) if monster else {}),
     )
+
+
+def legendary(monster: Monster) -> dict[str, Any]:
+    """A combatant's boss fields from its stat block, its legendary uses full."""
+    return {
+        "boss": monster.boss,
+        "legendary_actions": monster.legendary_actions,
+        "legendary_actions_left": monster.legendary_actions,
+        "legendary_resistances_left": monster.legendary_resistances,
+    }
 
 
 def from_encounter(
@@ -64,6 +76,7 @@ def from_encounter(
                     speed=bestiary.walking_speed(monster),
                     position=group.at[number].upper() if number < len(group.at) else None,
                     hidden=group.hidden,
+                    **legendary(monster),
                 )
             )
     return combatants

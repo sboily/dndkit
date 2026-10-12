@@ -9,6 +9,7 @@ from gamemaster_mcp.game.tables import (
     DIFFICULTY_THRESHOLDS,
     ENCOUNTER_MULTIPLIERS,
     FULL_CASTER_SLOTS,
+    MONSTER_STATS,
     PACT_SLOTS,
     SLOW_RACES,
     XP_BY_CHALLENGE,
@@ -76,11 +77,43 @@ def level_for_xp(xp: int) -> int:
     return max(level for level, needed in XP_FOR_LEVEL.items() if xp >= needed)
 
 
+def challenge_key(challenge: str) -> str:
+    """A challenge rating as the tables write it ("0.25" -> "1/4")."""
+    text = challenge.strip().replace(",", ".")
+    return {"0.125": "1/8", "0.25": "1/4", "0.5": "1/2"}.get(text, text)
+
+
 def xp_for_challenge(challenge: str) -> int | None:
     """Monster XP for a challenge rating ("1/4", "0.25", "3"), None if unknown."""
-    text = challenge.strip().replace(",", ".")
-    decimals = {"0.125": "1/8", "0.25": "1/4", "0.5": "1/2"}
-    return XP_BY_CHALLENGE.get(decimals.get(text, text))
+    return XP_BY_CHALLENGE.get(challenge_key(challenge))
+
+
+@dataclass(frozen=True)
+class MonsterStats:
+    """What a monster of some challenge rating should have (DMG ch. 9)."""
+
+    armor_class: int
+    hit_points: int
+    attack_bonus: int
+    damage_per_round: int
+    save_dc: int
+
+
+def monster_stats(challenge: str) -> MonsterStats | None:
+    """The DMG's statistics for a challenge rating, the middle of each range; None if unknown."""
+    row = MONSTER_STATS.get(challenge_key(challenge))
+    if row is None:
+        return None
+    armor, (low_hp, high_hp), attack, (low_damage, high_damage), save = row
+    return MonsterStats(
+        armor, (low_hp + high_hp) // 2, attack, (low_damage + high_damage) // 2, save
+    )
+
+
+def starting_hit_points(class_name: str, level: int, constitution_mod: int) -> int:
+    """Hit points by the PHB: the whole hit die at level 1, then its average; CON each level."""
+    die = hit_die(class_name)
+    return max(1, die + constitution_mod + (level - 1) * (die // 2 + 1 + constitution_mod))
 
 
 def spell_slots_for(class_name: str, level: int) -> dict[int, int] | None:

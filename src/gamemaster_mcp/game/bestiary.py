@@ -40,12 +40,32 @@ def save_monster(campaign: Campaign, name: str, fields: Mapping[str, Any]) -> tu
     existing = registry.find_optional(campaign.monsters, name)
     if existing is not None:
         return registry.update(campaign.monsters, existing.id, MONSTER_KIND, values), False
+    _fill_from_challenge(values)
+    if values.get("boss"):  # a 5e boss is usually a legendary creature
+        values.setdefault("legendary_actions", 3)
+        values.setdefault("legendary_resistances", 3)
     missing = [key for key in ("armor_class", "hit_points") if key not in values]
     if missing:
-        raise InvalidChangeError(f"A new monster needs {' and '.join(missing)}.")
+        raise InvalidChangeError(
+            f"A new monster needs {' and '.join(missing)}, or a challenge_rating to set them."
+        )
     return registry.add(
         campaign.monsters, Monster(name=name.strip(), **values), MONSTER_KIND
     ), True
+
+
+def _fill_from_challenge(values: dict[str, Any]) -> None:
+    """What a new monster lacks, from its challenge rating (DMG ch. 9)."""
+    stats = rules.monster_stats(values.get("challenge_rating") or "")
+    if stats is None:
+        return
+    values.setdefault("armor_class", stats.armor_class)
+    values.setdefault("hit_points", stats.hit_points)
+    values.setdefault(
+        "actions",
+        f"Attack +{stats.attack_bonus}, about {stats.damage_per_round} damage a round "
+        f"(split between its attacks), save DC {stats.save_dc}.",
+    )
 
 
 def _check_squares(

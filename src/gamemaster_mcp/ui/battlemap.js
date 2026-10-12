@@ -34,7 +34,7 @@ function BattleMap(map, me) {
     const cx = at(t.x) + radius;
     const cy = at(t.y) + radius;
     const classes = ["token", t.party ? "party" : "foe", t.current && "current", t.down && "down",
-      t.hidden && "hidden", me && t.name === me && "me", t.health].filter(Boolean).join(" ");
+      t.hidden && "hidden", t.boss && "boss", me && t.name === me && "me", t.health].filter(Boolean).join(" ");
     const ratio = t.hp_max ? Math.max(0, Math.min(1, t.hp / t.hp_max)) : null;
     const bar = ratio === null ? null : [
       s("rect", { x: cx - radius + 6, y: cy + radius - 7, width: 2 * radius - 12, height: 4, class: "life" }),
@@ -43,7 +43,8 @@ function BattleMap(map, me) {
     ];
     return s("g", { class: classes }, s("title", {}, t.name),
       s("circle", { cx, cy, r: radius - 5 }),
-      s("text", { x: cx, y: cy + 4.5 }, initials(t.name)), bar);
+      s("text", { x: cx, y: cy + 4.5 }, initials(t.name)), bar,
+      t.boss ? s("text", { x: cx, y: cy - radius + 9, class: "crown" }, "♛") : null);
   }
 
   const width = at(map.width);

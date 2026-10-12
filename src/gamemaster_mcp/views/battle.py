@@ -69,6 +69,7 @@ def _token(campaign: Campaign, combatant: Combatant, current: bool, public: bool
         "current": current,
         "down": hp == 0,
         "hidden": combatant.hidden,
+        "boss": combatant.boss,
     }
     if public and character is None:
         token["health"] = health(hp, hp_max)
