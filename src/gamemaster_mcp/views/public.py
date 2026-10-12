@@ -9,7 +9,7 @@ monster's hit points show as how hurt it looks.
 
 from gamemaster_mcp.models import Campaign, Combatant
 from gamemaster_mcp.views.battle import battle_map, health, unseen
-from gamemaster_mcp.views.widgets import Json, vitals
+from gamemaster_mcp.views.everyone import Json, vitals
 
 JOURNAL_EVENTS = 8
 

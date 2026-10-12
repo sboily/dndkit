@@ -10,12 +10,7 @@ from gamemaster_mcp.config import WebSettings, resolve_web_settings
 from gamemaster_mcp.views.battle import health
 from gamemaster_mcp.web import access, audiences
 from gamemaster_mcp.web.access import PlayerLinks
-from gamemaster_mcp.web.feed import _render_all
-from tests.web_helpers import aria_token, make_sources
-
-
-def rendered(views: audiences.Views) -> dict[str, dict]:
-    return {name: json.loads(text) for name, text in _render_all(views).items()}
+from tests.web_helpers import aria_token, make_sources, rendered
 
 
 def test_the_table_and_the_players_see_no_secret(tmp_path: Path) -> None:

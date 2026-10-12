@@ -1,6 +1,8 @@
 """A campaign full of secrets, and the web site over it."""
 
+import json
 from pathlib import Path
+from typing import Any
 
 from gamemaster_mcp.activity import ActivityLog
 from gamemaster_mcp.config import WebSettings
@@ -16,8 +18,9 @@ from gamemaster_mcp.models import (
 )
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.web.access import PlayerLinks
-from gamemaster_mcp.web.audiences import Sources
+from gamemaster_mcp.web.audiences import Sources, Views
 from gamemaster_mcp.web.changes import Changes
+from gamemaster_mcp.web.feed import _render_all
 from tests.helpers import make_character
 
 
@@ -82,3 +85,8 @@ def aria_token(sources: Sources) -> str:
     with sources.store.reading() as campaign:
         aria = next(c for c in campaign.characters.values() if c.name == "Aria")
         return sources.links.token(campaign, aria)
+
+
+def rendered(views: Views) -> dict[str, Any]:
+    """Every view's data, as a page would receive it."""
+    return {name: json.loads(text) for name, text in _render_all(views).items()}

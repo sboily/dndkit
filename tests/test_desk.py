@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 from fastmcp import Client, FastMCP
@@ -14,8 +13,7 @@ from gamemaster_mcp.models import AdventureEvent, Item
 from gamemaster_mcp.tools.recorder import Recorder
 from gamemaster_mcp.views import desk
 from gamemaster_mcp.web import audiences
-from gamemaster_mcp.web.feed import _render_all
-from tests.web_helpers import aria_token, make_sources
+from tests.web_helpers import aria_token, make_sources, rendered
 
 pytestmark = pytest.mark.anyio
 
@@ -51,10 +49,6 @@ async def test_every_call_is_recorded_with_its_answer_or_error() -> None:
     assert calls[1].outcome == "No one is called nobody."
     view = desk.activity(log)
     assert [c["n"] for c in view["calls"]] == [2, 1] and view["failures"] == 1
-
-
-def rendered(views: audiences.Views) -> dict[str, Any]:
-    return {name: json.loads(text) for name, text in _render_all(views).items()}
 
 
 def test_the_desk_is_the_game_masters_alone(tmp_path: Path) -> None:

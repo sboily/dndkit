@@ -2,7 +2,7 @@
 
 from gamemaster_mcp.models import NPC, Campaign, Location, Monster
 from gamemaster_mcp.text import normalize
-from gamemaster_mcp.views.widgets import Json
+from gamemaster_mcp.views.everyone import Json
 
 
 def world(campaign: Campaign) -> Json:

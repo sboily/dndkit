@@ -13,13 +13,13 @@ from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.models import Campaign
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools.deps import READ_ONLY, get_dice_log, get_store
-from gamemaster_mcp.views import widgets
+from gamemaster_mcp.views import everyone, widgets
 
 View = Literal["dice", "combat", "party", "character", "seating"]
-CAMPAIGN_VIEWS: dict[str, Callable[[Campaign], widgets.Json]] = {
+CAMPAIGN_VIEWS: dict[str, Callable[[Campaign], everyone.Json]] = {
     "combat": widgets.combat,
-    "party": widgets.party,
-    "seating": widgets.seating_chart,
+    "party": everyone.party,
+    "seating": everyone.seating_chart,
 }
 
 
@@ -32,13 +32,13 @@ def get_screen_data(
 ) -> str:
     """JSON for the on-screen widgets. Never needed in conversation."""
     if view == "dice":
-        data = widgets.dice(log)
+        data = everyone.dice(log)
     elif view == "character" and not name:
         raise InvalidChangeError("The character view needs a name.")
     else:
         with store.reading() as campaign:
             if view == "character" and name:
-                data = widgets.character(campaign, name)
+                data = everyone.character(campaign, name)
             else:
                 data = CAMPAIGN_VIEWS[view](campaign)
     return json.dumps(data, ensure_ascii=False, separators=(",", ":"))

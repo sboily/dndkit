@@ -21,7 +21,7 @@ import segno
 
 from gamemaster_mcp.config import WebSettings
 from gamemaster_mcp.models import Campaign, Character
-from gamemaster_mcp.views.widgets import Json
+from gamemaster_mcp.views.everyone import Json
 
 KEY_FILE = "player-links.key"
 SECRET_BYTES = 32

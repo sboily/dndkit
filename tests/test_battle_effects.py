@@ -9,7 +9,7 @@ from gamemaster_mcp.errors import InvalidChangeError
 from gamemaster_mcp.game import areas, battlefield, combat, grid, sight
 from gamemaster_mcp.game.areas import Aim
 from gamemaster_mcp.models import Campaign, Combatant
-from gamemaster_mcp.views import public, widgets
+from gamemaster_mcp.views import everyone, public, widgets
 from tests.helpers import call, call_error, make_campaign, make_character
 
 
@@ -99,7 +99,7 @@ def test_hidden_foes_stay_off_the_players_screens() -> None:
     assert [6, 4] in seen["map"]["moves"]  # type: ignore[index]  # no hole where it hides
     assert widgets.combat(campaign)["map"]["tokens"][1]["hidden"] is True  # type: ignore[index]
     combat.next_turn(state)
-    assert widgets.party(campaign)["current"] is None  # its turn names no one
+    assert everyone.party(campaign)["current"] is None  # its turn names no one
 
 
 @pytest.mark.anyio

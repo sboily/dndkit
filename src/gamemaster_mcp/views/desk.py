@@ -8,8 +8,8 @@ from gamemaster_mcp import __version__
 from gamemaster_mcp.activity import ActivityLog
 from gamemaster_mcp.models import Campaign
 from gamemaster_mcp.skills import load_catalog
-from gamemaster_mcp.views import widgets
-from gamemaster_mcp.views.widgets import Json
+from gamemaster_mcp.views import everyone
+from gamemaster_mcp.views.everyone import Json
 
 SHOWN_CALLS = 60
 SHOWN_SESSIONS = 6
@@ -72,5 +72,5 @@ def sheets(campaign: Campaign) -> Json:
     """Every character's full sheet, with the game master's notes on it."""
     party = sorted(campaign.characters.values(), key=lambda c: c.name)
     return {
-        "sheets": [{**widgets.character(campaign, c.id), "notes": c.notes} for c in party],
+        "sheets": [{**everyone.character(campaign, c.id), "notes": c.notes} for c in party],
     }

@@ -23,7 +23,8 @@ src/gamemaster_mcp/
 ├── activity.py   # In-memory log of the model's calls, for the backstage
 ├── config.py     # Data dir (env, else platformdirs), stderr logging, WebSettings
 ├── errors.py     # GameError hierarchy, subclasses of FastMCP's ToolError
-├── models/       # Pydantic models: base, character, world, bestiary, campaign
+├── text.py       # normalize(): how two spellings of a name compare, for every layer
+├── models/       # Pydantic models: base, character, world, bestiary, battle, campaign
 ├── storage/      # files (slugs, atomic JSON), catalog (summaries),
 │                 # confirmations (one-time codes), store (CampaignStore)
 ├── game/         # Game logic over a Campaign object: no MCP, no disk
@@ -56,10 +57,11 @@ src/gamemaster_mcp/
 │   ├── recorder.py    # Middleware writing every tool call and skill read to the activity
 │   ├── screen.py      # get_screen_data, the widgets' data tool
 │   └── render*.py     # Plain-text views of game data (render_map: the map in text)
-├── views/        # JSON views for screens: widgets (GM, everything), public
-│                 # (what players may see, allow-listed), backstage (GM plans),
-│                 # world (NPCs, places, bestiary: GM only), desk (activity,
-│                 # notebook, full sheets: GM only), battle (the map)
+├── views/        # JSON views for screens. What players may see, field by field:
+│                 # everyone (dice, party, seats, a sheet), public (the fight,
+│                 # the journal). GM only: widgets (the fight in full), backstage
+│                 # (plans), world (NPCs, places, bestiary), desk (activity,
+│                 # notebook, full sheets). battle: the map, for both
 ├── web/          # Live web pages, inside the MCP process: changes (notices from
 │                 # tool threads), access (player links, QR), audiences (views
 │                 # per page), feed (SSE), routes (Starlette), server (uvicorn)
@@ -135,10 +137,12 @@ calls `game` functions on the campaign, and renders a short text answer.
   exits the process when it cannot bind). Nothing on the web side may stop the
   game. A new way for `CampaignStore` to change the game must call
   `self._on_change()`, or the pages stay stale.
-- **Player views** (`views/public.py`) list every field they send; never pass
-  a model or a GM view through. `tests/test_web_views.py` fills every private
-  field with `SECRET` and checks the table and player feeds. The backstage is
-  local-only by peer address: keep `proxy_headers=False`.
+- **Player views** (`views/everyone.py`, `views/public.py`) list every field
+  they send; never pass a model or a GM view through, and never put a secret
+  in them (the GM views add theirs on top). `tests/test_web_views.py` fills
+  every private field with `SECRET` and checks the table and player feeds. The
+  backstage is local-only by peer address and by Host (DNS rebinding), and
+  refuses proxied requests: keep `proxy_headers=False`.
 - **Pages share renderers**: a widget and a web page show the same
   `Views.*` component; only the transport differs (`window.GM_WEB` set by the
   server: one EventSource per page, since browsers allow few connections per

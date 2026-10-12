@@ -3,7 +3,7 @@
 from gamemaster_mcp.errors import GameError
 from gamemaster_mcp.game import bestiary
 from gamemaster_mcp.models import Campaign, Encounter, Quest
-from gamemaster_mcp.views.widgets import Json
+from gamemaster_mcp.views.everyone import Json
 
 
 def backstage(campaign: Campaign) -> Json:

@@ -21,7 +21,7 @@ from gamemaster_mcp.config import WebSettings
 from gamemaster_mcp.game import dice
 from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.storage import CampaignStore
-from gamemaster_mcp.views import widgets
+from gamemaster_mcp.views import everyone
 from gamemaster_mcp.web import feed
 from gamemaster_mcp.web.changes import Changes
 from gamemaster_mcp.web.routes import create_app
@@ -60,7 +60,7 @@ def test_saved_changes_and_rolls_are_reported_failed_changes_are_not(tmp_path: P
 @pytest.mark.anyio
 async def test_the_stream_sends_every_view_then_what_changed(tmp_path: Path) -> None:
     sources = make_sources(tmp_path)
-    views = {"dice": lambda: widgets.dice(sources.dice), "party": sources.reading(widgets.party)}
+    views = {"dice": lambda: everyone.dice(sources.dice), "party": sources.reading(everyone.party)}
     events = feed.stream(sources.changes, views)
     with anyio.fail_after(5):
         assert await anext(events) == "retry: 2000\n\n"

@@ -12,9 +12,9 @@ from gamemaster_mcp.errors import GameError, NotFoundError
 from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.models import Campaign
 from gamemaster_mcp.storage import CampaignStore
-from gamemaster_mcp.views import desk, public, widgets
+from gamemaster_mcp.views import desk, everyone, public, widgets
 from gamemaster_mcp.views.backstage import backstage
-from gamemaster_mcp.views.widgets import Json
+from gamemaster_mcp.views.everyone import Json
 from gamemaster_mcp.views.world import world
 from gamemaster_mcp.web import access
 from gamemaster_mcp.web.access import PlayerLinks
@@ -72,7 +72,7 @@ def player(sources: Sources, token: str) -> Views:
         character = sources.links.character_for(campaign, token)
         if character is None:
             raise NotFoundError("unknownLink")  # a word the page translates
-        return widgets.character(campaign, character.id)
+        return everyone.character(campaign, character.id)
 
     return {
         **_shared(sources),
@@ -100,8 +100,8 @@ def game_master(sources: Sources, base_url: str) -> Views:
 
 def _shared(sources: Sources) -> Views:
     return {
-        "party": sources.reading(widgets.party),
-        "seating": sources.reading(widgets.seating_chart),
+        "party": sources.reading(everyone.party),
+        "seating": sources.reading(everyone.seating_chart),
         "journal": sources.reading(public.journal),
-        "dice": lambda: widgets.dice(sources.dice),
+        "dice": lambda: everyone.dice(sources.dice),
     }
