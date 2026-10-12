@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Character sheet</title>
+    <!--gm:shared-->
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="status"></div>
+    <script>
+      const sheet = Views.character();
+      document.getElementById("app").append(sheet.el);
+      GM.start(async () => {
+        const args = await GM.toolInput();
+        const name = args.name_or_id;
+        if (!name) return GM.status("?");
+        GM.live("character", { name }, sheet.render, 2500);
+      });
+    </script>
+  </body>
+</html>

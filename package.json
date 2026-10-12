@@ -1,0 +1,12 @@
+{
+  "name": "dndkit-ui",
+  "private": true,
+  "description": "Tooling for the pages' scripts (src/dndkit/ui); the server is Python.",
+  "type": "module",
+  "scripts": {
+    "knip": "knip"
+  },
+  "devDependencies": {
+    "knip": "6.38.0"
+  }
+}

@@ -1,59 +1,82 @@
-# D&D MCP Server - Data Storage Guide
+# Data storage
 
-This guide details the file and folder structure used by the D&D MCP Server to persist campaign data. All data is managed by the `DnDStorage` class located in `src/gamemaster_mcp/storage.py`.
-
-## Root Directory
-
-By default, all application data is stored in a root directory named `dnd_data/`. This folder is created automatically in the directory from which the server is run.
+`CampaignStore` (`src/dndkit/storage/store.py`) keeps campaigns as JSON
+files in the data directory: `$DNDKIT_STORAGE_DIR`, else the per-user data
+directory (`~/Library/Application Support/dndkit` on macOS,
+`~/.local/share/dndkit` on Linux, `%LOCALAPPDATA%\dndkit` on
+Windows; the `gamemaster-mcp` one from before the rename while it is alone).
 
 ```
-dnd_data/
+<data dir>/
 ├── campaigns/
-└── events/
+│   ├── Ghost Coast.json
+│   └── The Dragons Curse.json
+├── settings/
+│   └── forgotten-realms.md
+├── trash/
+│   └── Old Campaign 2026-10-11 174223.json
+└── player-links.key
 ```
 
-## Campaigns Directory
+## campaigns/
 
-- **Path**: `dnd_data/campaigns/`
-- **Purpose**: This directory stores all individual campaign files.
+One file per campaign holding the whole `Campaign` model: characters, NPCs,
+locations, quests, bestiary monsters and planned encounters (each a map keyed by
+entity ID), session notes, the adventure log (`events`), the game state (with
+the running fight, its battle map and who stands where, if any) and world
+notes. Dice rolls are not saved: the
+dice widget's history lives in memory for the session.
 
-Each campaign is saved as a single, self-contained JSON file. The `DnDStorage` class's `_save_campaign` method serializes the entire `Campaign` Pydantic model, including all associated characters, NPCs, locations, quests, and the game state, into this file.
+- **File name**: the campaign name reduced to letters, digits, spaces, `-`
+  and `_` ("The Dragon's Curse!" → `The Dragons Curse.json`). Two names that
+  reduce to the same file, ignoring case, cannot coexist: `create_campaign`
+  refuses the second one instead of overwriting the first.
+- **Writes** are atomic: the JSON goes to a hidden `.tmp` file next to the
+  target, is flushed to disk, then renamed over it. A crash leaves the old
+  file or the new one, never half of one.
+- **Startup** opens the most recently opened or changed campaign (by file
+  modification time). A file that cannot be read is logged and skipped; it is
+  never overwritten.
+- **Changes** happen inside `CampaignStore.transaction()`: the campaign is
+  saved when the tool succeeds and restored when it fails.
 
-### File Naming
+## trash/
 
-The filename for each campaign is derived from the campaign name provided during creation. The `_get_campaign_file` method sanitizes the name to ensure it's safe for the filesystem (allowing only alphanumeric characters, spaces, hyphens, and underscores) and appends a `.json` extension.
+`delete_campaign` moves a campaign file here, with the date and time of the
+deletion added to its name; nothing is erased. To bring one back, move it into
+`campaigns/` and remove the date from its name. Empty the folder by hand.
 
-**Example**: A campaign named "The Dragon's Curse!" would be saved as:
+## settings/
 
-```
-dnd_data/
-└── campaigns/
-    └── The Dragons Curse.json
-```
+Optional world documents (`.md` or `.txt`, up to 200 KB) for `create_campaign`
+and `update_campaign`'s `setting_file`. The text is copied into the campaign,
+so editing the file later does not change an existing campaign. Only files
+directly in this folder are read; paths and symlinks leading out are refused.
 
-## Events Directory
+## .lock
 
-- **Path**: `dnd_data/events/`
-- **Purpose**: This directory stores the global adventure log.
+An empty file whose advisory lock (`flock`, on macOS and Linux) makes changes
+from several processes take turns: two MCP clients on the same data directory,
+or a server restarting while the old one still runs. Before each look and each
+change, the server reads the active campaign again if its file changed since
+it last read or wrote it, so neither overwrites the other's changes, and a
+campaign file edited by hand is picked up. On Windows there is no lock; the
+file check alone remains.
 
-Unlike campaign-specific data, adventure events are stored in a single, global file. This allows for a persistent timeline of major events across all campaigns managed by the server.
+## player-links.key
 
-### File Naming
+Created the first time the web pages start (`DNDKIT_WEB_PORT`): 32 random
+bytes, readable by the owner only. Each player's link carries a code derived
+from it, the campaign and the character. Delete the file to change every link;
+a new key is made at the next start.
 
-The events log is always stored in a file named `adventure_log.json`. The `_get_events_file` method hardcodes this path. The file contains a JSON array of all `AdventureEvent` objects.
+## Files from the upstream server
 
-```
-dnd_data/
-└── events/
-    └── adventure_log.json
-```
-
-## Summary of Data Structure
-
-| Path                            | Content                                                                                             | Managed By Methods                                                              |
-| ------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `dnd_data/`                     | The root directory for all persistent application data.                                             | `DnDStorage.__init__`                                                           |
-| `dnd_data/campaigns/`           | A subdirectory containing all individual campaign save files.                                       | `DnDStorage.__init__`                                                           |
-| `dnd_data/campaigns/*.json`     | A JSON file representing a single, complete `Campaign` object and all its nested data.              | `_get_campaign_file`, `_save_campaign`, `_load_current_campaign`, `load_campaign` |
-| `dnd_data/events/`              | A subdirectory for global, cross-campaign data.                                                     | `DnDStorage.__init__`                                                           |
-| `dnd_data/events/adventure_log.json` | A JSON file containing a list of all `AdventureEvent` objects, forming a global adventure log. | `_get_events_file`, `_save_events`, `_load_events`                              |
+Upstream saves keyed entities by name and kept one global
+`events/adventure_log.json` for every campaign. They load as they are: entities
+are re-keyed by ID, unknown keys (`active_quests`, `current_turn`) are
+ignored, an initiative order of free-form entries keeps those that can still
+take a turn (an initiative written "15 (Dex)" reads 15), and the file is
+rewritten in the current format at the first change. Upstream's `encounters`
+was always empty, and loads as no planned encounter. The global adventure log is not imported, since nothing
+records which campaign its events belonged to.

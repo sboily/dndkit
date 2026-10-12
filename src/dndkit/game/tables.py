@@ -1,0 +1,216 @@
+"""D&D 5e (2014) reference tables: numbers only, read by ``rules``."""
+
+# Monster XP by challenge rating (DMG ch. 9 / basic rules).
+XP_BY_CHALLENGE: dict[str, int] = {
+    "0": 10, "1/8": 25, "1/4": 50, "1/2": 100, "1": 200, "2": 450, "3": 700,
+    "4": 1100, "5": 1800, "6": 2300, "7": 2900, "8": 3900, "9": 5000, "10": 5900,
+    "11": 7200, "12": 8400, "13": 10000, "14": 11500, "15": 13000, "16": 15000,
+    "17": 18000, "18": 20000, "19": 22000, "20": 25000, "21": 33000, "22": 41000,
+    "23": 50000, "24": 62000, "25": 75000, "26": 90000, "27": 105000,
+    "28": 120000, "29": 135000, "30": 155000,
+}  # fmt: skip
+
+# XP thresholds per character level: easy, medium, hard, deadly (DMG ch. 3).
+DIFFICULTY_THRESHOLDS: dict[int, tuple[int, int, int, int]] = {
+    1: (25, 50, 75, 100), 2: (50, 100, 150, 200), 3: (75, 150, 225, 400),
+    4: (125, 250, 375, 500), 5: (250, 500, 750, 1100), 6: (300, 600, 900, 1400),
+    7: (350, 750, 1100, 1700), 8: (450, 900, 1400, 2100), 9: (550, 1100, 1600, 2400),
+    10: (600, 1200, 1900, 2800), 11: (800, 1600, 2400, 3600),
+    12: (1000, 2000, 3000, 4500), 13: (1100, 2200, 3400, 5100),
+    14: (1250, 2500, 3800, 5700), 15: (1400, 2800, 4300, 6400),
+    16: (1600, 3200, 4800, 7200), 17: (2000, 3900, 5900, 8800),
+    18: (2100, 4200, 6300, 9500), 19: (2400, 4900, 7300, 10900),
+    20: (2800, 5700, 8500, 12700),
+}  # fmt: skip
+
+# Encounter multipliers, from one monster up (DMG ch. 3); a small party uses the
+# next step up, a large party the next step down.
+ENCOUNTER_MULTIPLIERS = (0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0)
+
+# XP needed to reach each level (PHB ch. 1).
+XP_FOR_LEVEL: dict[int, int] = {
+    1: 0, 2: 300, 3: 900, 4: 2700, 5: 6500, 6: 14000, 7: 23000, 8: 34000,
+    9: 48000, 10: 64000, 11: 85000, 12: 100000, 13: 120000, 14: 140000,
+    15: 165000, 16: 195000, 17: 225000, 18: 265000, 19: 305000, 20: 355000,
+}  # fmt: skip
+
+# Spell slots per slot level for a full caster of each level (PHB ch. 3).
+FULL_CASTER_SLOTS: dict[int, tuple[int, ...]] = {
+    1: (2,), 2: (3,), 3: (4, 2), 4: (4, 3), 5: (4, 3, 2), 6: (4, 3, 3),
+    7: (4, 3, 3, 1), 8: (4, 3, 3, 2), 9: (4, 3, 3, 3, 1), 10: (4, 3, 3, 3, 2),
+    11: (4, 3, 3, 3, 2, 1), 12: (4, 3, 3, 3, 2, 1), 13: (4, 3, 3, 3, 2, 1, 1),
+    14: (4, 3, 3, 3, 2, 1, 1), 15: (4, 3, 3, 3, 2, 1, 1, 1),
+    16: (4, 3, 3, 3, 2, 1, 1, 1), 17: (4, 3, 3, 3, 2, 1, 1, 1, 1),
+    18: (4, 3, 3, 3, 3, 1, 1, 1, 1), 19: (4, 3, 3, 3, 3, 2, 1, 1, 1),
+    20: (4, 3, 3, 3, 3, 2, 2, 1, 1),
+}  # fmt: skip
+
+# Warlock pact magic per level: (number of slots, slot level).
+PACT_SLOTS: dict[int, tuple[int, int]] = {
+    1: (1, 1), 2: (2, 1), 3: (2, 2), 4: (2, 2), 5: (2, 3), 6: (2, 3), 7: (2, 4),
+    8: (2, 4), 9: (2, 5), 10: (2, 5), 11: (3, 5), 12: (3, 5), 13: (3, 5),
+    14: (3, 5), 15: (3, 5), 16: (3, 5), 17: (4, 5), 18: (4, 5), 19: (4, 5),
+    20: (4, 5),
+}  # fmt: skip
+
+# Class -> (hit die, spellcasting progression).
+CLASSES: dict[str, tuple[int, str]] = {
+    "artificer": (8, "half_up"),
+    "barbarian": (12, "none"),
+    "bard": (8, "full"),
+    "cleric": (8, "full"),
+    "druid": (8, "full"),
+    "fighter": (10, "none"),
+    "monk": (8, "none"),
+    "paladin": (10, "half"),
+    "ranger": (10, "half"),
+    "rogue": (8, "none"),
+    "sorcerer": (6, "full"),
+    "warlock": (8, "pact"),
+    "wizard": (6, "full"),
+}
+
+# Class names as players say them, French included, in both genders (and both
+# translations of warlock).
+CLASS_ALIASES: dict[str, str] = {
+    "artificier": "artificer",
+    "artificiere": "artificer",
+    "barbare": "barbarian",
+    "barde": "bard",
+    "clerc": "cleric",
+    "pretre": "cleric",
+    "pretresse": "cleric",
+    "druide": "druid",
+    "druidesse": "druid",
+    "guerrier": "fighter",
+    "guerriere": "fighter",
+    "moine": "monk",
+    "moniale": "monk",
+    "paladine": "paladin",
+    "rodeur": "ranger",
+    "rodeuse": "ranger",
+    "roublard": "rogue",
+    "roublarde": "rogue",
+    "voleur": "rogue",
+    "voleuse": "rogue",
+    "ensorceleur": "sorcerer",
+    "ensorceleuse": "sorcerer",
+    "occultiste": "warlock",
+    "sorcier": "warlock",
+    "sorciere": "warlock",
+    "magicien": "wizard",
+    "magicienne": "wizard",
+    "mage": "wizard",
+}
+
+# Walking speed 25 feet (PHB races); every other race walks 30.
+SLOW_RACES = frozenset({"dwarf", "nain", "naine", "halfling", "halfelin", "halfeline", "gnome"})
+
+# DMG ch. 9, "Monster Statistics by Challenge Rating": armor class, hit points
+# (low, high), attack bonus, damage per round (low, high), save DC.
+MONSTER_STATS: dict[str, tuple[int, tuple[int, int], int, tuple[int, int], int]] = {
+    "0": (13, (1, 6), 3, (0, 1), 13),
+    "1/8": (13, (7, 35), 3, (2, 3), 13),
+    "1/4": (13, (36, 49), 3, (4, 5), 13),
+    "1/2": (13, (50, 70), 3, (6, 8), 13),
+    "1": (13, (71, 85), 3, (9, 14), 13),
+    "2": (13, (86, 100), 3, (15, 20), 13),
+    "3": (13, (101, 115), 4, (21, 26), 13),
+    "4": (14, (116, 130), 5, (27, 32), 14),
+    "5": (15, (131, 145), 6, (33, 38), 15),
+    "6": (15, (146, 160), 6, (39, 44), 15),
+    "7": (15, (161, 175), 6, (45, 50), 15),
+    "8": (16, (176, 190), 7, (51, 56), 16),
+    "9": (16, (191, 205), 7, (57, 62), 16),
+    "10": (17, (206, 220), 7, (63, 68), 16),
+    "11": (17, (221, 235), 8, (69, 74), 17),
+    "12": (17, (236, 250), 8, (75, 80), 17),
+    "13": (18, (251, 265), 8, (81, 86), 18),
+    "14": (18, (266, 280), 8, (87, 92), 18),
+    "15": (18, (281, 295), 8, (93, 98), 18),
+    "16": (18, (296, 310), 9, (99, 104), 18),
+    "17": (19, (311, 325), 10, (105, 110), 19),
+    "18": (19, (326, 340), 10, (111, 116), 19),
+    "19": (19, (341, 355), 10, (117, 122), 19),
+    "20": (19, (356, 400), 10, (123, 140), 19),
+    "21": (19, (401, 445), 11, (141, 158), 20),
+    "22": (19, (446, 490), 11, (159, 176), 20),
+    "23": (19, (491, 535), 11, (177, 194), 20),
+    "24": (19, (536, 580), 12, (195, 212), 21),
+    "25": (19, (581, 625), 12, (213, 230), 21),
+    "26": (19, (626, 670), 12, (231, 248), 21),
+    "27": (19, (671, 715), 13, (249, 266), 22),
+    "28": (19, (716, 760), 13, (267, 284), 22),
+    "29": (19, (761, 805), 13, (285, 302), 22),
+    "30": (19, (806, 850), 14, (303, 320), 23),
+}
+
+# The ability each class casts its spells with (PHB ch. 3).
+CASTING_ABILITY: dict[str, str] = {
+    "artificer": "intelligence",
+    "bard": "charisma",
+    "cleric": "wisdom",
+    "druid": "wisdom",
+    "paladin": "charisma",
+    "ranger": "wisdom",
+    "sorcerer": "charisma",
+    "warlock": "charisma",
+    "wizard": "intelligence",
+}
+
+
+# PHB ch. 7: each skill and its ability.
+SKILLS: dict[str, str] = {
+    "Acrobatics": "dexterity",
+    "Animal Handling": "wisdom",
+    "Arcana": "intelligence",
+    "Athletics": "strength",
+    "Deception": "charisma",
+    "History": "intelligence",
+    "Insight": "wisdom",
+    "Intimidation": "charisma",
+    "Investigation": "intelligence",
+    "Medicine": "wisdom",
+    "Nature": "intelligence",
+    "Perception": "wisdom",
+    "Performance": "charisma",
+    "Persuasion": "charisma",
+    "Religion": "intelligence",
+    "Sleight of Hand": "dexterity",
+    "Stealth": "dexterity",
+    "Survival": "wisdom",
+}
+
+# The French names (official translation) of the skills that change.
+SKILL_ALIASES: dict[str, str] = {
+    "acrobaties": "Acrobatics",
+    "dressage": "Animal Handling",
+    "arcanes": "Arcana",
+    "athletisme": "Athletics",
+    "tromperie": "Deception",
+    "histoire": "History",
+    "perspicacite": "Insight",
+    "intuition": "Insight",
+    "medecine": "Medicine",
+    "representation": "Performance",
+    "escamotage": "Sleight of Hand",
+    "discretion": "Stealth",
+    "survie": "Survival",
+}
+
+# PHB ch. 3: the two saving throws each class is proficient in.
+CLASS_SAVES: dict[str, tuple[str, str]] = {
+    "artificer": ("constitution", "intelligence"),
+    "barbarian": ("strength", "constitution"),
+    "bard": ("dexterity", "charisma"),
+    "cleric": ("wisdom", "charisma"),
+    "druid": ("intelligence", "wisdom"),
+    "fighter": ("strength", "constitution"),
+    "monk": ("strength", "dexterity"),
+    "paladin": ("wisdom", "charisma"),
+    "ranger": ("strength", "dexterity"),
+    "rogue": ("dexterity", "intelligence"),
+    "sorcerer": ("constitution", "charisma"),
+    "warlock": ("wisdom", "charisma"),
+    "wizard": ("intelligence", "wisdom"),
+}

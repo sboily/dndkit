@@ -1,0 +1,5 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["src/dndkit/ui/components.js", "src/dndkit/ui/shared.js"],
+  "project": ["src/dndkit/ui/**/*.js"]
+}

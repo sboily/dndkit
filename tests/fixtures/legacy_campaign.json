@@ -1,0 +1,79 @@
+{
+  "id": "BFy2ERKe",
+  "name": "Ghost Coast",
+  "description": "Written by the upstream 0.1 server",
+  "dm_name": null,
+  "setting": "A foggy coast.",
+  "characters": {
+    "Aria": {
+      "id": "PUVYW4Xh",
+      "name": "Aria",
+      "player_name": null,
+      "character_class": {"name": "Wizard", "level": 1, "hit_dice": "1d4", "subclass": null},
+      "race": {"name": "Elf", "subrace": null, "traits": []},
+      "abilities": {
+        "strength": {"score": 14},
+        "dexterity": {"score": 10},
+        "constitution": {"score": 10},
+        "intelligence": {"score": 10},
+        "wisdom": {"score": 10},
+        "charisma": {"score": 10}
+      },
+      "armor_class": 10,
+      "hit_points_max": 1,
+      "hit_points_current": 50,
+      "temporary_hit_points": 0,
+      "hit_dice_remaining": "1d8",
+      "death_saves_success": 0,
+      "death_saves_failure": 0,
+      "inventory": [
+        {"id": "xgsxRPgC", "name": "Staff", "description": null, "quantity": 1,
+         "weight": null, "value": null, "item_type": "misc", "properties": {}}
+      ],
+      "equipment": {"weapon_main": null, "weapon_off": null, "armor": null, "shield": null},
+      "spell_slots": {"1": 2},
+      "spell_slots_used": {},
+      "spells_known": [],
+      "created_at": "2026-10-11T17:08:15.028168",
+      "updated_at": "2026-10-11T17:08:15.103158"
+    }
+  },
+  "npcs": {
+    "Bob": {"id": "MgECjKnB", "name": "Bob", "notes": "", "relationships": {}}
+  },
+  "locations": {},
+  "quests": {
+    "Find the lighthouse": {
+      "id": "Qx7aLmPt",
+      "title": "Find the lighthouse",
+      "description": "It went dark",
+      "status": "active",
+      "objectives": ["Reach the cliffs"],
+      "completed_objectives": [],
+      "created_at": "2026-10-11T17:08:15.028168"
+    }
+  },
+  "encounters": {},
+  "sessions": [],
+  "game_state": {
+    "campaign_name": "Ghost Coast",
+    "current_session": 2,
+    "active_quests": [],
+    "party_level": 1,
+    "party_funds": "0 gp",
+    "initiative_order": [
+      {"name": "Goblin", "initiative": 12},
+      {"initiative": 3},
+      {"name": "Orc", "initiative": "15 (Dex)"},
+      {"name": "Rat"},
+      {"name": "Ghost", "initiative": 4, "hit_points": "lots"}
+    ],
+    "in_combat": true,
+    "current_turn": "Goblin",
+    "notes": "",
+    "updated_at": "2026-10-11T17:08:15.027092"
+  },
+  "world_notes": "",
+  "created_at": "2026-10-11T17:08:15.027119",
+  "updated_at": "2026-10-11T17:08:15.103222"
+}

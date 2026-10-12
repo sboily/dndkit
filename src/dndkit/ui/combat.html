@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Combat tracker</title>
+    <!--gm:shared-->
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="status"></div>
+    <script>
+      const tracker = Views.combat();
+      document.getElementById("app").append(tracker.el);
+      GM.start(() => GM.live("combat", null, tracker.render, 1500));
+    </script>
+  </body>
+</html>

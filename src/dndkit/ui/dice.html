@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dice tray</title>
+    <!--gm:shared-->
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="status"></div>
+    <script>
+      const tray = Views.dice();
+      document.getElementById("app").append(tray.el);
+      const normalize = (text) => String(text || "").toLowerCase().replace(/\s+/g, "");
+      const loadedAt = Date.now() / 1000;
+
+      GM.onResult((result) => {
+        if (result.isError) GM.status(((result.content || [])[0] || {}).text || "error");
+      });
+
+      // This widget shows the roll its own call made, not merely the latest one.
+      GM.start(async () => {
+        const args = await GM.toolInput();
+        if (args.secret) return GM.status(`🔒 ${GM.t("secretRoll")}`); // not for the table's eyes
+        const wanted = normalize(args.notation);
+        let rolls = [];
+        let roll = null;
+        // The roll may land a moment after the page opens: look for it a few times.
+        for (let attempt = 0; attempt < 16 && !roll; attempt++) {
+          rolls = (await GM.data("dice")).rolls;
+          roll = rolls.slice().reverse().find((r) =>
+            r.t >= loadedAt - 5 && (!wanted || normalize(r.notation) === wanted)) || null;
+          if (!roll) await GM.sleep(250);
+        }
+        roll = roll || rolls[rolls.length - 1];
+        if (!roll) return GM.status(GM.t("waiting"));
+        tray.show(roll, rolls);
+      });
+    </script>
+  </body>
+</html>

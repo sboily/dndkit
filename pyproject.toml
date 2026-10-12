@@ -3,55 +3,85 @@ requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gamemaster-mcp"
-version = "0.1.0"
-description = "A comprehensive D&D campaign management MCP server built with FastMCP 2.8.0+"
-authors = [{name = "Joel Casimir", email = "y9agf5y5@anonaddy.me"}]
+name = "dndkit"
+version = "0.4.0"
+description = "A D&D 5e campaign management MCP server, built for voice game masters"
+# Joel Casimir wrote gamemaster-mcp, the project dndkit was forked from.
+authors = [{ name = "Sylvain Boily" }, { name = "Joel Casimir" }]
+maintainers = [{ name = "Sylvain Boily" }]
 license = "MIT"
-urls = {Homepage = "https://github.com/study-flamingo/gamemaster-mcp"}
-
-license-files = ["LICENSE.md"]
+license-files = ["LICENSE"]
 readme = "README.md"
-
 requires-python = ">=3.12"
+# Capped at the next major version: `uvx --from git+...` installs without the lock.
 dependencies = [
-    "fastmcp>=2.9.0",
-    "pydantic>=2.0.0",
-    "python-dotenv>=1.1.1",
-    "shortuuid>=1.0.13",
-    "typing-extensions>=4.0.0",
+    "fastmcp>=4.1.0,<5",
+    "platformdirs>=4.0,<5",
+    "pydantic>=2.11,<3",
+    "pyyaml>=6.0,<7",
+    "segno>=1.6,<2",
+    "shortuuid>=1.0.13,<2",
+    "starlette>=0.46,<2",
+    "uvicorn>=0.34,<1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/sboily/dndkit"
+Changelog = "https://github.com/sboily/dndkit/blob/main/CHANGELOG.md"
+Upstream = "https://github.com/study-flamingo/gamemaster-mcp"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "ruff>=0.1.0",
-    "mypy>=1.0.0",
-    "pre-commit>=3.0.0",
+    "bandit>=1.8",
+    "httpx>=0.28",
+    "mypy>=1.15",
+    "pre-commit>=4.0",
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "ruff>=0.11",
+    "types-pyyaml>=6.0",
 ]
 
 [project.scripts]
-gamemaster-mcp = "gamemaster_mcp.main:main"
+dndkit = "dndkit.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-dir]
-"" = "src"
+[tool.setuptools.package-data]
+"dndkit.ui" = ["*.html", "*.css", "*.js"]
+# Skill files (Markdown only so far: widen this when a skill ships scripts or assets).
+"dndkit.skills" = ["*/*.md", "*/**/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
 
 [tool.ruff]
 target-version = "py312"
-line-length = 100
-select = ["E", "F", "I", "N", "W"]
-ignore = [
-    "E501",
-    "F403",
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastMCP injects these defaults per call; they are markers, not shared state.
+extend-immutable-calls = [
+    "fastmcp.dependencies.CurrentContext",
+    "fastmcp.dependencies.Depends",
 ]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dndkit"]
 
 [tool.mypy]
 python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["shortuuid.*"]
+ignore_missing_imports = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]

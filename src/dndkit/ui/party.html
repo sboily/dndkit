@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Party board</title>
+    <!--gm:shared-->
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="status"></div>
+    <script>
+      const board = Views.party();
+      document.getElementById("app").append(board.el);
+      GM.start(() => GM.live("party", null, board.render, 2500));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#17151b" />
+    <title>Character</title>
+    <!--gm:shared-->
+  </head>
+  <body class="web">
+    <div id="heading"></div>
+    <div class="board">
+      <div class="col" id="main"></div>
+      <div class="col" id="side"></div>
+    </div>
+    <div id="status"></div>
+    <script>
+      // One player's phone: their sheet, the fight, the party and the rolls.
+      // It buzzes when their turn comes.
+      const { h, t } = GM;
+      const banner = h("div", { class: "yourturn", hidden: true }, t("yourTurn"));
+      const sheet = Views.character();
+      const combat = Views.combat({ me: () => me });
+      const dice = Views.dice();
+      const journal = Views.journal();
+      const heading = Views.campaign();
+      document.getElementById("heading").append(heading.el);
+      const party = Views.party({ quests: false, campaign: false });
+      let me = null;
+      let fight = null;
+      let myTurn = false;
+
+      function checkTurn() {
+        const now = Boolean(me && fight && fight.in_combat && fight.order.some((f) => f.current && f.name === me));
+        banner.hidden = !now;
+        // Browsers refuse to vibrate before the first tap on the page.
+        const tapped = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+        if (now && !myTurn && navigator.vibrate && tapped) navigator.vibrate([200, 100, 200]);
+        document.title = (now ? "▶ " : "") + (me || t("character"));
+        myTurn = now;
+      }
+
+      document.getElementById("main").append(banner, combat.el, sheet.el);
+      document.getElementById("side").append(dice.el, journal.el, party.el);
+
+      GM.start(() => {
+        GM.live("party", null, heading.render);
+        GM.live("me", null, (data) => { me = data.name; sheet.render(data); checkTurn(); });
+        GM.live("combat", null, (data) => {
+          fight = data;
+          combat.el.hidden = !data.in_combat;
+          combat.render(data);
+          checkTurn();
+        });
+        GM.live("dice", null, dice.render);
+        GM.live("journal", null, journal.render);
+        GM.live("party", null, party.render);
+      });
+    </script>
+  </body>
+</html>

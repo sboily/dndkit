@@ -1,0 +1,120 @@
+/* dndkit pages: their words in English and French, picked from the
+ * browser's language. t("key") also passes through an unknown key, so a
+ * server message without a translation still shows. */
+"use strict";
+
+export const I18N = (() => {
+  const FRENCH = (navigator.language || "").toLowerCase().startsWith("fr");
+  const WORDS = {
+    round: ["Round", "Round"], turn: ["turn", "tour"], hp: ["HP", "PV"], ac: ["AC", "CA"],
+    total: ["Total", "Total"], advantage: ["Advantage", "Avantage"],
+    disadvantage: ["Disadvantage", "Désavantage"], waiting: ["Rolling…", "Lancer…"],
+    noCombat: ["No combat running.", "Aucun combat en cours."],
+    defeated: ["Overcome", "Vaincus"], xp: ["XP", "XP"], session: ["Session", "Session"],
+    funds: ["Funds", "Bourse"], quests: ["Active quests", "Quêtes en cours"],
+    noQuest: ["No active quest.", "Aucune quête en cours."], inCombat: ["In combat", "En combat"],
+    party: ["Party", "Groupe"], noParty: ["No character yet.", "Aucun personnage."],
+    slots: ["Spell slots", "Emplacements de sorts"], spells: ["Spells", "Sorts"],
+    inventory: ["Inventory", "Inventaire"], cantrip: ["Cantrip", "Tour de magie"],
+    level: ["Level", "Niveau"], prepared: ["prepared", "préparé"],
+    proficiency: ["Proficiency", "Maîtrise"], inspiration: ["Inspiration", "Inspiration"],
+    deathSaves: ["Death saves", "Jets contre la mort"], exhaustion: ["Exhaustion", "Épuisement"],
+    temp: ["temp", "temp"], unknown: ["unknown", "inconnu"], nextLevel: ["next level", "niveau suivant"],
+    turnOf: ["{name}'s turn", "Tour de {name}"], lvl: ["Lvl", "Niv."],
+    str: ["STR", "FOR"], dex: ["DEX", "DEX"], con: ["CON", "CON"], int: ["INT", "INT"],
+    wis: ["WIS", "SAG"], cha: ["CHA", "CHA"],
+    blinded: ["blinded", "aveuglé"], charmed: ["charmed", "charmé"], deafened: ["deafened", "assourdi"],
+    frightened: ["frightened", "effrayé"], grappled: ["grappled", "agrippé"],
+    incapacitated: ["incapacitated", "neutralisé"], invisible: ["invisible", "invisible"],
+    paralyzed: ["paralyzed", "paralysé"], petrified: ["petrified", "pétrifié"],
+    poisoned: ["poisoned", "empoisonné"], prone: ["prone", "à terre"],
+    restrained: ["restrained", "entravé"], stunned: ["stunned", "étourdi"],
+    unconscious: ["unconscious", "inconscient"],
+    // How hurt a monster looks to the players.
+    unhurt: ["unhurt", "indemne"], hurt: ["hurt", "blessé"], bloodied: ["bloodied", "en sang"],
+    down: ["down", "hors de combat"],
+    speed: ["Speed", "Vitesse"], hidden: ["hidden", "caché"], boss: ["Boss", "Boss"],
+    initiative: ["Initiative", "Initiative"], castsWith: ["Casts with", "Lance avec"],
+    spellAttack: ["Spell attack", "Attaque de sort"], spellDc: ["Spell save DC", "DD des sorts"],
+    intelligence: ["Intelligence", "Intelligence"], wisdom: ["Wisdom", "Sagesse"], charisma: ["Charisma", "Charisme"],
+    features: ["Features", "Capacités"], proficiencies: ["Proficiencies", "Maîtrises"], save: ["Save", "JS"],
+    languages: ["Languages", "Langues"], story: ["Story", "Histoire"], hitDice: ["Hit dice", "Dés de vie"],
+    legendaryActions: ["Legendary actions", "Actions légendaires"],
+    legendaryResistances: ["Legendary resistances", "Résistances légendaires"],
+    // The table.
+    theTable: ["🪑 The table", "🪑 La table"], noCharacter: ["no character yet", "pas encore de personnage"],
+    nobodySeated: ["Nobody seated yet: the game master asks who is playing.",
+      "Personne n'est encore installé : le maître du jeu demande qui joue."],
+    absentees: ["Absent", "Absents"], knownPlayers: ["Known players", "Joueurs connus"],
+    noPlayer: ["No player", "Sans joueur"], away: ["absent", "absent"], unplayed: ["no player", "sans joueur"],
+    // Web pages.
+    yourTurn: ["Your turn!", "À toi de jouer !"], journal: ["Adventure log", "Journal"],
+    noEvent: ["Nothing logged yet.", "Rien de noté pour l'instant."], from: ["from {name}", "confiée par {name}"],
+    players: ["Players", "Joueurs"], showCodes: ["Join codes", "Codes joueurs"], hideCodes: ["Hide", "Masquer"],
+    scanToJoin: ["Scan your character's code to follow it on your phone.",
+      "Scanne le code de ton personnage pour le suivre sur ton téléphone."],
+    unreachable: ["Phones cannot reach this server: start it with DNDKIT_WEB_HOST=0.0.0.0.",
+      "Les téléphones ne peuvent pas joindre ce serveur : lance-le avec DNDKIT_WEB_HOST=0.0.0.0."],
+    noCampaign: ["No active campaign.", "Aucune campagne active."],
+    unknownLink: ["This link no longer matches a character of the active campaign.",
+      "Ce lien ne correspond plus à un personnage de la campagne active."],
+    offline: ["Connection lost, reconnecting…", "Connexion perdue, reconnexion…"],
+    // Skills, by their English names (PHB ch. 7) and the French translation.
+    Acrobatics: ["Acrobatics", "Acrobaties"], "Animal Handling": ["Animal Handling", "Dressage"],
+    Arcana: ["Arcana", "Arcanes"], Athletics: ["Athletics", "Athlétisme"], Deception: ["Deception", "Tromperie"],
+    History: ["History", "Histoire"], Insight: ["Insight", "Perspicacité"], Intimidation: ["Intimidation", "Intimidation"],
+    Investigation: ["Investigation", "Investigation"], Medicine: ["Medicine", "Médecine"], Nature: ["Nature", "Nature"],
+    Perception: ["Perception", "Perception"], Performance: ["Performance", "Représentation"],
+    Persuasion: ["Persuasion", "Persuasion"], Religion: ["Religion", "Religion"],
+    "Sleight of Hand": ["Sleight of Hand", "Escamotage"], Stealth: ["Stealth", "Discrétion"], Survival: ["Survival", "Survie"],
+    concentration: ["Concentration", "Concentration"],
+    stable: ["Stable at 0 HP", "Stabilisé à 0 PV"],
+    turnsLeft: ["{n} turns left", "{n} tours restants"],
+    reactionUsed: ["Reaction used this round", "Réaction utilisée ce round"],
+    secretRoll: ["Secret roll, for the game master", "Jet secret, pour le MJ"],
+    viewFailed: ["This part failed: see the server log.", "Cette partie a échoué : voir le journal du serveur."],
+    // Adventure log entries.
+    combat: ["combat", "combat"], roleplay: ["roleplay", "interprétation"], exploration: ["exploration", "exploration"],
+    quest: ["quest", "quête"], character: ["character", "personnage"], world: ["world", "monde"],
+    // The world, on the backstage.
+    locations: ["Locations", "Lieux"], noLocation: ["No location yet.", "Aucun lieu."],
+    partyHere: ["the party is here", "le groupe est ici"], population: ["Population", "Population"],
+    government: ["Government", "Gouvernement"], notable: ["Notable", "À remarquer"], leadsTo: ["Leads to", "Mène à"],
+    ties: ["Ties", "Liens"], inFight: ["fighting", "en combat"],
+    // Sizes ("medium" is shared with the difficulty ratings below).
+    tiny: ["tiny", "très petite"], small: ["small", "petite"],
+    large: ["large", "grande"], huge: ["huge", "très grande"], gargantuan: ["gargantuan", "gigantesque"],
+    // The desk, on the backstage.
+    activity: ["Model activity", "Activité du MJ"], noCall: ["No call yet.", "Aucun appel pour l'instant."],
+    failures: ["{n} failed", "{n} en échec"], notebook: ["Notebook", "Carnet"],
+    situation: ["Situation", "Situation"], worldNotes: ["World notes", "Notes du monde"],
+    setting: ["Setting", "Univers"], show: ["Show", "Afficher"], sessions: ["Past sessions", "Sessions passées"],
+    noNotes: ["No notes yet.", "Pas encore de notes."], dm: ["GM", "MJ"], saved: ["saved", "enregistré"],
+    skills: ["skills", "skills"],
+    lastFight: ["Last fight ({rounds} rounds):", "Dernier combat ({rounds} rounds) :"], treasure: ["Treasure", "Butin"],
+    equipped: ["Equipped", "Équipé"], stats: ["Statistics", "Statistiques"], done: ["done", "terminée"],
+    // Backstage.
+    backstage: ["Backstage", "Régie"], encounters: ["Planned encounters", "Rencontres prévues"],
+    noEncounter: ["Nothing planned.", "Rien de prévu."], npcs: ["NPCs", "PNJ"], noNpc: ["No NPC yet.", "Aucun PNJ."],
+    allQuests: ["Quests", "Quêtes"], bestiary: ["Bestiary", "Bestiaire"], noMonster: ["Empty.", "Vide."],
+    notes: ["Notes", "Notes"], reward: ["Reward", "Récompense"], secret: ["Secret", "Secret"],
+    planned: ["planned", "prévue"], running: ["running", "en cours"],
+    trivial: ["trivial", "triviale"], easy: ["easy", "facile"], medium: ["medium", "moyenne"],
+    hard: ["hard", "difficile"], deadly: ["deadly", "mortelle"],
+    friendly: ["friendly", "amical"], neutral: ["neutral", "neutre"], hostile: ["hostile", "hostile"],
+    active: ["active", "en cours"], completed: ["completed", "accomplie"], failed: ["failed", "échouée"],
+    on_hold: ["on hold", "en pause"],
+  };
+
+  function t(key, values) {
+    const text = (WORDS[key] ? WORDS[key][FRENCH ? 1 : 0] : String(key)).replace(/\{(\w+)\}/g, (_, name) =>
+      values && values[name] !== undefined ? values[name] : "");
+    // French elision: "Tour de Élodie" -> "Tour d'Élodie".
+    return FRENCH ? text.replace(/\bde ([aeiouyàâéèêëîïôûü])/gi, "d'$1") : text;
+  }
+
+  /** A distance as the players' books give it: feet, or metres in French (5 ft = 1.5 m). */
+  const distance = (feet) => (FRENCH ? `${(feet * 0.3).toLocaleString("fr")} m` : `${feet} ft`);
+
+  return { t, distance, FRENCH };
+})();

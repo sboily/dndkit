@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Table</title>
+    <!--gm:shared-->
+  </head>
+  <body class="web">
+    <div id="heading"></div>
+    <div class="board">
+      <div class="col" id="main"></div>
+      <div class="col" id="side"></div>
+    </div>
+    <div id="status"></div>
+    <script>
+      // The shared screen: what everyone at the table may see, and the codes
+      // that open each character on a phone.
+      const combat = Views.combat();
+      const heading = Views.campaign();
+      document.getElementById("heading").append(heading.el);
+      const seating = Views.seating();
+      const party = Views.party({ quests: false, campaign: false });
+      const dice = Views.dice();
+      const journal = Views.journal();
+      const join = Views.join();
+      document.getElementById("main").append(combat.el, party.el, seating.el);
+      document.getElementById("side").append(dice.el, journal.el, join.el);
+
+      GM.start(() => {
+        GM.live("party", null, heading.render);
+        GM.live("seating", null, seating.render);
+        GM.live("combat", null, (data) => { combat.el.hidden = !data.in_combat; combat.render(data); });
+        GM.live("party", null, (data) => { document.title = data.campaign; party.render(data); });
+        GM.live("dice", null, dice.render);
+        GM.live("journal", null, journal.render);
+        GM.live("join", null, join.render);
+      });
+    </script>
+  </body>
+</html>
