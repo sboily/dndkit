@@ -17,8 +17,11 @@ DNDKIT_WEB_PORT=8765 uv run dndkit   # Also serve the web pages
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of these on every push, Python 3.12
-and 3.13; its actions are pinned by commit. A tag `v<version>` matching
-`pyproject.toml` publishes to PyPI (`release.yml`, trusted publishing).
+and 3.13; its actions are pinned by commit. Note each user-visible change
+under `## Unreleased` in CHANGELOG.md. `scripts/release.py prepare <version>`
+on main stamps the changelog, sets the version, commits and tags; pushing the
+tag runs `release.yml` (PyPI by trusted publishing, then the GitHub release
+with the changelog section).
 
 The project was gamemaster-mcp before its rename (a fork of
 study-flamingo/gamemaster-mcp): `config.py` still reads the `GAMEMASTER_*`
