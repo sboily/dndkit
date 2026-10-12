@@ -1,8 +1,11 @@
-"""Who opens what: each character's private link, and where phones find the server.
+"""Who opens what: each character's private link, the backstage's, and where
+phones find the server.
 
 A player's link carries a token derived from the campaign, the character and
 a secret kept in the data directory: links survive restarts, cannot be
-guessed, and all change if that file is deleted.
+guessed, and all change if that file is deleted. The backstage's link, for a
+game master away from the server's computer (Docker, a home server), is
+derived from the same secret.
 """
 
 import base64
@@ -27,6 +30,7 @@ KEY_FILE = "player-links.key"
 SECRET_BYTES = 32
 TOKEN_BYTES = 10  # 80 bits, 16 base32 characters
 TOKEN_PATTERN = re.compile(r"[a-z2-7]{16}")
+BACKSTAGE = b"backstage"  # no campaign/character pair looks like it
 
 
 class PlayerLinks:
@@ -42,7 +46,18 @@ class PlayerLinks:
 
     def token(self, campaign: Campaign, character: Character) -> str:
         """The token for *character* of *campaign*."""
-        message = f"{campaign.id}/{character.id}".encode()
+        return self._sign(f"{campaign.id}/{character.id}".encode())
+
+    def backstage_token(self) -> str:
+        """The token in the backstage's link, the same for every campaign."""
+        return self._sign(BACKSTAGE)
+
+    def opens_backstage(self, token: str) -> bool:
+        return bool(TOKEN_PATTERN.fullmatch(token)) and hmac.compare_digest(
+            self.backstage_token(), token
+        )
+
+    def _sign(self, message: bytes) -> str:
         digest = hmac.new(self._secret, message, hashlib.sha256).digest()
         return base64.b32encode(digest[:TOKEN_BYTES]).decode().lower()
 
