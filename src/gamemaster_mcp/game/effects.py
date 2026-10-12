@@ -1,9 +1,10 @@
 """Hit points and conditions for anyone at the table: characters or combatants.
 
-A name is looked up in the running fight first, then among the party. A
-combatant linked to a character is changed on the character's sheet; any
-other combatant keeps its own hit points and conditions, and leaves the
-initiative order when it drops to 0 HP. Each change first brings the fight up
+A whole name is looked up in the running fight first, then among the party;
+only then a part of a name, if it points to one target alone. A combatant
+linked to a character is changed on the character's sheet; any other
+combatant keeps its own hit points and conditions, and leaves the initiative
+order when it drops to 0 HP. Each change first brings the fight up
 to date (``combatants.refresh``): a sheet created or a stat block saved after
 the fight began takes effect at once.
 """
@@ -26,27 +27,49 @@ class Target:
 
 
 def resolve(campaign: Campaign, refs: Sequence[str]) -> list[Target]:
-    """Every target in *refs*, or one error naming all the unknown ones."""
+    """Every target in *refs*, once each, or one error naming all the unknown ones."""
     state = campaign.game_state
     fighters = state.initiative_order if state.in_combat else []
     targets: list[Target] = []
     missing: list[str] = []
     for ref in refs:
-        fighter = combat.find_optional(state, ref) if fighters else None
-        if fighter is not None and fighter.character_id is None:
-            targets.append(Target(fighter.name, combatant=fighter))
-            continue
-        ref_or_id = fighter.character_id if fighter and fighter.character_id else ref
-        character = registry.find_optional(campaign.characters, ref_or_id)
-        if character is None:
+        target = _target(campaign, fighters, ref)
+        if target is None:
             missing.append(ref)
-        else:
-            targets.append(Target(character.name, character=character))
+        elif all(t.name != target.name for t in targets):
+            targets.append(target)
     if missing:
         known = [c.name for c in fighters] + [c.name for c in campaign.characters.values()]
         unknown = ", ".join(f"'{ref}'" for ref in missing)
         raise NotFoundError(f"Unknown: {unknown}. Known: {', '.join(sorted(set(known)))}.")
     return targets
+
+
+def _target(campaign: Campaign, fighters: Sequence[Combatant], ref: str) -> Target | None:
+    """A whole name, a fighter's then a character's; else the only one a part names.
+    "Thorn" is the character Thorn, not the "Thornback Boar"."""
+    wanted = registry.normalize(ref)
+    fighter = next((c for c in fighters if registry.normalize(c.name) == wanted), None)
+    if fighter is not None:
+        return _fighting(campaign, fighter)
+    character = registry.find_exact(campaign.characters, ref)
+    if character is not None:
+        return Target(character.name, character=character)
+    in_fight = registry.partial_matches(fighters, ref)
+    linked = {c.character_id for c in in_fight}
+    sheets = registry.partial_matches(campaign.characters.values(), ref)
+    sheets = [c for c in sheets if c.id not in linked]
+    if len(in_fight) + len(sheets) != 1:
+        return None
+    return _fighting(campaign, in_fight[0]) if in_fight else Target(sheets[0].name, sheets[0])
+
+
+def _fighting(campaign: Campaign, fighter: Combatant) -> Target | None:
+    """A fighter as a target: its sheet when it is a party character."""
+    if fighter.character_id is None:
+        return Target(fighter.name, combatant=fighter)
+    character = campaign.characters.get(fighter.character_id)
+    return Target(character.name, character=character) if character else None
 
 
 def change_hit_points(campaign: Campaign, refs: Sequence[str], amount: int) -> list[str]:

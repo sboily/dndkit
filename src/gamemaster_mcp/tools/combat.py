@@ -9,23 +9,25 @@ from pydantic import Field
 
 from gamemaster_mcp.errors import InvalidChangeError
 from gamemaster_mcp.game import battlefield, bestiary, combat, combatants
+from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.models import Participant
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render_combat
 from gamemaster_mcp.tools.apps import COMBAT_APP, app_meta
-from gamemaster_mcp.tools.deps import get_store
+from gamemaster_mcp.tools.deps import get_dice_log, get_store
 
 
 @tool(meta=app_meta(COMBAT_APP))
 def start_combat(
     participants: Annotated[
         list[Participant] | None,
-        Field(description="Who fights, with initiative; party characters at least"),
+        Field(description="Who fights, with initiative; the party rolls if left out"),
     ] = None,
     encounter: Annotated[
         str | None, Field(description="Planned encounter: its monsters join, initiative rolled")
     ] = None,
     store: CampaignStore = Depends(get_store),
+    log: DiceLog = Depends(get_dice_log),
 ) -> str:
     """Start a combat. Party characters use their sheet; bestiary monsters get their stats;
     same-named foes become 'Goblin 1', 'Goblin 2'."""
@@ -40,12 +42,19 @@ def start_combat(
                 state.battlefield = planned.battlefield.model_copy(deep=True)
         if not fighters:
             raise InvalidChangeError("Give participants, an encounter, or both.")
+        party = any(f.character_id for f in fighters)
+        rolled = [] if party else combatants.party_at_the_table(campaign)
+        fighters += [fighter for fighter, _ in rolled]
         first = combat.start(state, fighters, planned.id if planned else None)
         if state.battlefield is not None:
             battlefield.settle(state)
             battlefield.place_the_rest(state)
         order = render_combat.initiative(campaign)
-    return f"Combat started. {first.name} acts first.\n{order}"
+    for _, result in rolled:
+        log.record(result)
+    rolls = ", ".join(f"{c.name} {r.total}" for c, r in rolled)
+    note = f"Initiative rolled for the party: {rolls}.\n" if rolls else ""
+    return f"Combat started. {first.name} acts first.\n{note}{order}"
 
 
 @tool

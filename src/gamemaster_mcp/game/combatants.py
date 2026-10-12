@@ -6,7 +6,8 @@ from collections import Counter
 from collections.abc import Sequence
 from typing import Any
 
-from gamemaster_mcp.game import bestiary, registry
+from gamemaster_mcp.game import bestiary, characters, dice, registry, seating
+from gamemaster_mcp.game.dice import RollResult
 from gamemaster_mcp.models import Campaign, Character, Combatant, Encounter, Monster, Participant
 
 _SYSTEM_RNG = secrets.SystemRandom()
@@ -55,14 +56,17 @@ def legendary(monster: Monster) -> dict[str, Any]:
 
 
 def character_for(campaign: Campaign, name: str) -> Character | None:
-    """The party character a combatant name stands for: its name, part of it, or a
-    name that holds it ("Fizbin the gnome")."""
-    found = registry.find_optional(campaign.characters, name)
+    """The party character a combatant name stands for: its name, whole words of it
+    ("Aria" for "Aria Moonwhisper"), or a name that holds it ("Fizbin the gnome").
+    A part of a word is not enough: a "Wolf" is not "Wolfgang"."""
+    found = registry.find_exact(campaign.characters, name)
     if found is not None:
         return found
     words = f" {registry.normalize(name)} "
     holding = [
-        c for c in campaign.characters.values() if f" {registry.normalize(c.name)} " in words
+        c
+        for c in campaign.characters.values()
+        if f" {registry.normalize(c.name)} " in words or words in f" {registry.normalize(c.name)} "
     ]
     return holding[0] if len(holding) == 1 else None
 
@@ -142,15 +146,32 @@ def from_encounter(
     return combatants
 
 
+def party_at_the_table(campaign: Campaign) -> list[tuple[Combatant, RollResult]]:
+    """The characters at the table, each with initiative rolled (d20 + Dexterity):
+    for a fight started with its foes only."""
+    joined: list[tuple[Combatant, RollResult]] = []
+    for character in seating.present_characters(campaign):
+        bonus = characters.initiative(character)
+        result = dice.roll(f"d20{bonus:+d}" if bonus else "d20")
+        fighter = Combatant(
+            name=character.name, initiative=result.total, character_id=character.id
+        )
+        joined.append((fighter, result))
+    return joined
+
+
 def number_duplicates(order: Sequence[Combatant]) -> list[Combatant]:
     """Same-named combatants become "Goblin 1", "Goblin 2"... so they can be told apart."""
     totals = Counter(registry.normalize(c.name) for c in order)
+    taken = set(totals)
     seen: Counter[str] = Counter()
     numbered: list[Combatant] = []
     for combatant in order:
         key = registry.normalize(combatant.name)
         if totals[key] > 1 and combatant.character_id is None:
             seen[key] += 1
+            while f"{key} {seen[key]}" in taken:  # a "Goblin 1" given by name
+                seen[key] += 1
             combatant = combatant.model_copy(update={"name": f"{combatant.name} {seen[key]}"})
         numbered.append(combatant)
     return numbered

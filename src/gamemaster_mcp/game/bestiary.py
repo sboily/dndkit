@@ -20,8 +20,8 @@ def find_monster(campaign: Campaign, ref: str) -> Monster:
 
 def monster_for(campaign: Campaign, name: str) -> Monster | None:
     """The bestiary entry a combatant name stands for: "Goblin 2" is a Goblin."""
-    found = registry.find_optional(campaign.monsters, name)
-    return found or registry.find_optional(campaign.monsters, _NUMBER_SUFFIX.sub("", name))
+    found = registry.find_exact(campaign.monsters, name)
+    return found or registry.find_exact(campaign.monsters, _NUMBER_SUFFIX.sub("", name))
 
 
 def save_monster(campaign: Campaign, name: str, fields: Mapping[str, Any]) -> tuple[Monster, bool]:
@@ -37,7 +37,7 @@ def save_monster(campaign: Campaign, name: str, fields: Mapping[str, Any]) -> tu
             raise InvalidChangeError(f"Unknown challenge rating '{challenge}'; use 0-30 or 1/8.")
         values["xp"] = xp
     values = {key: value for key, value in values.items() if value is not None}
-    existing = registry.find_optional(campaign.monsters, name)
+    existing = registry.find_exact(campaign.monsters, name)
     if existing is not None:
         return registry.update(campaign.monsters, existing.id, MONSTER_KIND, values), False
     _fill_from_challenge(values)
@@ -46,8 +46,10 @@ def save_monster(campaign: Campaign, name: str, fields: Mapping[str, Any]) -> tu
         values.setdefault("legendary_resistances", 3)
     missing = [key for key in ("armor_class", "hit_points") if key not in values]
     if missing:
+        known = registry.known_names(campaign.monsters.values())
         raise InvalidChangeError(
-            f"A new monster needs {' and '.join(missing)}, or a challenge_rating to set them."
+            f"A new monster needs {' and '.join(missing)}, or a challenge_rating to set them. "
+            f"To change one, give its full name: {known}."
         )
     return registry.add(
         campaign.monsters, Monster(name=name.strip(), **values), MONSTER_KIND
@@ -114,7 +116,7 @@ def plan_encounter(
         values["monsters"] = [
             {**g.model_dump(), "monster": find_monster(campaign, g.monster).name} for g in groups
         ]
-    existing = registry.find_optional(campaign.encounters, name)
+    existing = registry.find_exact(campaign.encounters, name)
     _check_squares(
         campaign,
         values.get("battlefield") or (existing.battlefield if existing else None),
@@ -123,7 +125,10 @@ def plan_encounter(
     if existing is not None:
         return registry.update(campaign.encounters, existing.id, ENCOUNTER_KIND, values), False
     if not values.get("monsters"):
-        raise InvalidChangeError("A new encounter needs its monsters.")
+        known = registry.known_names(campaign.encounters.values())
+        raise InvalidChangeError(
+            f"A new encounter needs its monsters. To change one, give its full name: {known}."
+        )
     encounter = Encounter.model_validate({"name": name.strip(), **values})
     return registry.add(campaign.encounters, encounter, ENCOUNTER_KIND), True
 

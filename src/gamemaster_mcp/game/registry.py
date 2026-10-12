@@ -14,14 +14,18 @@ from pydantic import BaseModel, ValidationError
 from gamemaster_mcp.errors import AlreadyExistsError, InvalidChangeError, NotFoundError
 
 
-class Named(Protocol):
+class Spoken(Protocol):
+    """Anything with a display name."""
+
+    @property
+    def name(self) -> str: ...
+
+
+class Named(Spoken, Protocol):
     """An entity with an ID and a display name."""
 
     @property
     def id(self) -> str: ...
-
-    @property
-    def name(self) -> str: ...
 
 
 def normalize(name: str) -> str:
@@ -43,24 +47,30 @@ def find[E: Named](items: Mapping[str, E], ref: str, kind: str) -> E:
     Spoken names get shortened ("the lighthouse" for "The Dark Lighthouse"): a
     part of a name (3 characters or more) is enough when no other name shares it.
     """
-    if ref in items:
-        return items[ref]
-    wanted = normalize(ref)
-    for entity in items.values():
-        if normalize(entity.name) == wanted:
-            return entity
-    partial = [e for e in items.values() if len(wanted) >= 3 and wanted in normalize(e.name)]
+    found = find_exact(items, ref)
+    if found is not None:
+        return found
+    partial = partial_matches(items.values(), ref)
     if len(partial) == 1:
         return partial[0]
     raise NotFoundError(f"No {kind} named '{ref}'. Known {kind}s: {known_names(items.values())}.")
 
 
-def find_optional[E: Named](items: Mapping[str, E], ref: str) -> E | None:
-    """The entity *ref* names, or None."""
-    try:
-        return find(items, ref, "entity")
-    except NotFoundError:
-        return None
+def find_exact[E: Named](items: Mapping[str, E], ref: str) -> E | None:
+    """The entity whose ID or whole name is *ref*, or None. Creating or linking
+    goes by this: "Wolf" must not update or become the "Dire Wolf"."""
+    if ref in items:
+        return items[ref]
+    wanted = normalize(ref)
+    return next((e for e in items.values() if normalize(e.name) == wanted), None)
+
+
+def partial_matches[E: Spoken](entities: Iterable[E], ref: str) -> list[E]:
+    """The entities whose name holds *ref* (3 characters or more)."""
+    wanted = normalize(ref)
+    if len(wanted) < 3:
+        return []
+    return [e for e in entities if wanted in normalize(e.name)]
 
 
 def find_many[E: Named](items: Mapping[str, E], refs: Iterable[str], kind: str) -> list[E]:

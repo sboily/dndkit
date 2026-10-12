@@ -2,10 +2,11 @@
 
 Turns are tracked by index, so three goblins each get their turn; same-named
 combatants are numbered ("Goblin 1", "Goblin 2") so they can be told apart
-aloud. Combatants who fall or flee move to ``defeated``, which the end of the
-combat turns into an XP total.
+aloud. Foes who fall or flee move to ``defeated``, which the end of the combat
+turns into an XP total; the party and its allies earn none.
 """
 
+from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -30,8 +31,14 @@ def start(
     """Sort by initiative (ties keep the given order) and open round 1."""
     if state.in_combat:
         raise InvalidChangeError("A combat is already running. Use add_combatant or end_combat.")
+    if state.combat_round:
+        raise InvalidChangeError("The last fight was not closed: call end_combat first.")
     if not combatants:
         raise InvalidChangeError("A combat needs at least one participant.")
+    linked = Counter(c.character_id for c in combatants if c.character_id)
+    twice = sorted({c.name for c in combatants if c.character_id and linked[c.character_id] > 1})
+    if twice:
+        raise InvalidChangeError(f"Given twice: {', '.join(twice)}. Name each one once.")
     ordered = sorted(combatants, key=lambda c: c.initiative, reverse=True)
     state.initiative_order = number_duplicates(ordered)
     state.in_combat = True
@@ -91,8 +98,8 @@ def find_optional(state: GameState, name: str) -> Combatant | None:
     for combatant in state.initiative_order:
         if registry.normalize(combatant.name) == wanted:
             return combatant
-    partial = [c for c in state.initiative_order if wanted in registry.normalize(c.name)]
-    return partial[0] if len(wanted) >= 3 and len(partial) == 1 else None
+    partial = registry.partial_matches(state.initiative_order, name)
+    return partial[0] if len(partial) == 1 else None
 
 
 def remove(
@@ -107,7 +114,7 @@ def remove(
     removed = find(state, name)
     index = next(i for i, c in enumerate(state.initiative_order) if c is removed)
     state.initiative_order = [c for c in state.initiative_order if c is not removed]
-    if overcome and removed.character_id is None:
+    if overcome and removed.character_id is None and not removed.ally:
         state.defeated = [*state.defeated, removed]
     if not state.initiative_order:
         state.in_combat = False
@@ -123,8 +130,9 @@ def remove(
 
 
 def end(state: GameState) -> CombatSummary:
-    """Close the combat; the summary lists who was overcome and their total XP."""
-    if not state.in_combat and not state.defeated:
+    """Close the combat, or what is left of one whose last combatant was removed;
+    the summary lists who was overcome and their total XP."""
+    if not state.in_combat and not state.combat_round:
         raise InvalidChangeError("No combat is running.")
     summary = CombatSummary(
         rounds=state.combat_round,
