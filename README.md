@@ -278,6 +278,11 @@ Around the moves:
   squares `at` which they start (checked against the map, its walls and each
   other); `start_combat` with that encounter lays it all out.
 
+`remove_combatant` takes a creature out of the fight and off the map: a
+`defeated` or `fled` foe counts for XP, a `withdrawn` one (a mistake, a
+change of plan) leaves no trace; `add_combatant` brings one in at its side's
+edge.
+
 The model reads the map in text: `set_battlefield` and `place_tokens` return
 a grid with a legend, every move says what it cost, what is left and who is
 in reach, and `get_game_state` lists the squares and the distances from

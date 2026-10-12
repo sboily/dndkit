@@ -89,15 +89,19 @@ def find(state: GameState, name: str) -> Combatant:
     raise NotFoundError(f"No combatant named '{name}'. In the fight: {listed}.")
 
 
-def remove(state: GameState, name: str) -> tuple[Combatant, Combatant | None]:
-    """Take a fallen or fled combatant out; returns it and whoever acts now.
+def remove(
+    state: GameState, name: str, overcome: bool = True
+) -> tuple[Combatant, Combatant | None]:
+    """Take a combatant out of the fight and off the map; returns it and whoever acts now.
 
-    Removing the last combatant ends the combat and returns None as the second value.
+    An *overcome* foe (fallen or fled) joins the defeated and counts for XP; one
+    taken back (a mistake, a change of plan) leaves no trace. Removing the last
+    combatant ends the combat and returns None as the second value.
     """
     removed = find(state, name)
     index = next(i for i, c in enumerate(state.initiative_order) if c is removed)
     state.initiative_order = [c for c in state.initiative_order if c is not removed]
-    if removed.character_id is None:
+    if overcome and removed.character_id is None:
         state.defeated = [*state.defeated, removed]
     if not state.initiative_order:
         state.in_combat = False

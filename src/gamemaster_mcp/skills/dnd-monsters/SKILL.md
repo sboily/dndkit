@@ -61,6 +61,10 @@ bestiary lacks one. Create it, then rate the fight.
 
 - `start_combat` with the encounter. On a battle map, the monsters can wait
   at their planned squares, hidden for an ambush (the `dnd-battle-map` skill).
+- Too many or too few once it starts? `remove_combatant` with `reason:
+  withdrawn` takes a monster back (no XP, off the map); `add_combatant`
+  brings reinforcements. Before it starts, change the plan instead:
+  `plan_encounter` with the new count.
 - Roll every attack and damage with `roll_dice`, record hits with
   `change_hit_points`; a monster at 0 leaves the fight on its own.
 - `end_combat` gives the XP to award with `award_experience`.

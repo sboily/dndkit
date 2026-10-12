@@ -1,7 +1,7 @@
 """Combat tools: the initiative order, turns, newcomers and the end of the fight."""
 
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastmcp.dependencies import Depends
 from fastmcp.tools import tool
@@ -75,14 +75,24 @@ def next_turn(store: CampaignStore = Depends(get_store)) -> str:
 @tool
 def remove_combatant(
     name: Annotated[str, Field(min_length=1, description="Combatant name, e.g. 'Goblin 2'")],
+    reason: Annotated[
+        Literal["defeated", "fled", "withdrawn"],
+        Field(description="withdrawn: a mistake or change of plan, no XP"),
+    ] = "defeated",
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Take a defeated or fleeing combatant out of the initiative order."""
+    """Take a combatant out of the fight and off the battle map. Defeated or fled foes
+    count for XP; a withdrawn one is as if it never joined."""
     with store.transaction() as campaign:
-        removed, acting = combat.remove(campaign.game_state, name)
+        removed, acting = combat.remove(campaign.game_state, name, overcome=reason != "withdrawn")
+    gone = (
+        f"{removed.name} withdrawn: as if it never joined, no XP."
+        if reason == "withdrawn"
+        else f"{removed.name} removed ({reason})."
+    )
     if acting is None:
-        return f"{removed.name} removed. No one is left: call end_combat."
-    return f"{removed.name} removed. Current turn: {acting.name}."
+        return f"{gone} No one is left: call end_combat."
+    return f"{gone} Current turn: {acting.name}."
 
 
 @tool

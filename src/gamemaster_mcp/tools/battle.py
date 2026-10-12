@@ -44,7 +44,7 @@ def place_tokens(
     store: CampaignStore = Depends(get_store),
 ) -> str:
     """Put combatants on squares (big ones by their top-left square), or hide them from
-    the players (an ambush) and reveal them."""
+    the players (an ambush) and reveal them. remove_combatant takes one off."""
     with store.transaction() as campaign:
         state = campaign.game_state
         for token in tokens:

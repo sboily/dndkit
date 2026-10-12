@@ -30,6 +30,11 @@ from whoever is acting, and every move says who is now in reach.
 - A planned encounter can carry its map and its monsters' squares
   (`plan_encounter` with `battlefield`, and `at` per group): `start_combat`
   with that encounter lays them out.
+- Changed your mind about who is in the fight? `remove_combatant` with
+  `reason: withdrawn` takes a creature off the map and out of the initiative,
+  as if it never joined (no XP); `add_combatant` brings one in, at its side's
+  edge, and `place_tokens` puts it where you want. A redrawn map
+  (`set_battlefield`) keeps everyone who still fits.
 - Foes the players have not noticed are `hidden` (in the plan, or with
   `place_tokens`): they stay off the players' screens and out of the
   initiative they see. Reveal them with `place_tokens` (`hidden: false`) when

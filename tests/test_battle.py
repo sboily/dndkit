@@ -165,3 +165,27 @@ async def test_the_map_through_the_tools(client: Client) -> None:
     assert "Borin has 5 left" in refused  # a dwarf's 25 ft, 20 spent
     await call(client, "end_combat")  # the next fight lays out its own map
     assert json.loads(await call(client, "get_screen_data", view="combat"))["map"] is None
+
+
+@pytest.mark.anyio
+async def test_a_creature_taken_back_leaves_the_map_without_xp(client: Client) -> None:
+    await call(client, "create_campaign", name="Ghost", description="d")
+    await call(client, "create_character", name="Borin", character_class="Cleric", race="Nain")
+    await call(client, "save_monster", name="Goblin", challenge_rating="1/4")
+    await call(client, "set_battlefield", width=8, height=5)
+    await call(
+        client,
+        "start_combat",
+        participants=[
+            {"name": "Borin", "initiative": 15},
+            {"name": "Goblin", "initiative": 9},
+            {"name": "Goblin", "initiative": 7},
+        ],
+    )
+    taken = await call(client, "remove_combatant", name="goblin 2", reason="withdrawn")
+    assert taken == "Goblin 2 withdrawn: as if it never joined, no XP. Current turn: Borin."
+    seen = json.loads(await call(client, "get_screen_data", view="combat"))
+    assert [t["name"] for t in seen["map"]["tokens"]] == ["Borin", "Goblin 1"]
+    assert seen["defeated"] == [] and seen["xp"] == 0
+    await call(client, "remove_combatant", name="goblin 1")  # defeated: it counts
+    assert "(50 XP)" in await call(client, "end_combat")
