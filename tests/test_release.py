@@ -1,6 +1,8 @@
 """scripts/release.py: the changelog section a release publishes, and its stamp."""
 
 import importlib.util
+import re
+import tomllib
 from datetime import date
 from pathlib import Path
 from types import ModuleType
@@ -56,8 +58,15 @@ def test_a_release_names_the_unreleased_section() -> None:
         release.stamp(stamped, "0.6.0", date(2026, 12, 2))
 
 
-def test_the_changelog_has_a_section_for_every_release_to_come() -> None:
+def test_the_changelog_opens_on_what_comes_next_or_on_this_version() -> None:
+    """Between releases, an Unreleased section ready to stamp; on a release's own
+    commit, that version's section, which the GitHub release takes as its notes."""
     text = (ROOT / "CHANGELOG.md").read_text()
-    assert release.stamp(text, "0.4.0", date(2026, 10, 13)).startswith(
-        "# Changelog\n\n## 0.4.0 (2026-10-13)\n"
-    )
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
+    first = re.search(r"^## (.+)$", text, re.MULTILINE)
+    assert first is not None
+    if first.group(1) == "Unreleased":
+        assert release.stamp(text, "9.9.9", date(2026, 10, 13))
+    else:
+        assert first.group(1).startswith(f"{version} ("), first.group(1)
+        assert release.notes(text, version).strip()
