@@ -97,9 +97,27 @@ def spellcasting(character: Character) -> Spellcasting | None:
 
 
 def initiative(character: Character) -> int:
-    """The initiative bonus: the Dexterity modifier."""
+    """The initiative bonus: the Dexterity modifier, and a bard's Jack of All Trades."""
     dexterity = character.abilities.get("dexterity")
-    return dexterity.mod if dexterity else 0
+    return (dexterity.mod if dexterity else 0) + proficiencies.jack_of_all_trades(character)
+
+
+def _skill_edits(character: Character, edits: Mapping[str, Any]) -> dict[str, list[str]]:
+    """Skills and Expertise checked together: Expertise only in a proficient skill, and
+    a skill dropped from the list loses its Expertise."""
+    proficient = character.skill_proficiencies
+    checked: dict[str, list[str]] = {}
+    if "skill_proficiencies" in edits:
+        proficient = proficiencies.skills(edits["skill_proficiencies"])
+        checked["skill_proficiencies"] = proficient
+    if "skill_expertise" in edits:
+        checked["skill_expertise"] = proficiencies.expertise(edits["skill_expertise"], proficient)
+    else:
+        kept = {proficiencies.skill_name(name) for name in proficient}
+        checked["skill_expertise"] = [
+            s for s in character.skill_expertise if proficiencies.skill_name(s) in kept
+        ]
+    return checked
 
 
 def remove(campaign: Campaign, ref: str) -> Character:
@@ -125,8 +143,8 @@ def update(
         # Back from 0 HP by hand (a spell that raises the dead): a fresh start.
         edits.update(death_saves_success=0, death_saves_failure=0, stable=False)
         edits.setdefault("conditions", [c for c in character.conditions if c != "unconscious"])
-    if "skill_proficiencies" in edits:
-        edits["skill_proficiencies"] = proficiencies.skills(edits["skill_proficiencies"])
+    if "skill_proficiencies" in edits or "skill_expertise" in edits:
+        edits.update(_skill_edits(character, edits))
     if "saving_throw_proficiencies" in edits:
         edits["saving_throw_proficiencies"] = proficiencies.saves(
             edits["saving_throw_proficiencies"]

@@ -72,7 +72,7 @@ and the name; you fill in the rules:
 2. `create_character` with all six scores, `player_name`, `class_level`, and
    `armor_class` from the armor below (hit points come from the class).
 3. `update_character` with `skills` (the class's count plus 2 from a
-   background) and `languages`.
+   background), `languages`, and a rogue's `expertise` (two of its skills).
 4. `add_item_to_character`: the weapon (`item_type` weapon, its damage in the
    description, "1d8 slashing"), the armor, a pack.
 5. Casters: `set_known_spell` for the cantrips and the level 1 spells.
@@ -87,7 +87,7 @@ and the name; you fill in the rules:
 | Monk | DEX, WIS | none: 10 + DEX + WIS | shortsword 1d6 | 2 | martial arts |
 | Paladin | STR, CHA | chain mail, shield: 18 | longsword 1d8 | 2 | no spells yet |
 | Ranger | DEX, WIS | scale mail: 14 + DEX (max 2) | longbow 1d8 | 3 | no spells yet |
-| Rogue | DEX, INT or CHA | leather: 11 + DEX | rapier 1d8 | 4 | sneak attack 1d6 |
+| Rogue | DEX, INT or CHA | leather: 11 + DEX | rapier 1d8 | 4 | sneak attack 1d6, expertise in 2 |
 | Sorcerer | CHA, CON | none: 10 + DEX | light crossbow 1d8 | 2 | 4 cantrips, 2 spells |
 | Warlock | CHA, CON | leather: 11 + DEX | light crossbow 1d8 | 2 | 2 cantrips, 2 spells |
 | Wizard | INT, CON | none: 10 + DEX | quarterstaff 1d6 | 2 | 3 cantrips, 6 in the spellbook |

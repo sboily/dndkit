@@ -1,5 +1,6 @@
 """Skill and saving throw proficiencies (PHB ch. 7): the names players say, in
-English or French, and the bonus each gives (ability modifier + proficiency)."""
+English or French, and the bonus each gives (ability modifier + proficiency,
+twice the proficiency with Expertise)."""
 
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -48,13 +49,38 @@ def saves(names: Sequence[str]) -> list[str]:
     return list(dict.fromkeys(ability for ability in found.values() if ability))
 
 
+def expertise(names: Sequence[str], proficient: Sequence[str]) -> list[str]:
+    """The skills *names* say, each one among *proficient*: Expertise (a rogue's, a
+    bard's) doubles a proficiency the character has."""
+    chosen = skills(names)
+    have = {skill_name(name) for name in proficient}
+    missing = [skill for skill in chosen if skill not in have]
+    if missing:
+        raise InvalidChangeError(
+            f"Expertise doubles a proficiency, and {', '.join(missing)} is not among the "
+            "proficient skills: give it in skills too."
+        )
+    return chosen
+
+
+def jack_of_all_trades(character: Character) -> int:
+    """A bard's half proficiency, rounded down, on the checks it is not proficient in
+    (initiative included), from level 2."""
+    cls = character.character_class
+    if rules.class_key(cls.name) == "bard" and cls.level >= 2:
+        return character.proficiency_bonus // 2
+    return 0
+
+
 def skill_bonuses(character: Character) -> list[Proficiency]:
     """Each proficient skill with its bonus, as the sheet lists them."""
+    experts = {skill_name(name) for name in character.skill_expertise}
     shown: list[Proficiency] = []
     for name in character.skill_proficiencies:
         skill = skill_name(name)
         ability = SKILLS[skill] if skill else None
-        shown.append(Proficiency(skill or name, _bonus(character, ability)))
+        times = 2 if skill and skill in experts else 1
+        shown.append(Proficiency(skill or name, _bonus(character, ability, times)))
     return shown
 
 
@@ -71,8 +97,8 @@ def save_bonus(character: Character, ability: str) -> int:
     return (score.mod if score else 0) + (character.proficiency_bonus if proficient else 0)
 
 
-def _bonus(character: Character, ability: str | None) -> int | None:
+def _bonus(character: Character, ability: str | None, times: int = 1) -> int | None:
     if ability is None:
         return None
     score = character.abilities.get(ability)
-    return (score.mod if score else 0) + character.proficiency_bonus
+    return (score.mod if score else 0) + times * character.proficiency_bonus

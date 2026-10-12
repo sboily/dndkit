@@ -93,7 +93,7 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 62 tool schemas weigh about 8,870 tokens by roomkit's own estimate, just
+The 62 tool schemas weigh about 8,900 tokens by roomkit's own estimate, just
 over the 8,000 at which roomkit hides tools behind `find_tools` by default:
 enable the skills below (their tools then wait for them: about 7,300 tokens)
 or raise roomkit's threshold (`tool_search_threshold_tokens`). Optional
@@ -239,7 +239,10 @@ A few rules the tools keep:
 - **Proficiencies**: `update_character` takes skills, saving throws (English
   or French names: *Discrétion*, *Sagesse*), languages and features; a new
   character is proficient in its class's saves. The sheets give each
-  proficient skill and save with its bonus.
+  proficient skill and save with its bonus. `expertise` doubles the
+  proficiency of a rogue's or a bard's chosen skills, and a bard from level 2
+  adds half of it to every other check, initiative included (Jack of All
+  Trades).
 - **Hit Dice**: `rest` with `hit_dice` spends them on a short rest (rolled on
   the dice tray, each die plus the Constitution modifier); a long rest gives
   half of them back.

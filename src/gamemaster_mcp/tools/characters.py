@@ -128,6 +128,9 @@ def update_character(
     exhaustion: Annotated[int | None, Field(ge=0, le=6, description="Exhaustion level")] = None,
     notes: Text = None,
     skills: Annotated[list[str] | None, Field(description="Proficient skills")] = None,
+    expertise: Annotated[
+        list[str] | None, Field(description="Skills with double proficiency")
+    ] = None,
     saving_throws: Annotated[list[str] | None, Field(description="Proficient saves: DEX")] = None,
     languages: Annotated[list[str] | None, Field(description="Languages spoken")] = None,
     features: Annotated[list[str] | None, Field(description="Features, traits, feats")] = None,
@@ -158,6 +161,7 @@ def update_character(
         exhaustion=exhaustion,
         notes=notes,
         skill_proficiencies=skills,
+        skill_expertise=expertise,
         saving_throw_proficiencies=saving_throws,
         languages=languages,
         features_and_traits=features,

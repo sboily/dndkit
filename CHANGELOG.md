@@ -102,7 +102,9 @@ Live web pages: a table screen, each player's phone, the game master's backstage
 - **Proficiencies**: `update_character` sets skills, saving throws (English
   or French names), languages and features; a new character is proficient in
   its class's saving throws; the sheets give each proficient skill and save
-  with its bonus.
+  with its bonus. `expertise` doubles a proficiency (a rogue's, a bard's), and
+  a bard from level 2 adds half of it to other checks and initiative (Jack of
+  All Trades).
 - **Hit Dice**: `rest` with `hit_dice` spends them on a short rest (rolled on
   the dice tray); a long rest gives half of them back.
 - **Concentration**: `set_concentration`; damage asks for the Constitution

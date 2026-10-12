@@ -85,6 +85,11 @@ def _sheet_extras(c: Character) -> dict[str, str | None]:
         ),
         "Skills": _listed(proficiencies.skill_bonuses(c)),
         "Saving throws": _listed(proficiencies.save_bonuses(c), short=True),
+        "Other checks": (
+            f"+{bonus} (Jack of All Trades)"
+            if (bonus := proficiencies.jack_of_all_trades(c))
+            else ""
+        ),
         "Features": ", ".join(c.features_and_traits),
         "Languages": ", ".join(c.languages),
         "Notes": c.notes,

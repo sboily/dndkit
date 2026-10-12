@@ -41,6 +41,11 @@ monsters have (a challenge 1/4 creature gets 42).
 - `plan_encounter` with the monsters and how many: it rates the fight
   against the characters at the table (`seat_players`), and says the XP.
 - Aim for medium or hard for an ordinary fight, deadly only for a climax.
+- The rating counts every monster. The DMG leaves out minions far weaker than
+  the others when they hardly threaten: a boss with a few rats is rated a
+  little harder than it plays.
+- A challenge 0 creature is worth 10 XP; one with no attack worth having (a
+  frog, a crab) is worth 0: give `xp` 0 to `save_monster`.
 - A boss alone against four characters of level L: challenge rating about
   L + 2. Against two or three characters: about L. Add a few weak minions
   rather than raising the boss.

@@ -124,6 +124,7 @@ class Character(GameModel):
 
     proficiency_bonus: int = 2
     skill_proficiencies: list[str] = Field(default_factory=list)
+    skill_expertise: list[str] = Field(default_factory=list)  # proficiency counted twice
     saving_throw_proficiencies: list[str] = Field(default_factory=list)
 
     inventory: list[Item] = Field(default_factory=list)

@@ -29,6 +29,8 @@ UNARMORED_DEFENSE = {"barbarian": "constitution", "monk": "wisdom"}
 STANDARD_ARRAY = "15, 14, 13, 12, 10, 8"
 # Hit points a feature may add per level (Tough, a hill dwarf's toughness).
 EXTRA_HP_PER_LEVEL = 3
+# Expertise in two skills at each of these class levels.
+EXPERTISE_LEVELS = {"rogue": (1, 6), "bard": (3, 10)}
 
 
 @dataclass(frozen=True)
@@ -129,6 +131,16 @@ def _hit_points(c: Character) -> Finding | None:
     return Finding(c.name, problem, "update_character hit_points_max", True)
 
 
+def _expertise(c: Character) -> Finding | None:
+    """A rogue's or a bard's Expertise (or thieves' tools for a rogue, hence not certain)."""
+    levels = EXPERTISE_LEVELS.get(rules.class_key(c.character_class.name) or "", ())
+    due = 2 * sum(c.character_class.level >= level for level in levels)
+    if len(c.skill_expertise) >= due:
+        return None
+    problem = f"Expertise in {due} skills by its level, has {len(c.skill_expertise)}"
+    return Finding(c.name, problem, "update_character expertise", False)
+
+
 def _gear(c: Character) -> Finding | None:
     items = [*c.inventory, *(i for i in c.equipment.values() if i)]
     if not items:
@@ -168,6 +180,7 @@ CHARACTER_CHECKS: tuple[Callable[[Character], Finding | None], ...] = (
     _hit_points,
     _armor,
     _skills,
+    _expertise,
     _gear,
     _spells,
 )
