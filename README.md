@@ -1,11 +1,13 @@
 # dndkit
 
-A [Model Context Protocol](https://modelcontextprotocol.io) server that keeps a
-Dungeons & Dragons 5e campaign for an AI game master: characters, NPCs,
-locations, quests, combat turns, dice, session notes and an adventure log.
-It is built with [FastMCP](https://gofastmcp.com) 4 and made for **voice play**,
-for example as an MCP service in [roomkit-ui](https://github.com/roomkit-live/roomkit-ui),
-while working just as well from Claude Desktop or any MCP client.
+A [Model Context Protocol](https://modelcontextprotocol.io) server that lets an
+AI be the game master of a Dungeons & Dragons 5e campaign: it keeps the
+characters, the world, the fights and the dice, and holds the rules, so the
+model narrates while the server keeps count. It is built with
+[FastMCP](https://gofastmcp.com) 4 and made for **voice play with several
+players around one microphone**, as an MCP service in
+[roomkit-ui](https://github.com/roomkit-live/roomkit-ui), while working just as
+well from Claude Desktop or any MCP client, with a cloud model or a local one.
 
 dndkit began as a fork of
 [study-flamingo/gamemaster-mcp](https://github.com/study-flamingo/gamemaster-mcp)
@@ -37,8 +39,19 @@ project's. See [CHANGELOG.md](CHANGELOG.md) for what changed.
 - **Dice and rules**: `d20`, `1d20+5`, `2d6+1d4+3`, advantage and disadvantage;
   short rule reminders (conditions, cover, grapple, death saves...) by English
   or French name.
+- **Several players**: each spoken turn names its speaker; a roll call says
+  who plays which character tonight, and only the characters at the table
+  count for difficulty and XP.
+- **Battle map**: a grid where moves follow the 5e rules (speed, terrain,
+  opportunity attacks), areas of effect, cover, hidden foes.
+- **Before play**: `check_campaign` says what breaks the rules or is missing
+  in a new campaign, each with the tool that fixes it.
+- **Skills**: how-to guides the model loads when it needs them: being the
+  game master and preparing a campaign, monsters and bosses, the battle map.
 - **On-screen widgets** (MCP Apps): rolling dice, a live combat tracker, a party
-  board and character sheets, in clients that show MCP Apps.
+  board, the table and character sheets, in clients that show MCP Apps.
+- **Live web pages**: a table screen, each player's sheet on their phone, and
+  a backstage where you follow every call the model makes.
 
 Names are matched without case or accents ("elodie" finds "Élodie"), and a part
 of a name is enough when only one name contains it ("phare" finds "Le phare
@@ -50,20 +63,21 @@ says why and lists the known names, so the model can correct itself.
 Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-# From PyPI, nothing else to install
+# From PyPI (from the first release, 0.4.0)
 uvx dndkit
 
 # Straight from GitHub
-uvx --from git+https://github.com/sboily/gamemaster-mcp dndkit
+uvx --from git+https://github.com/sboily/dndkit dndkit
 
 # From a checkout
-git clone https://github.com/sboily/gamemaster-mcp.git
-cd gamemaster-mcp
+git clone https://github.com/sboily/dndkit.git
+cd dndkit
 uv sync
 uv run dndkit
 ```
 
-The server speaks MCP over stdio: an MCP client starts it, you don't keep it running yourself.
+The server speaks MCP over stdio: an MCP client starts it, you don't keep it
+running yourself. `uvx` fetches it on first use and keeps it cached.
 
 ### Configuration
 
@@ -99,18 +113,33 @@ In **Settings → Integrations → MCP**, add a server:
 | Name | `dndkit` |
 | Transport | `stdio` |
 | Command | `uvx` |
-| Arguments | `dndkit` |
+| Arguments | `dndkit` (from PyPI), or `--from git+https://github.com/sboily/dndkit dndkit` |
 | Environment variables | `DNDKIT_STORAGE_DIR=/Users/you/Games/dnd` (optional)<br>`DNDKIT_WEB_PORT=8765` and `DNDKIT_WEB_HOST=0.0.0.0` for the web pages (optional) |
 
 From a local checkout instead: Command `uv`, Arguments
-`run --directory /path/to/gamemaster-mcp dndkit`.
+`run --directory /path/to/dndkit dndkit`.
 
-The 62 tool schemas weigh about 8,900 tokens by roomkit's own estimate, just
-over the 8,000 at which roomkit hides tools behind `find_tools` by default:
-enable the skills below (their tools then wait for them: about 7,300 tokens)
-or raise roomkit's threshold (`tool_search_threshold_tokens`). Optional
-parameters are advertised without their `null` alternative to save room.
-Put the system prompt below in the assistant's personality.
+roomkit-ui reads what the server publishes besides its tools: its skills
+(roomkit 0.98 and later) and its instructions, which tell the model how the
+tools are meant to be used (roomkit 0.99). Put the system prompt below in the
+assistant's personality.
+
+The 62 tool schemas weigh about 8,900 tokens by roomkit's own estimate, over
+the 8,000 at which roomkit may hide tools behind `find_tools`: keep the skills
+on (the tools they bring then wait for them: about 7,300 tokens), or raise
+roomkit's threshold (`tool_search_threshold_tokens`). roomkit-ui's automatic
+Tool Search leaves a local voice model every tool. Optional parameters are
+advertised without their `null` alternative to save room.
+
+#### Local models
+
+A model running on your own computer can be the game master. The
+[local model bench](poc/local-model/RESULTS.md) plays scripted table turns
+through roomkit with Ornith 1.5 35B-A3B (llama.cpp): with **thinking on** it
+passes 26 to 30 of 36 scenarios; without thinking it mostly narrates instead
+of calling the tools. Tool Search hurts such a model: leave every tool in
+sight. A thinking turn takes about a minute, which roomkit-ui's background
+tasks (on a llama.cpp model of their own) keep away from the voice.
 
 #### Skills
 
@@ -121,7 +150,8 @@ needs them, and publishes them by the official MCP Skills extension
 capabilities, serves every skill file as a `skill://<name>/<file>` resource,
 and answers `skills/list` and `skills/get` with each skill's frontmatter and
 the SHA-256 digest and size of its files. The server instructions also point
-at each skill's URI, for hosts that only read resources.
+at each skill's URI, for hosts that only read resources. Load
+`dnd-game-master` first: the system prompt below asks for it.
 
 | Skill | Teaches | Gates (roomkit) |
 | --- | --- | --- |
@@ -131,10 +161,9 @@ at each skill's URI, for hosts that only read resources.
 
 A skill's `allowed_tools` frontmatter is roomkit's: roomkit keeps those tools
 out of the catalogue, and out of its token count, until the model activates
-the skill. With the skills on, the catalogue weighs about 7,300 tokens. To
-use them in roomkit-ui before it speaks the Skills extension, add this
-repository (or its checkout) as a skill source in Settings → Skills: they
-live in `src/dndkit/skills/`.
+the skill. With the skills on, the catalogue weighs about 7,300 tokens.
+roomkit-ui lists them under the server's name; a client that does not speak
+the extension can load them from `src/dndkit/skills/` as a skill folder.
 
 ### With Claude Desktop
 
@@ -404,10 +433,6 @@ every couple of seconds: the combat tracker follows `change_hit_points` or
 `next_turn` calls made later in the conversation. The widgets only display; the
 game changes through the conversation, so the model always knows the state.
 
-roomkit-ui shows MCP Apps since its `MCPManager.read_resource` passes the
-resource URI as a string (with the `mcp` 2.x SDK, an `AnyUrl` fails validation
-and the widget falls back to a text line).
-
 ## Live web pages
 
 With `DNDKIT_WEB_PORT` set, the server also serves web pages that follow
@@ -455,9 +480,9 @@ the game goes on without the pages.
 ## Data
 
 See [docs/STORAGE_STRUCTURE.md](docs/STORAGE_STRUCTURE.md). Campaigns saved by
-the upstream server load as they are and are rewritten in the current format at
-their first change. The upstream global `events/adventure_log.json` is not
-imported: events now belong to their campaign.
+gamemaster-mcp, dndkit's upstream, load as they are and are rewritten in the
+current format at their first change. Its global `events/adventure_log.json`
+is not imported: events now belong to their campaign.
 
 ## Development
 
@@ -479,11 +504,30 @@ and `pre-commit install` runs most of it before each commit.
 
 ### Releasing
 
-Set the version in `pyproject.toml`, give it a section in the changelog, then
-push a tag of that version: `git tag v0.4.0 && git push origin v0.4.0`. The
-release workflow checks that the tag matches, runs the tests, builds, and
-publishes to PyPI by trusted publishing (no token: PyPI trusts
-`.github/workflows/release.yml` in its `pypi` environment).
+Each change worth telling goes into [CHANGELOG.md](CHANGELOG.md) under
+`## Unreleased` with the commit that makes it. To release, on an up-to-date
+`main`:
+
+```bash
+uv run python scripts/release.py prepare 0.5.0   # versions follow semver
+git push origin main v0.5.0
+```
+
+`prepare` names the Unreleased section `## 0.5.0 (<date>)`, sets the version
+in `pyproject.toml` and `uv.lock`, commits `release: 0.5.0` and tags
+`v0.5.0`; it refuses outside `main`, with uncommitted changes, an empty
+Unreleased section or an existing tag. The tag runs
+`.github/workflows/release.yml`: it checks that the tag matches the version,
+sits on `main` and has its changelog section, runs the tests and builds, then
+publishes to PyPI by trusted publishing (no token: PyPI trusts the workflow in
+its `pypi` environment) and makes the GitHub release, its notes the version's
+changelog section, the built files attached. A failed step stops what follows:
+nothing reaches GitHub's releases before PyPI has the version.
+
+Once, on pypi.org: add a pending trusted publisher for the project `dndkit`
+(owner `sboily`, repository `dndkit`, workflow `release.yml`, environment
+`pypi`). GitHub creates the `pypi` environment at the first release; required
+reviewers set on it (Settings → Environments) hold each release for approval.
 
 ## License
 

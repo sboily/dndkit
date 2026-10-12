@@ -26,7 +26,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/sboily/gamemaster-mcp"
+Homepage = "https://github.com/sboily/dndkit"
+Changelog = "https://github.com/sboily/dndkit/blob/main/CHANGELOG.md"
 Upstream = "https://github.com/study-flamingo/gamemaster-mcp"
 
 [project.optional-dependencies]
