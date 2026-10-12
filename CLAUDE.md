@@ -34,6 +34,10 @@ src/gamemaster_mcp/
 │   ├── progression.py # XP awards (to those at the table) and level up
 │   ├── seating.py     # Who plays which character, the roll call, who is present
 │   ├── combat.py      # Initiative order by index, rounds, defeated, summary
+│   ├── grid.py        # Squares "D7", areas, footprints by size, distances
+│   ├── battlefield.py # The map: terrain, who stands where, placement at the edges
+│   ├── pathing.py     # Routes for one mover (Dijkstra), opportunity attacks
+│   ├── movement.py    # Speed, standing up, Dash/Disengage, to/toward/away, forced
 │   ├── combatants.py  # Participants -> combatants (linked PCs, bestiary stats)
 │   ├── bestiary.py    # Monsters, planned encounters, difficulty
 │   ├── world.py       # NPCs, locations, quests, remove_entity
@@ -47,15 +51,18 @@ src/gamemaster_mcp/
 │   ├── schema.py      # Compacts advertised schemas (drops the null alternative)
 │   ├── apps.py        # ui:// pages, app_meta(), register_apps()
 │   ├── screen.py      # get_screen_data, the widgets' data tool
-│   └── render*.py     # Plain-text views of game data
+│   └── render*.py     # Plain-text views of game data (render_map: the map in text)
 ├── views/        # JSON views for screens: widgets (GM, everything), public
-│                 # (what players may see, allow-listed), backstage (GM secrets)
+│                 # (what players may see, allow-listed), backstage (GM secrets),
+│                 # battle (the map to draw)
 ├── web/          # Live web pages, inside the MCP process: changes (notices from
 │                 # tool threads), access (player links, QR), audiences (views
 │                 # per page), feed (SSE), routes (Starlette), server (uvicorn)
 └── ui/           # Pages: widgets and web pages (<name>.html), shared.css,
                   # components.css, words.js, shared.js (transports), dicetray.js,
-                  # components.js (renderers), assembled by ui.page()
+                  # battlemap.js, backstage.js, components.js (renderers),
+                  # assembled by ui.page()
+skills/           # Agent Skills for roomkit-ui (dnd-battle-map gates the map tools)
 ```
 
 Layers only call downwards: `tools` → `game` → `models`; `tools` → `storage`;
@@ -136,6 +143,18 @@ calls `game` functions on the campaign, and renders a short text answer.
   with `seating.same_person`. Anything that should count only the characters
   at the table (difficulty, XP) goes through `seating.present_characters`,
   which is the whole party until a roll call.
+- **Battle map**: squares are names ("D7"), stored as text (`Battlefield`,
+  `Combatant.position`, the top-left square of a big creature) and parsed
+  with `grid.parse` against the map. Movement follows the PHB grid rule
+  (diagonals 5 ft); `pathing` is the only place that knows what blocks or
+  provokes, and `movement` the only place that spends movement. Moves that
+  break a rule raise `InvalidChangeError` (the model then offers Dash or
+  `toward`), except `toward`, which goes as far as it can. Movement resets in
+  `combat._begin_turn`. The players' map (`views.battle`, `public=True`) has
+  no hit points for foes and shows reachable squares on the party's turns only.
+- **Skills**: a skill's `allowed_tools` hides those tools from roomkit's
+  catalogue until the skill is activated. A tool must still work without the
+  skill (other clients have none): never rely on the skill's text.
 - **Schema budget**: `tests/test_tools.py` keeps the catalogue under roomkit's
   Tool Search threshold. `tools/schema.compact` must also walk `$defs`: FastMCP
   inlines model parameters (`Participant`) only after registration.

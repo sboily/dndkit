@@ -37,6 +37,8 @@ def build(campaign: Campaign, participant: Participant) -> Combatant:
         hit_points_max=hit_points,
         armor_class=armor_class,
         xp=monster.xp if monster else 0,
+        size=monster.size if monster else "medium",
+        speed=bestiary.walking_speed(monster) if monster else None,
     )
 
 
@@ -58,6 +60,8 @@ def from_encounter(
                     hit_points_max=monster.hit_points,
                     armor_class=monster.armor_class,
                     xp=monster.xp,
+                    size=monster.size,
+                    speed=bestiary.walking_speed(monster),
                 )
             )
     return combatants

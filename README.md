@@ -93,10 +93,20 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 53 tool schemas weigh about 7,000 tokens by roomkit's own estimate, under
-the 8,000 at which roomkit hides tools behind `find_tools`; optional parameters
-are advertised without their `null` alternative to stay there. Put the system
-prompt below in the assistant's personality.
+The 56 tool schemas weigh about 7,600 tokens by roomkit's own estimate, under
+the 8,000 at which roomkit hides tools behind `find_tools` by default;
+optional parameters are advertised without their `null` alternative to stay
+there. Put the system prompt below in the assistant's personality.
+
+#### Skills
+
+`skills/` holds Agent Skills for roomkit-ui (Settings → Skills: add this
+repository, or its local checkout, as a source, then enable them):
+
+- `dnd-battle-map` teaches the game master to run a fight on the map, and
+  gates `set_battlefield`, `place_tokens` and `move_token`: roomkit keeps them
+  out of the catalogue (and out of its token count) until the model activates
+  the skill.
 
 ### With Claude Desktop
 
@@ -140,6 +150,8 @@ The Gamemaster tools hold the campaign. Trust them over your memory:
 - Roll every die with roll_dice and say the result; never invent a roll.
 - In combat, start_combat with everyone's initiative (or a planned encounter),
   then next_turn after each turn. Monsters at 0 HP leave the fight on their own.
+  When positions matter, play it on the battle map (the dnd-battle-map skill:
+  set_battlefield, then move_token for every move).
   At the end, end_combat, then award_experience with the XP it reports.
 - When you're unsure of a rule, lookup_rule.
 - Never call get_screen_data: it feeds the on-screen widgets.
@@ -171,6 +183,7 @@ and a first quest, creating each with its tool as soon as you have it.
 | Quests | `create_quest`, `get_quest`, `update_quest`, `list_quests` |
 | Table | `seat_players` 🖥, `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition` |
 | Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `end_combat` |
+| Battle map | `set_battlefield` 🖥, `place_tokens`, `move_token` |
 | Bestiary | `save_monster`, `get_monsters`, `plan_encounter`, `list_encounters` |
 | Journal | `add_session_note`, `get_sessions`, `add_event`, `get_events` |
 | Utility | `roll_dice` 🖥, `lookup_rule`, `get_screen_data` (for the widgets) |
@@ -180,6 +193,42 @@ and a first quest, creating each with its tool as soon as you have it.
 `update_character` sets absolute values; `change_hit_points` applies damage or
 healing to characters and monsters alike, and changes nobody if one name is
 unknown. A tool that fails changes nothing, in memory or on disk.
+
+### Battle map
+
+A fight can be played on a grid of 5-foot squares named like a chessboard (a
+column letter and a row number, A1 at the top left). `set_battlefield` lays it
+out with walls and difficult terrain; `start_combat` puts everyone without a
+square at an edge (the party left, its foes right) and `place_tokens` sets
+chosen squares (an ambush). `move_token` moves a combatant by the 5e rules
+(PHB ch. 9) and refuses an impossible move:
+
+- 5 feet a square, diagonals included (the PHB grid rule), 10 in difficult
+  terrain or through another creature's space; walls are walked around and
+  never cut diagonally;
+- allies can be passed through, foes only when two sizes apart; nobody ends a
+  move on someone else; a Large creature holds 2x2 squares, Huge 3x3,
+  Gargantuan 4x4 (`save_monster`'s `size`);
+- speed from the sheet (25 ft for dwarves, halflings and gnomes, else 30;
+  `create_character`'s `speed` overrides it) or the stat block's `speed`;
+  grappled, restrained, stunned, paralyzed, petrified or unconscious: 0;
+  exhaustion halves it from level 2; Dash doubles the turn's movement;
+- a prone mover stands up first, for half its speed;
+- leaving a foe's reach provokes an opportunity attack, which the result
+  names, unless the mover Disengaged; `forced` movement (a shove, a spell, a
+  teleport) spends nothing and provokes nothing;
+- `toward` someone stops within reach or as close as it can ("still 15 ft
+  away"); `away_from` backs off; `next_turn` restores the next combatant's
+  movement.
+
+The model reads the map in text: `set_battlefield` and `place_tokens` return
+a grid with a legend, every move says what it cost, what is left and who is
+in reach, and `get_game_state` lists the squares and the distances from
+whoever is acting. The combat widget and the web pages draw it: tokens gold for
+the party and red for its foes, the squares the acting character can still
+reach, and on a player's phone their own token ringed. The players' pages show
+how hurt a foe looks, never its hit points. The map goes away with
+`end_combat`.
 
 ### Who plays
 
@@ -213,7 +262,7 @@ page next to the conversation.
 | Tool | Widget |
 | --- | --- |
 | `roll_dice` | Dice tray: each die tumbles and lands on its face; a natural 20 glows, a natural 1 shakes; with advantage the discarded d20 fades out; recent rolls below. |
-| `start_combat` | Combat tracker, live: initiative order, current turn, hit point bars that flash on damage or healing, AC, conditions, the defeated and their XP. |
+| `start_combat` | Combat tracker, live: the battle map when there is one, initiative order, current turn, hit point bars that flash on damage or healing, AC, conditions, the defeated and their XP. |
 | `get_game_state` | Party board, live: location, date, funds, every character's hit points, spell slots, conditions and death saves, quest progress, combat banner. |
 | `seat_players` | The table, live: the players seated around it with their characters, newcomers without one yet, absent players and characters nobody plays. |
 | `get_character` | Character sheet, live: hit points, AC, proficiency, XP to next level, abilities, conditions, spell slots, spells, inventory. |

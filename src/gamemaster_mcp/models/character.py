@@ -108,6 +108,7 @@ class Character(GameModel):
     abilities: dict[str, AbilityScore] = Field(default_factory=_default_abilities)
 
     armor_class: int = Field(default=10, ge=0)
+    speed: int = Field(default=30, ge=0)  # walking, in feet
     hit_points_max: int = Field(default=1, ge=1)
     hit_points_current: int = Field(default=1, ge=0)
     temporary_hit_points: int = Field(default=0, ge=0)

@@ -69,7 +69,7 @@ def next_turn(state: GameState) -> Combatant:
     if state.turn_index >= len(state.initiative_order):
         state.turn_index = 0
         state.combat_round += 1
-    return state.initiative_order[state.turn_index]
+    return _begin_turn(state.initiative_order[state.turn_index])
 
 
 def find(state: GameState, name: str) -> Combatant:
@@ -98,9 +98,11 @@ def remove(state: GameState, name: str) -> tuple[Combatant, Combatant | None]:
         return removed, None
     if index < state.turn_index:
         state.turn_index -= 1
-    elif state.turn_index >= len(state.initiative_order):
-        state.turn_index = 0
-        state.combat_round += 1
+    elif index == state.turn_index:  # the one acting left: the next one's turn starts
+        if state.turn_index >= len(state.initiative_order):
+            state.turn_index = 0
+            state.combat_round += 1
+        _begin_turn(state.initiative_order[state.turn_index])
     return removed, state.initiative_order[state.turn_index]
 
 
@@ -119,7 +121,16 @@ def end(state: GameState) -> CombatSummary:
     state.combat_round = 0
     state.defeated = []
     state.encounter_id = None
+    state.battlefield = None  # the next fight lays out its own
     return summary
+
+
+def _begin_turn(combatant: Combatant) -> Combatant:
+    """A turn starts with the full movement, no Dash and no Disengage yet."""
+    combatant.movement_used = 0
+    combatant.dashed = False
+    combatant.disengaged = False
+    return combatant
 
 
 def _require_combat(state: GameState) -> None:

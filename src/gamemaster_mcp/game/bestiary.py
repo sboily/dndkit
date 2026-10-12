@@ -48,6 +48,12 @@ def save_monster(campaign: Campaign, name: str, fields: Mapping[str, Any]) -> tu
     ), True
 
 
+def walking_speed(monster: Monster) -> int | None:
+    """The walking speed in a stat block's speed text ("30 ft., fly 60 ft." -> 30)."""
+    match = re.match(r"\s*(\d+)", monster.speed or "")
+    return int(match.group(1)) if match else None
+
+
 def find_encounter(campaign: Campaign, ref: str) -> Encounter:
     """The planned encounter *ref* names."""
     return registry.find(campaign.encounters, ref, ENCOUNTER_KIND)

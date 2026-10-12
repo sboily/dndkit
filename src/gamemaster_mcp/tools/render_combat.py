@@ -20,6 +20,8 @@ def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
         conditions = combatant.conditions
     if conditions:
         parts.append(", ".join(conditions))
+    if combatant.position:
+        parts.append(f"at {combatant.position}")
     return "; ".join(parts)
 
 
@@ -39,7 +41,8 @@ def monster(m: Monster) -> str:
     challenge = f", CR {m.challenge_rating}" if m.challenge_rating else ""
     lines = [
         f"{m.name}: AC {m.armor_class}, HP {m.hit_points}{challenge}, {m.xp} XP, "
-        f"initiative {m.initiative_bonus:+d}{f', speed {m.speed}' if m.speed else ''}."
+        f"initiative {m.initiative_bonus:+d}{f', speed {m.speed}' if m.speed else ''}"
+        f"{f', {m.size}' if m.size != 'medium' else ''}."
     ]
     lines += [
         f"{label}: {value}"

@@ -17,13 +17,15 @@ const Views = (() => {
   const slots = (c) => c.slots.map(([level, left, max]) =>
     h("span", { class: "slot" }, `${t("lvl")} ${level} `, GM.pips(left, max)));
 
-  /** Initiative order with hit points; for the players, how hurt a monster looks. */
-  function combat() {
+  /** The battle map, if any, and the initiative order with hit points; for the players,
+   *  how hurt a monster looks. *me*: the name of the player's own token, to ring it. */
+  function combat({ me = () => null } = {}) {
     const title = h("span", { class: "title" }, "⚔");
     const turn = h("span", { class: "muted small" });
+    const map = h("div", { class: "map" });
     const order = h("div", { class: "order" });
     const defeated = h("div", { class: "defeated" });
-    const el = h("div", { class: "card combat" }, head(title, turn), order, defeated);
+    const el = h("div", { class: "card combat" }, head(title, turn), map, order, defeated);
     const last = new Map();
 
     function vitals(f) {
@@ -42,7 +44,8 @@ const Views = (() => {
       return h("div", { class: classes },
         h("div", { class: "init" }, f.initiative),
         h("div", { class: "name" }, f.current ? h("span", { class: "arrow" }, "▶") : null, f.name,
-          f.ac !== null && f.ac !== undefined ? h("span", { class: "ac" }, `${t("ac")} ${f.ac}`) : null),
+          f.ac !== null && f.ac !== undefined ? h("span", { class: "ac" }, `${t("ac")} ${f.ac}`) : null,
+          f.position ? h("span", { class: "pos" }, f.position) : null),
         vitals(f),
         GM.conditions(f.conditions, f.exhaustion));
     }
@@ -51,6 +54,8 @@ const Views = (() => {
       const current = data.order.find((f) => f.current);
       title.textContent = data.in_combat ? `⚔ ${t("round")} ${data.round}` : "⚔";
       turn.textContent = current ? t("turnOf", { name: current.name }) : "";
+      fill(map, data.map ? BattleMap(data.map, me()) : null);
+      map.hidden = !data.map;
       fill(order, data.order.length ? data.order.map(fighter) : h("div", { class: "empty" }, t("noCombat")));
       fill(defeated, data.defeated.length ? [
         h("span", { class: "muted small" }, `${t("defeated")}:`),
@@ -172,7 +177,8 @@ const Views = (() => {
     const el = h("div", { class: "card sheet" }, h("div", { class: "empty" }, "…"));
 
     function render(c) {
-      const stats = [[t("ac"), c.ac], [t("proficiency"), signed(c.proficiency)], [t("xp"), c.xp]];
+      const stats = [[t("ac"), c.ac], [t("speed"), I18N.distance(c.speed)],
+        [t("proficiency"), signed(c.proficiency)], [t("xp"), c.xp]];
       const xpRatio = c.next_level_xp ? Math.min(1, c.xp / c.next_level_xp) : 1;
       fill(el,
         head(h("span", { class: "title" }, c.inspiration ? `${c.name} ★` : c.name),
@@ -249,46 +255,5 @@ const Views = (() => {
     return { el, render };
   }
 
-  /** What only the game master sees: plans, secrets, notes, the bestiary. */
-  function backstage() {
-    const lists = { encounters: h("div"), npcs: h("div"), quests: h("div"), monsters: h("div", { class: "list" }) };
-    const el = h("div", { class: "card backstage" }, head(h("span", { class: "title" }, t("backstage"))),
-      section(t("encounters"), lists.encounters), section(t("npcs"), lists.npcs),
-      section(t("allQuests"), lists.quests), section(t("bestiary"), lists.monsters));
-    const note = (label, text) => (text ? h("div", { class: "note small" }, h("b", {}, `${label} `), text) : null);
-    const line = (...parts) => parts.filter(Boolean).join(" — ");
-
-    const encounter = (e) => h("div", { class: "entry" },
-      h("div", { class: "row" }, h("b", {}, e.name), h("span", { class: "chip" }, t(e.status)),
-        e.difficulty ? h("span", { class: `chip rating ${e.difficulty}` }, `${t(e.difficulty)} · ${e.xp} ${t("xp")}`) : null),
-      h("div", { class: "muted small" }, line(e.monsters.join(", "), e.location)),
-      e.description ? h("div", { class: "small" }, e.description) : null,
-      note(t("notes"), e.notes));
-
-    const npc = (n) => h("div", { class: "entry" },
-      h("div", { class: "row" }, h("b", {}, n.name),
-        n.attitude ? h("span", { class: `chip ${n.attitude}` }, t(n.attitude)) : null,
-        h("span", { class: "muted small" }, line(n.occupation, n.location))),
-      n.description ? h("div", { class: "small" }, n.description) : null,
-      note(`🔒 ${t("secret")}`, n.bio), note(t("notes"), n.notes));
-
-    const quest = (q) => h("div", { class: "entry" },
-      h("div", { class: "row" }, h("b", {}, q.title), h("span", { class: "chip" }, t(q.status)),
-        q.total ? h("span", { class: "muted small" }, `${q.done}/${q.total}`) : null),
-      note(t("reward"), q.reward), note(t("notes"), q.notes));
-
-    const monster = (m) => h("span", { class: "chip" },
-      `${m.name} · ${t("ac")} ${m.ac} · ${t("hp")} ${m.hp}` + (m.cr ? ` · CR ${m.cr}` : ""));
-
-    function render(data) {
-      fill(lists.encounters, data.encounters.length ? data.encounters.map(encounter) : empty("noEncounter"));
-      fill(lists.npcs, data.npcs.length ? data.npcs.map(npc) : empty("noNpc"));
-      fill(lists.quests, data.quests.length ? data.quests.map(quest) : empty("noQuest"));
-      fill(lists.monsters, data.monsters.length ? data.monsters.map(monster) : empty("noMonster"));
-    }
-
-    return { el, render };
-  }
-
-  return { campaign, combat, party, seating, character, journal, join, backstage, dice: DiceTray };
+  return { campaign, combat, party, seating, character, journal, join, backstage: Backstage, dice: DiceTray };
 })();

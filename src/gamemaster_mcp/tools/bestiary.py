@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.game import bestiary
-from gamemaster_mcp.models import EncounterGroup
+from gamemaster_mcp.models import EncounterGroup, Size
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render_combat
 from gamemaster_mcp.tools.deps import READ_ONLY, get_store, provided
@@ -24,7 +24,8 @@ def save_monster(
     challenge_rating: Annotated[str | None, Field(description="CR, e.g. 1/4 or 3")] = None,
     xp: Annotated[int | None, Field(ge=0, description="XP; derived from CR if omitted")] = None,
     initiative_bonus: Annotated[int | None, Field(description="Dexterity modifier")] = None,
-    speed: Text = None,
+    speed: Annotated[str | None, Field(description="e.g. 30 ft., fly 60 ft.")] = None,
+    size: Annotated[Size | None, Field(description="Size")] = None,
     actions: Annotated[str | None, Field(description="Attacks and abilities")] = None,
     notes: Text = None,
     store: CampaignStore = Depends(get_store),
@@ -37,6 +38,7 @@ def save_monster(
         xp=xp,
         initiative_bonus=initiative_bonus,
         speed=speed,
+        size=size,
         actions=actions,
         notes=notes,
     )

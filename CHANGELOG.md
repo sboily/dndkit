@@ -28,6 +28,17 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   instructions and the README's game master prompt open each session with a
   roll call. Party cards show each character's player, absent ones faded.
 - The table also shows on the web pages (`/table/`, `/gm/`).
+- **Battle map**: `set_battlefield`, `place_tokens` and `move_token` play a
+  fight on a grid of 5-foot squares (A1 top left) by the 5e rules: speed,
+  difficult terrain, walls, creature sizes, passing allies but not foes,
+  standing up from prone, conditions that stop movement, exhaustion, Dash,
+  Disengage, opportunity attacks, forced movement, and refusing what cannot
+  be done. The combat widget and the web pages draw the map, with the
+  squares the acting character can still reach; players see foes' state,
+  not their hit points. Characters have a `speed` (from their race unless
+  given) and monsters a `size`.
+- `skills/dnd-battle-map`, an Agent Skill for roomkit-ui that teaches the map
+  and keeps its three tools out of the catalogue until a fight needs them.
 
 ### Changed
 

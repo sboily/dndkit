@@ -20,7 +20,7 @@
       const { h, t } = GM;
       const banner = h("div", { class: "yourturn", hidden: true }, t("yourTurn"));
       const sheet = Views.character();
-      const combat = Views.combat();
+      const combat = Views.combat({ me: () => me });
       const dice = Views.dice();
       const journal = Views.journal();
       const heading = Views.campaign();

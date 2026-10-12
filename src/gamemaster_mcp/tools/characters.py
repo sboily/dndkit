@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import characters
+from gamemaster_mcp.game import characters, rules
 from gamemaster_mcp.models import AbilityScore, Character, CharacterClass, Race
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render
@@ -28,6 +28,7 @@ def create_character(
     class_level: Annotated[int, Field(ge=1, le=20, description="Class level")] = 1,
     hit_points_max: Annotated[int, Field(ge=1, description="Maximum hit points")] = 10,
     armor_class: Annotated[int, Field(ge=0, description="Armor class")] = 10,
+    speed: Annotated[int | None, Field(ge=0, description="Feet; from race if omitted")] = None,
     player_name: Annotated[str | None, Field(description="Player controlling it")] = None,
     description: Annotated[str | None, Field(description="Appearance and demeanor")] = None,
     bio: Annotated[str | None, Field(description="Backstory and motivations")] = None,
@@ -60,6 +61,7 @@ def create_character(
         description=description,
         bio=bio,
         armor_class=armor_class,
+        speed=speed if speed is not None else rules.base_speed(race),
         hit_points_max=hit_points_max,
         hit_points_current=hit_points_max,
         abilities={k: AbilityScore(score=v) for k, v in scores.items()},
@@ -100,6 +102,7 @@ def update_character(
     hit_points_max: Annotated[int | None, Field(ge=1, description="Maximum HP")] = None,
     temporary_hit_points: Annotated[int | None, Field(ge=0, description="Temporary HP")] = None,
     armor_class: Annotated[int | None, Field(ge=0, description="Armor class")] = None,
+    speed: Annotated[int | None, Field(ge=0, description="Walking speed, feet")] = None,
     inspiration: Annotated[bool | None, Field(description="Has inspiration")] = None,
     exhaustion: Annotated[int | None, Field(ge=0, le=6, description="Exhaustion level")] = None,
     notes: Text = None,
@@ -124,6 +127,7 @@ def update_character(
         hit_points_max=hit_points_max,
         temporary_hit_points=temporary_hit_points,
         armor_class=armor_class,
+        speed=speed,
         inspiration=inspiration,
         exhaustion=exhaustion,
         notes=notes,

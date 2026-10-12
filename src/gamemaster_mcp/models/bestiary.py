@@ -7,6 +7,7 @@ from pydantic import Field
 from gamemaster_mcp.models.base import GameModel, new_id
 
 EncounterStatus = Literal["planned", "running", "done"]
+Size = Literal["tiny", "small", "medium", "large", "huge", "gargantuan"]
 
 
 class Monster(GameModel):
@@ -20,6 +21,7 @@ class Monster(GameModel):
     xp: int = Field(default=0, ge=0)
     initiative_bonus: int = 0
     speed: str | None = None  # "30 ft., fly 60 ft."
+    size: Size = "medium"
     actions: str = ""  # free text: attacks, damage, special abilities
     notes: str = ""
 

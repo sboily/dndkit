@@ -23,7 +23,8 @@ Windows).
 One file per campaign holding the whole `Campaign` model: characters, NPCs,
 locations, quests, bestiary monsters and planned encounters (each a map keyed by
 entity ID), session notes, the adventure log (`events`), the game state (with
-the running fight, if any) and world notes. Dice rolls are not saved: the
+the running fight, its battle map and who stands where, if any) and world
+notes. Dice rolls are not saved: the
 dice widget's history lives in memory for the session.
 
 - **File name**: the campaign name reduced to letters, digits, spaces, `-`

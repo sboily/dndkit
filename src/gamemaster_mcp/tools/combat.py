@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import bestiary, combat, combatants
+from gamemaster_mcp.game import battlefield, bestiary, combat, combatants
 from gamemaster_mcp.models import Participant
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render_combat
@@ -39,6 +39,7 @@ def start_combat(
             raise InvalidChangeError("Give participants, an encounter, or both.")
         state = campaign.game_state
         first = combat.start(state, fighters, planned.id if planned else None)
+        battlefield.place_the_rest(state)
         order = render_combat.initiative(campaign)
     return f"Combat started. {first.name} acts first.\n{order}"
 
@@ -51,6 +52,7 @@ def add_combatant(
     """Bring someone into the running fight (reinforcements, a late arrival)."""
     with store.transaction() as campaign:
         added = combat.add(campaign.game_state, combatants.build(campaign, participant))
+        battlefield.place_the_rest(campaign.game_state)
         order = render_combat.initiative(campaign)
     return f"{added.name} joins the fight.\n{order}"
 

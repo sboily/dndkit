@@ -11,7 +11,8 @@ from typing import Any
 from pydantic import Field, field_validator
 
 from gamemaster_mcp.models.base import GameModel, new_id, now
-from gamemaster_mcp.models.bestiary import Encounter, Monster
+from gamemaster_mcp.models.battle import Battlefield
+from gamemaster_mcp.models.bestiary import Encounter, Monster, Size
 from gamemaster_mcp.models.character import Character
 from gamemaster_mcp.models.world import NPC, Location, Quest
 
@@ -19,9 +20,11 @@ from gamemaster_mcp.models.world import NPC, Location, Quest
 class Combatant(GameModel):
     """One entry in the initiative order.
 
-    A party character is linked by ``character_id`` and its hit points and
-    conditions live on its sheet; any other combatant (monster, NPC) keeps its
-    own here, when they are known.
+    A party character is linked by ``character_id`` and its hit points,
+    conditions and speed live on its sheet; any other combatant (monster, NPC)
+    keeps its own here, when they are known. ``ally`` puts a non-party
+    combatant on the party's side. On a battle map, ``position`` is the
+    top-left square it occupies, and the movement fields last one turn.
     """
 
     name: str = Field(min_length=1)
@@ -33,6 +36,14 @@ class Combatant(GameModel):
     armor_class: int | None = Field(default=None, ge=0)
     xp: int = Field(default=0, ge=0)
     conditions: list[str] = Field(default_factory=list)
+    ally: bool = False
+    size: Size = "medium"
+    speed: int | None = Field(default=None, ge=0)  # feet; None: 30
+    reach: int = Field(default=5, ge=5)
+    position: str | None = None
+    movement_used: int = Field(default=0, ge=0)
+    dashed: bool = False
+    disengaged: bool = False
 
 
 class Participant(GameModel):
@@ -67,6 +78,7 @@ class GameState(GameModel):
     defeated: list[Combatant] = Field(default_factory=list)  # fallen this combat
     encounter_id: str | None = None  # the planned encounter being fought
     players_present: list[str] = Field(default_factory=list)  # the roll call, in seat order
+    battlefield: Battlefield | None = None
     notes: str = ""
     updated_at: datetime = Field(default_factory=now)
 

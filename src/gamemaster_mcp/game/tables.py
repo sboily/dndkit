@@ -89,3 +89,6 @@ CLASS_ALIASES: dict[str, str] = {
     "magicien": "wizard",
     "mage": "wizard",
 }
+
+# Walking speed 25 feet (PHB races); every other race walks 30.
+SLOW_RACES = frozenset({"dwarf", "nain", "naine", "halfling", "halfelin", "halfeline", "gnome"})

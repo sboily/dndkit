@@ -10,6 +10,7 @@ from gamemaster_mcp.game import characters, seating
 from gamemaster_mcp.game.dice import DiceLog, RollResult
 from gamemaster_mcp.game.tables import XP_FOR_LEVEL
 from gamemaster_mcp.models import ABILITIES, Campaign, Character, Combatant
+from gamemaster_mcp.views.battle import battle_map
 
 Json = dict[str, Any]
 
@@ -43,6 +44,7 @@ def combat(campaign: Campaign) -> Json:
         "order": [_combatant(campaign, c, c is current) for c in state.initiative_order],
         "defeated": [c.name for c in state.defeated],
         "xp": sum(c.xp for c in state.defeated),
+        "map": battle_map(campaign, public=False),
     }
 
 
@@ -63,6 +65,7 @@ def _combatant(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
         "initiative": combatant.initiative,
         "pc": character is not None,
         "current": current,
+        "position": combatant.position,
         **stats,
     }
 
@@ -141,6 +144,7 @@ def character(campaign: Campaign, ref: str) -> Json:
             if key in c.abilities
         ],
         "proficiency": c.proficiency_bonus,
+        "speed": c.speed,
         "xp": c.experience_points,
         "next_level_xp": XP_FOR_LEVEL.get(level + 1),
         "inspiration": c.inspiration,

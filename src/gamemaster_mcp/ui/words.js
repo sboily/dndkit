@@ -33,6 +33,7 @@ const I18N = (() => {
     // How hurt a monster looks to the players.
     unhurt: ["unhurt", "indemne"], hurt: ["hurt", "blessé"], bloodied: ["bloodied", "en sang"],
     down: ["down", "hors de combat"],
+    speed: ["Speed", "Vitesse"],
     // The table.
     theTable: ["🪑 The table", "🪑 La table"], noCharacter: ["no character yet", "pas encore de personnage"],
     nobodySeated: ["Nobody seated yet: the game master asks who is playing.",
@@ -74,5 +75,8 @@ const I18N = (() => {
     return FRENCH ? text.replace(/\bde ([aeiouyàâéèêëîïôûü])/gi, "d'$1") : text;
   }
 
-  return { t, FRENCH };
+  /** A distance as the players' books give it: feet, or metres in French (5 ft = 1.5 m). */
+  const distance = (feet) => (FRENCH ? `${(feet * 0.3).toLocaleString("fr")} m` : `${feet} ft`);
+
+  return { t, distance, FRENCH };
 })();

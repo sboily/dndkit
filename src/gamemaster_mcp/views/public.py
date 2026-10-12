@@ -8,6 +8,7 @@ as how hurt it looks.
 """
 
 from gamemaster_mcp.models import Campaign, Combatant
+from gamemaster_mcp.views.battle import battle_map, health
 from gamemaster_mcp.views.widgets import Json, vitals
 
 JOURNAL_EVENTS = 8
@@ -23,11 +24,17 @@ def combat(campaign: Campaign) -> Json:
         "order": [_fighter(campaign, c, c is current) for c in state.initiative_order],
         "defeated": [c.name for c in state.defeated],
         "xp": sum(c.xp for c in state.defeated),
+        "map": battle_map(campaign, public=True),
     }
 
 
 def _fighter(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
-    seen = {"name": combatant.name, "initiative": combatant.initiative, "current": current}
+    seen = {
+        "name": combatant.name,
+        "initiative": combatant.initiative,
+        "current": current,
+        "position": combatant.position,
+    }
     character = campaign.characters.get(combatant.character_id or "")
     if character is not None:
         return {**seen, "pc": True, **vitals(character)}
@@ -37,17 +44,6 @@ def _fighter(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
         "health": health(combatant.hit_points, combatant.hit_points_max),
         "conditions": list(combatant.conditions),
     }
-
-
-def health(hit_points: int | None, maximum: int | None) -> str | None:
-    """How hurt a creature looks: unhurt, hurt, bloodied (half or less) or down."""
-    if hit_points is None or not maximum:
-        return None
-    if hit_points <= 0:
-        return "down"
-    if hit_points >= maximum:
-        return "unhurt"
-    return "bloodied" if hit_points * 2 <= maximum else "hurt"
 
 
 def journal(campaign: Campaign, limit: int = JOURNAL_EVENTS) -> Json:

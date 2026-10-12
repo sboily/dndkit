@@ -10,6 +10,7 @@ from gamemaster_mcp.game.tables import (
     ENCOUNTER_MULTIPLIERS,
     FULL_CASTER_SLOTS,
     PACT_SLOTS,
+    SLOW_RACES,
     XP_BY_CHALLENGE,
     XP_FOR_LEVEL,
 )
@@ -44,6 +45,12 @@ def experience_per_character(total_xp: int, party_size: int) -> int:
     if party_size < 1:
         raise ValueError("party_size must be at least 1")
     return total_xp // party_size
+
+
+def base_speed(race: str) -> int:
+    """Walking speed for a race: 25 for dwarves, halflings and gnomes, else 30."""
+    words = set(normalize(race).split())
+    return 25 if words & SLOW_RACES else 30
 
 
 def class_key(class_name: str) -> str | None:

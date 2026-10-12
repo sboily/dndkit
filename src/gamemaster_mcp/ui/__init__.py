@@ -12,7 +12,14 @@ from importlib.resources import files
 
 _MARKER = "<!--gm:shared-->"
 _STYLES = ("shared.css", "components.css")
-_SCRIPTS = ("words.js", "shared.js", "dicetray.js", "components.js")
+_SCRIPTS = (
+    "words.js",
+    "shared.js",
+    "dicetray.js",
+    "battlemap.js",
+    "backstage.js",
+    "components.js",
+)
 _WEB = '<script>window.GM_WEB = { feed: "feed" };</script>\n'
 
 

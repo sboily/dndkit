@@ -34,6 +34,37 @@
 .combat .defeated { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .combat .defeated:empty { display: none; }
 .combat .defeated .gone { text-decoration: line-through; }
+.combat .pos { font-size: 11px; color: var(--gold); margin-left: 6px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.combat .map { margin: 2px 0 8px; }
+
+/* Battle map */
+.battlemap { display: block; width: 100%; height: auto; max-height: 70vh; }
+.battlemap .floor { fill: var(--card-2); }
+.battlemap .grid { stroke: var(--line); stroke-width: 1; fill: none; }
+.battlemap .wall { fill: color-mix(in srgb, var(--text) 62%, var(--card)); }
+.battlemap .rough { fill: url(#gm-rough); }
+.battlemap .hatch { stroke: color-mix(in srgb, var(--amber) 60%, transparent); stroke-width: 1.4; }
+.battlemap .reach { fill: color-mix(in srgb, var(--gold) 13%, transparent); }
+.battlemap .label { fill: var(--muted); font: 600 11px var(--sans); text-anchor: middle; }
+.battlemap .label.row { text-anchor: end; }
+.battlemap .token circle { stroke: var(--card); stroke-width: 2.5; }
+.battlemap .token text { font: 700 13px var(--sans); text-anchor: middle; pointer-events: none; }
+.battlemap .token.party circle { fill: var(--gold); }
+.battlemap .token.party text { fill: #1d1a22; }
+.battlemap .token.foe circle { fill: var(--red); }
+.battlemap .token.foe text { fill: #fff; }
+.battlemap .token.foe.hurt circle { fill: color-mix(in srgb, var(--red) 80%, #000); }
+.battlemap .token.foe.bloodied circle { fill: color-mix(in srgb, var(--red) 60%, #000); }
+.battlemap .token.current circle { stroke: var(--gold-hi); stroke-width: 4; animation: turn 1.4s ease-in-out infinite; }
+.battlemap .token.me circle { stroke: var(--text); stroke-width: 3; stroke-dasharray: 5 3; }
+.battlemap .token.down { opacity: .35; }
+.battlemap .life { fill: rgba(0,0,0,.35); }
+.battlemap .life-left { fill: var(--green); }
+.battlemap .life-left.mid { fill: var(--amber); }
+.battlemap .life-left.low { fill: #fff; }
+@keyframes turn { 50% { stroke-opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .battlemap .token.current circle { animation: none; } }
+
 .health { padding: 1px 8px; border-radius: 999px; font-size: 11px; }
 .health.unhurt { background: color-mix(in srgb, var(--green) 18%, transparent); color: var(--green); }
 .health.hurt { background: color-mix(in srgb, var(--amber) 20%, transparent); color: var(--amber); }

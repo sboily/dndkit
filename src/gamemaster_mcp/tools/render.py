@@ -17,7 +17,7 @@ from gamemaster_mcp.models import (
     SessionNote,
 )
 from gamemaster_mcp.storage import CampaignEntry
-from gamemaster_mcp.tools import render_combat
+from gamemaster_mcp.tools import render_combat, render_map
 
 
 def character_line(c: Character) -> str:
@@ -41,7 +41,8 @@ def character_sheet(c: Character) -> str:
         f"Player: {c.player_name or 'unknown'}. Background: {c.background or 'none'}. "
         f"Alignment: {c.alignment or 'none'}.",
         f"Abilities: {scores}.",
-        f"Temporary HP {c.temporary_hit_points}. Proficiency +{c.proficiency_bonus}. "
+        f"Speed {c.speed} ft. Temporary HP {c.temporary_hit_points}. "
+        f"Proficiency +{c.proficiency_bonus}. "
         f"Inspiration: {'yes' if c.inspiration else 'no'}. XP {c.experience_points}.",
     ]
     if c.conditions or c.exhaustion:
@@ -51,7 +52,12 @@ def character_sheet(c: Character) -> str:
         lines.append(
             f"Death saves: {c.death_saves_success} successes, {c.death_saves_failure} failures."
         )
-    optional = {
+    lines += [f"{label}: {value}" for label, value in _sheet_extras(c).items() if value]
+    return "\n".join(lines)
+
+
+def _sheet_extras(c: Character) -> dict[str, str | None]:
+    return {
         "Description": c.description,
         "Bio": c.bio,
         "Inventory": ", ".join(f"{i.name} x{i.quantity}" for i in c.inventory),
@@ -67,8 +73,6 @@ def character_sheet(c: Character) -> str:
         "Languages": ", ".join(c.languages),
         "Notes": c.notes,
     }
-    lines += [f"{label}: {value}" for label, value in optional.items() if value]
-    return "\n".join(lines)
 
 
 def npc(n: NPC) -> str:
@@ -139,6 +143,9 @@ def game_state(campaign: Campaign) -> str:
     ]
     if state.in_combat:
         lines.append("In combat. " + render_combat.initiative(campaign))
+        where = render_map.positions(campaign)
+        if where:
+            lines.append(where)
     if state.notes:
         lines.append(f"Notes: {state.notes}")
     return "\n".join(lines)
