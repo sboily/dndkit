@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 (2026-10-12)
 
 A server of its own: dndkit over HTTP, in Docker; the players' QR codes in
 roomkit-ui.
