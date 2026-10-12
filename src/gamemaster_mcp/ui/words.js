@@ -59,6 +59,14 @@ const I18N = (() => {
     unknownLink: ["This link no longer matches a character of the active campaign.",
       "Ce lien ne correspond plus à un personnage de la campagne active."],
     offline: ["Connection lost, reconnecting…", "Connexion perdue, reconnexion…"],
+    // Skills, by their English names (PHB ch. 7) and the French translation.
+    Acrobatics: ["Acrobatics", "Acrobaties"], "Animal Handling": ["Animal Handling", "Dressage"],
+    Arcana: ["Arcana", "Arcanes"], Athletics: ["Athletics", "Athlétisme"], Deception: ["Deception", "Tromperie"],
+    History: ["History", "Histoire"], Insight: ["Insight", "Perspicacité"], Intimidation: ["Intimidation", "Intimidation"],
+    Investigation: ["Investigation", "Investigation"], Medicine: ["Medicine", "Médecine"], Nature: ["Nature", "Nature"],
+    Perception: ["Perception", "Perception"], Performance: ["Performance", "Représentation"],
+    Persuasion: ["Persuasion", "Persuasion"], Religion: ["Religion", "Religion"],
+    "Sleight of Hand": ["Sleight of Hand", "Escamotage"], Stealth: ["Stealth", "Discrétion"], Survival: ["Survival", "Survie"],
     secretRoll: ["Secret roll, for the game master", "Jet secret, pour le MJ"],
     viewFailed: ["This part failed: see the server log.", "Cette partie a échoué : voir le journal du serveur."],
     // Adventure log entries.

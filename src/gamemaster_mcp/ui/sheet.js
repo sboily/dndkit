@@ -8,6 +8,7 @@ function CharacterSheet() {
   const signed = (n) => (n >= 0 ? `+${n}` : `${n}`);
   const section = (title, ...content) => h("div", { class: "section" }, h("h4", {}, title), ...content);
   const chips = (items) => h("div", { class: "list" }, items.map((item) => h("span", { class: "chip" }, item)));
+  const bonus = (name, value) => (value === null || value === undefined ? name : `${name} ${signed(value)}`);
   const stat = ([label, value]) => h("div", { class: "stat" }, h("b", {}, value), h("span", {}, label));
   const el = h("div", { class: "card sheet" }, h("div", { class: "empty" }, "…"));
 
@@ -56,7 +57,8 @@ function CharacterSheet() {
         chips(c.race.traits)) : null,
       c.features.length ? section(t("features"), chips(c.features)) : null,
       c.skills.length || c.saves.length ? section(t("proficiencies"),
-        chips([...c.skills, ...c.saves.map((save) => `${t("save")} ${save}`)])) : null,
+        chips([...c.skills.map((s) => bonus(t(s.name), s.bonus)),
+          ...c.saves.map((s) => bonus(`${t("save")} ${t(s.name)}`, s.bonus))])) : null,
       c.languages.length ? section(t("languages"), chips(c.languages)) : null,
       c.description || c.bio ? section(t("story"),
         c.description ? h("p", { class: "small appearance" }, c.description) : null,

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import registry, rules
+from gamemaster_mcp.game import proficiencies, registry, rules
 from gamemaster_mcp.models import ABILITIES, Campaign, Character, now
 
 KIND = "character"
@@ -49,6 +49,8 @@ def create(campaign: Campaign, character: Character) -> Character:
     character.character_class = cls.model_copy(update={"hit_dice": f"1d{die}"})
     character.hit_dice_remaining = f"{cls.level}d{die}"
     character.proficiency_bonus = rules.proficiency_bonus(cls.level)
+    if not character.saving_throw_proficiencies:
+        character.saving_throw_proficiencies = rules.class_saves(cls.name)
     if not character.spell_slots:
         character.spell_slots = rules.spell_slots_for(cls.name, cls.level) or {}
     return registry.add(campaign.characters, character, KIND)
@@ -85,7 +87,7 @@ def slots_still_used(character: Character, slots: Mapping[int, int]) -> dict[int
 
 def spellcasting(character: Character) -> Spellcasting | None:
     """Spell attack bonus and save DC (PHB ch. 10); None for a character who casts nothing."""
-    ability = _ability_name(character.spellcasting_ability) or rules.casting_ability(
+    ability = rules.ability_name(character.spellcasting_ability) or rules.casting_ability(
         character.character_class.name
     )
     if ability is None or ability not in character.abilities:
@@ -98,18 +100,6 @@ def initiative(character: Character) -> int:
     """The initiative bonus: the Dexterity modifier."""
     dexterity = character.abilities.get("dexterity")
     return dexterity.mod if dexterity else 0
-
-
-_FRENCH_ABILITIES = {"for": "strength", "sag": "wisdom"}
-
-
-def _ability_name(text: str | None) -> str | None:
-    """ "INT", "Intelligence" or French "Sagesse" -> the ability's name."""
-    if not text:
-        return None
-    wanted = registry.normalize(text)[:3]
-    found = next((a for a in ABILITIES if a.startswith(wanted)), None)
-    return found or _FRENCH_ABILITIES.get(wanted)
 
 
 def remove(campaign: Campaign, ref: str) -> Character:
@@ -133,6 +123,12 @@ def update(
         # Back from 0 HP by hand (a spell that raises the dead): a fresh start.
         edits.update(death_saves_success=0, death_saves_failure=0)
         edits.setdefault("conditions", [c for c in character.conditions if c != "unconscious"])
+    if "skill_proficiencies" in edits:
+        edits["skill_proficiencies"] = proficiencies.skills(edits["skill_proficiencies"])
+    if "saving_throw_proficiencies" in edits:
+        edits["saving_throw_proficiencies"] = proficiencies.saves(
+            edits["saving_throw_proficiencies"]
+        )
     if abilities:
         unknown = sorted(set(abilities) - set(ABILITIES))
         if unknown:

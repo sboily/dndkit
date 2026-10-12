@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from gamemaster_mcp.game.tables import (
     CASTING_ABILITY,
     CLASS_ALIASES,
+    CLASS_SAVES,
     CLASSES,
     DIFFICULTY_THRESHOLDS,
     ENCOUNTER_MULTIPLIERS,
@@ -15,7 +16,10 @@ from gamemaster_mcp.game.tables import (
     XP_BY_CHALLENGE,
     XP_FOR_LEVEL,
 )
+from gamemaster_mcp.models import ABILITIES
 from gamemaster_mcp.text import normalize
+
+_FRENCH_ABILITIES = {"for": "strength", "sag": "wisdom"}
 
 
 @dataclass(frozen=True)
@@ -175,3 +179,18 @@ def _multiplier_step(monsters: int) -> int:
         if monsters <= upper:
             return step
     return 6
+
+
+def ability_name(text: str | None) -> str | None:
+    """ "INT", "Intelligence" or French "Sagesse" -> the ability's name."""
+    if not text:
+        return None
+    wanted = normalize(text)[:3]
+    found = next((a for a in ABILITIES if a.startswith(wanted)), None)
+    return found or _FRENCH_ABILITIES.get(wanted)
+
+
+def class_saves(class_name: str) -> list[str]:
+    """The saving throws a class is proficient in; none for a class the rules do not know."""
+    key = class_key(class_name)
+    return list(CLASS_SAVES[key]) if key else []

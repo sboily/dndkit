@@ -8,7 +8,7 @@ plan, the game master's notes.
 
 from typing import Any
 
-from gamemaster_mcp.game import characters, seating
+from gamemaster_mcp.game import characters, proficiencies, seating
 from gamemaster_mcp.game.dice import DiceLog, LoggedRoll
 from gamemaster_mcp.game.tables import XP_FOR_LEVEL
 from gamemaster_mcp.models import ABILITIES, Campaign, Character, Item, Spell
@@ -137,8 +137,8 @@ def character(campaign: Campaign, ref: str) -> Json:
         ],
         "spells": [_spell(s) for s in sorted(c.spells_known, key=lambda s: (s.level, s.name))],
         "features": c.features_and_traits,
-        "skills": c.skill_proficiencies,
-        "saves": c.saving_throw_proficiencies,
+        "skills": [{"name": p.name, "bonus": p.bonus} for p in proficiencies.skill_bonuses(c)],
+        "saves": [{"name": p.name[:3], "bonus": p.bonus} for p in proficiencies.save_bonuses(c)],
         "languages": c.languages,
         **vitals(c),
     }

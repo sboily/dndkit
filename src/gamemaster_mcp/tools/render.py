@@ -4,7 +4,7 @@ No emoji and little markup: a voice model reads these, then says what
 matters in its own words.
 """
 
-from gamemaster_mcp.game import characters, seating
+from gamemaster_mcp.game import characters, proficiencies, seating
 from gamemaster_mcp.game.spellbook import describe_slots
 from gamemaster_mcp.models import (
     ABILITIES,
@@ -70,12 +70,21 @@ def _sheet_extras(c: Character) -> dict[str, str | None]:
             f"{', prepared' if s.prepared else ''})"
             for s in sorted(c.spells_known, key=lambda s: (s.level, s.name))
         ),
-        "Skills": ", ".join(c.skill_proficiencies),
-        "Saving throws": ", ".join(c.saving_throw_proficiencies),
+        "Skills": _listed(proficiencies.skill_bonuses(c)),
+        "Saving throws": _listed(proficiencies.save_bonuses(c), short=True),
         "Features": ", ".join(c.features_and_traits),
         "Languages": ", ".join(c.languages),
         "Notes": c.notes,
     }
+
+
+def _listed(shown: list[proficiencies.Proficiency], short: bool = False) -> str:
+    """ "Stealth +5, Arcana +4": a bonus where the rules know it."""
+    return ", ".join(
+        (p.name[:3].upper() if short else p.name)
+        + (f" {p.bonus:+d}" if p.bonus is not None else "")
+        for p in shown
+    )
 
 
 def npc(n: NPC) -> str:

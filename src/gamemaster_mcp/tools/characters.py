@@ -126,6 +126,10 @@ def update_character(
     inspiration: Annotated[bool | None, Field(description="Has inspiration")] = None,
     exhaustion: Annotated[int | None, Field(ge=0, le=6, description="Exhaustion level")] = None,
     notes: Text = None,
+    skills: Annotated[list[str] | None, Field(description="Proficient skills")] = None,
+    saving_throws: Annotated[list[str] | None, Field(description="Proficient saves: DEX")] = None,
+    languages: Annotated[list[str] | None, Field(description="Languages spoken")] = None,
+    features: Annotated[list[str] | None, Field(description="Features, traits, feats")] = None,
     strength: NewScore = None,
     dexterity: NewScore = None,
     constitution: NewScore = None,
@@ -134,7 +138,8 @@ def update_character(
     charisma: NewScore = None,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Set character sheet values (absolute). For damage or healing use change_hit_points."""
+    """Set character sheet values (absolute; a list replaces the old one). For damage or
+    healing use change_hit_points. Skills and saves take English or French names."""
     changes = provided(
         name=name,
         player_name=player_name,
@@ -151,6 +156,10 @@ def update_character(
         inspiration=inspiration,
         exhaustion=exhaustion,
         notes=notes,
+        skill_proficiencies=skills,
+        saving_throw_proficiencies=saving_throws,
+        languages=languages,
+        features_and_traits=features,
     )
     abilities = provided(
         strength=strength,

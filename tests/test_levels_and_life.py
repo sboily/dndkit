@@ -78,11 +78,11 @@ async def test_create_character_reports_a_level_5_caster_right(client: Client) -
 def test_hit_dice_heal_on_a_short_rest_and_half_come_back_on_a_long_one() -> None:
     campaign = make_campaign()
     fighter = make_character(
-        "Borin", hp=40, character_class=CharacterClass(name="Fighter", level=5)
+        "Borin", hp=60, character_class=CharacterClass(name="Fighter", level=5)
     )
     fighter.abilities = {"constitution": AbilityScore(score=14)}
     characters.create(campaign, fighter)
-    fighter.hit_points_current = 10
+    fighter.hit_points_current = 10  # 3d10 + 6 heals 9 to 36: never past the maximum
     rested = rests.rest(campaign, ["Borin"], "short", hit_dice=3)
     faces = rested.rolls[0].terms[0].faces
     assert fighter.hit_points_current == 10 + sum(face + 2 for face in faces)

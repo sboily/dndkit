@@ -70,23 +70,36 @@ CLASSES: dict[str, tuple[int, str]] = {
     "wizard": (6, "full"),
 }
 
-# Class names as players say them, French included (both translations of warlock).
+# Class names as players say them, French included, in both genders (and both
+# translations of warlock).
 CLASS_ALIASES: dict[str, str] = {
     "artificier": "artificer",
+    "artificiere": "artificer",
     "barbare": "barbarian",
     "barde": "bard",
     "clerc": "cleric",
     "pretre": "cleric",
+    "pretresse": "cleric",
     "druide": "druid",
+    "druidesse": "druid",
     "guerrier": "fighter",
+    "guerriere": "fighter",
     "moine": "monk",
+    "moniale": "monk",
+    "paladine": "paladin",
     "rodeur": "ranger",
+    "rodeuse": "ranger",
     "roublard": "rogue",
+    "roublarde": "rogue",
     "voleur": "rogue",
+    "voleuse": "rogue",
     "ensorceleur": "sorcerer",
+    "ensorceleuse": "sorcerer",
     "occultiste": "warlock",
     "sorcier": "warlock",
+    "sorciere": "warlock",
     "magicien": "wizard",
+    "magicienne": "wizard",
     "mage": "wizard",
 }
 
@@ -143,4 +156,61 @@ CASTING_ABILITY: dict[str, str] = {
     "sorcerer": "charisma",
     "warlock": "charisma",
     "wizard": "intelligence",
+}
+
+
+# PHB ch. 7: each skill and its ability.
+SKILLS: dict[str, str] = {
+    "Acrobatics": "dexterity",
+    "Animal Handling": "wisdom",
+    "Arcana": "intelligence",
+    "Athletics": "strength",
+    "Deception": "charisma",
+    "History": "intelligence",
+    "Insight": "wisdom",
+    "Intimidation": "charisma",
+    "Investigation": "intelligence",
+    "Medicine": "wisdom",
+    "Nature": "intelligence",
+    "Perception": "wisdom",
+    "Performance": "charisma",
+    "Persuasion": "charisma",
+    "Religion": "intelligence",
+    "Sleight of Hand": "dexterity",
+    "Stealth": "dexterity",
+    "Survival": "wisdom",
+}
+
+# The French names (official translation) of the skills that change.
+SKILL_ALIASES: dict[str, str] = {
+    "acrobaties": "Acrobatics",
+    "dressage": "Animal Handling",
+    "arcanes": "Arcana",
+    "athletisme": "Athletics",
+    "tromperie": "Deception",
+    "histoire": "History",
+    "perspicacite": "Insight",
+    "intuition": "Insight",
+    "medecine": "Medicine",
+    "representation": "Performance",
+    "escamotage": "Sleight of Hand",
+    "discretion": "Stealth",
+    "survie": "Survival",
+}
+
+# PHB ch. 3: the two saving throws each class is proficient in.
+CLASS_SAVES: dict[str, tuple[str, str]] = {
+    "artificer": ("constitution", "intelligence"),
+    "barbarian": ("strength", "constitution"),
+    "bard": ("dexterity", "charisma"),
+    "cleric": ("wisdom", "charisma"),
+    "druid": ("intelligence", "wisdom"),
+    "fighter": ("strength", "constitution"),
+    "monk": ("strength", "dexterity"),
+    "paladin": ("wisdom", "charisma"),
+    "ranger": ("strength", "dexterity"),
+    "rogue": ("dexterity", "intelligence"),
+    "sorcerer": ("constitution", "charisma"),
+    "warlock": ("wisdom", "charisma"),
+    "wizard": ("intelligence", "wisdom"),
 }
