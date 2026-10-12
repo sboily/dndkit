@@ -10,14 +10,20 @@ The Gamemaster MCP server aims to be the ultimate AI-assisted Dungeon Master for
 
 Built on FastMCP, the server provides structured data models and intelligent tools to manage all aspects of a D&D campaign while enabling natural language interaction through MCP clients.
 
-## Current state (0.2.0)
+## Current state (0.4.0)
 
 What the server does today is in the [README](../README.md), how it is built in
 [CLAUDE.md](../CLAUDE.md), how campaigns are stored in
 [STORAGE_STRUCTURE.md](STORAGE_STRUCTURE.md), and what changed from upstream
-in the [CHANGELOG](../CHANGELOG.md). Spell slots (`use_spell_slot`) and
-relative damage and healing (`bulk_update_characters`) from Phase 1 below are
-done; the rest of the roadmap is upstream's and still open.
+in the [CHANGELOG](../CHANGELOG.md).
+
+From the roadmap below, done: the advanced combat tools (damage and healing
+with `change_hit_points`, conditions, spell slots, legendary actions, a battle
+map), rule reminders (`lookup_rule`), a bestiary (`save_monster`,
+`get_monsters`), and automated level up (`level_up`). The rest is upstream's
+and still open. Closer at hand, for a voice game master: concentration,
+spending hit dice on a short rest, skill and saving throw proficiencies set by
+the model, condition durations, and secret rolls kept off the players' screens.
 
 ---
 

@@ -64,7 +64,9 @@ a new key is made at the next start.
 
 Upstream saves keyed entities by name and kept one global
 `events/adventure_log.json` for every campaign. They load as they are: entities
-are re-keyed by ID, unknown keys (`encounters`, `active_quests`,
-`current_turn`) are ignored, and the file is rewritten in the current format at
-the first change. The global adventure log is not imported, since nothing
+are re-keyed by ID, unknown keys (`active_quests`, `current_turn`) are
+ignored, an initiative order of free-form entries keeps those that can still
+take a turn (an initiative written "15 (Dex)" reads 15), and the file is
+rewritten in the current format at the first change. Upstream's `encounters`
+was always empty, and loads as no planned encounter. The global adventure log is not imported, since nothing
 records which campaign its events belonged to.

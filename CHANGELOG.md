@@ -109,8 +109,42 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   `tools/screen_views.py` to the `views` package.
 - `CampaignStore` and `DiceLog` take a change callback.
 - New dependencies: `starlette` and `uvicorn` (already installed with FastMCP),
-  `segno` for the QR codes, `pyyaml` for skill frontmatter; `httpx` and
-  `types-pyyaml` for development.
+  `segno` for the QR codes, `pyyaml` for skill frontmatter; `httpx`,
+  `types-pyyaml` and `pytest-cov` for development. Every dependency stops
+  before its next major version (`uvx --from git+...` installs without the lock).
+- `remove_from_campaign` works in two calls, like `delete_campaign`: the
+  first names what would go and gives a code. A removed character leaves the
+  running fight.
+- `start_combat` with an encounter alone brings the characters at the table,
+  initiative rolled and shown on the dice tray.
+- `get_campaign_info` gives the setting's first 1,500 characters (`full` for
+  the rest); `get_game_state` shows each character's level, and
+  `update_game_state` no longer takes a party level nobody kept up.
+- `next_turn` tells a down character's turn to roll a death save;
+  `save_monster` says when AC and HP come from the challenge rating.
+- Campaign names compare without accents, like every other name.
+- The views every player may see (dice, party, seats, a sheet) moved from
+  `views.widgets` to `views.everyone`, which holds no secret.
+
+### Fixed
+
+- Creating or linking goes by whole names: saving a "Wolf" no longer rewrote
+  the "Dire Wolf", a "Wolf" combatant no longer fought on Wolfgang's sheet, and
+  "Thorn" hits the character Thorn before the "Thornback Boar".
+- A fallen ally no longer counts as a foe overcome (XP); a fight whose last
+  combatant was taken out closes with `end_combat`.
+- A character created above level 1 gets its level's proficiency bonus and hit
+  dice (a level 5 wizard casts at +6, DC 14); `level_up` adds one hit die
+  instead of restoring them all; healing no longer raises the dead.
+- The backstage refuses DNS rebinding and proxied requests; a hidden foe
+  overcome no longer shows on the players' screens.
+- A web view that fails no longer cuts the others off; a refused feed is tried
+  again instead of claiming to reconnect.
+- A bad file in the campaigns folder (dangling link, absurd nesting) no longer
+  stops the server; a relative `GAMEMASTER_STORAGE_DIR` is refused instead of
+  resolved against the client's working directory; a non-UTF-8 setting file
+  or an accented confirmation code is a clear error.
+- Old mid-combat saves with odd initiative entries load.
 
 ## 0.3.0
 

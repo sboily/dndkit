@@ -93,9 +93,9 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 59 tool schemas weigh about 8,200 tokens by roomkit's own estimate, just
+The 59 tool schemas weigh about 8,350 tokens by roomkit's own estimate, just
 over the 8,000 at which roomkit hides tools behind `find_tools` by default:
-enable the skills below (their tools then wait for them: about 6,650 tokens)
+enable the skills below (their tools then wait for them: about 6,750 tokens)
 or raise roomkit's threshold (`tool_search_threshold_tokens`). Optional
 parameters are advertised without their `null` alternative to save room.
 Put the system prompt below in the assistant's personality.
@@ -118,7 +118,7 @@ at both skills' URIs, for hosts that only read resources.
 
 A skill's `allowed_tools` frontmatter is roomkit's: roomkit keeps those tools
 out of the catalogue, and out of its token count, until the model activates
-the skill. With both skills on, the catalogue weighs about 6,650 tokens. To
+the skill. With both skills on, the catalogue weighs about 6,750 tokens. To
 use them in roomkit-ui before it speaks the Skills extension, add this
 repository (or its checkout) as a skill source in Settings → Skills: they
 live in `src/gamemaster_mcp/skills/`.
@@ -178,9 +178,9 @@ The Gamemaster tools hold the campaign. Trust them over your memory:
   to create: save_monster with a challenge rating fitting the party (and
   boss for the boss), then plan_encounter to check the fight's difficulty.
   Spend a boss's legendary actions and resistances with use_legendary.
-- Ask before removing anything with remove_from_campaign. To delete a
-  campaign, call delete_campaign, tell the players what would be lost, and call
-  it again with the code only after a clear yes.
+- remove_from_campaign and delete_campaign work in two calls: the first
+  says what would be lost and gives a code; ask the players, and call again
+  with the code only after a clear yes.
 
 Starting a new campaign, run a short session zero, one question at a time:
 the campaign's name and pitch, then each player's character (name, race,
@@ -328,13 +328,13 @@ from where it can be put back by hand. A wrong code cancels the request.
 
 ## On-screen widgets (MCP Apps)
 
-Five tools carry an MCP App (`_meta.ui.resourceUri`): the client opens their
+Six tools carry an MCP App (`_meta.ui.resourceUri`): the client opens their
 page next to the conversation.
 
 | Tool | Widget |
 | --- | --- |
 | `roll_dice` | Dice tray: each die tumbles and lands on its face; a natural 20 glows, a natural 1 shakes; with advantage the discarded d20 fades out; recent rolls below. |
-| `start_combat` | Combat tracker, live: the battle map when there is one, initiative order, current turn, hit point bars that flash on damage or healing, AC, conditions, the defeated and their XP. |
+| `start_combat`, `set_battlefield` | Combat tracker, live: the battle map when there is one, initiative order, current turn, hit point bars that flash on damage or healing, AC, conditions, the defeated and their XP. |
 | `get_game_state` | Party board, live: location, date, funds, every character's hit points, spell slots, conditions and death saves, quest progress, combat banner. |
 | `seat_players` | The table, live: the players seated around it with their characters, newcomers without one yet, absent players and characters nobody plays. |
 | `get_character` | Character sheet, live: hit points, AC, proficiency, XP to next level, abilities, conditions, spell slots, spells, inventory. |
@@ -378,9 +378,12 @@ the game goes on without the pages.
   skips the widgets' own `get_screen_data` polling. A call the client refuses
   before sending it (roomkit checks required arguments) never reaches the
   server, so it is not there: look at the client's log for those.
-- **The backstage** opens only from the computer running the server (a
-  loopback peer). A reverse proxy or tunnel running on that computer would make
-  every visitor look local: do not put one in front of the pages.
+- **The backstage** opens only from the computer running the server: a
+  loopback peer, asking for this server by name (`localhost`, its address or
+  `GAMEMASTER_WEB_URL`'s host), so a web page whose domain points at this
+  computer (DNS rebinding) is refused. Requests carrying proxy headers are
+  refused too, but a reverse proxy or tunnel on that computer that adds none
+  would make every visitor look local: do not put one in front of the pages.
 - **Read-only**: the pages never change the game; it changes through the
   conversation, so the model always knows the state.
 - **Phones** need `GAMEMASTER_WEB_HOST=0.0.0.0` and the same network. The table
