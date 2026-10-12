@@ -14,6 +14,7 @@ APP_TOOLS = {
     "roll_dice": "ui://gamemaster/dice.html",
     "start_combat": "ui://gamemaster/combat.html",
     "get_game_state": "ui://gamemaster/party.html",
+    "seat_players": "ui://gamemaster/seating.html",
     "get_character": "ui://gamemaster/character.html",
 }
 
@@ -47,6 +48,11 @@ async def test_screen_data_for_each_widget(client: Client) -> None:
     await call(client, "create_character", name="Aria", character_class="Wizard", race="Elf")
     party = json.loads(await call(client, "get_screen_data", view="party"))
     assert party["characters"][0]["name"] == "Aria" and party["in_combat"] is False
+    await call(client, "seat_players", players=[{"player": "Ana", "character": "aria"}])
+    seats = json.loads(await call(client, "get_screen_data", view="seating"))
+    assert seats["seats"] == [
+        {"player": "Ana", "characters": [{"name": "Aria", "summary": "Elf Wizard 1"}]}
+    ]
     sheet = json.loads(await call(client, "get_screen_data", view="character", name="aria"))
     assert sheet["abilities"][0] == {"key": "str", "score": 10, "mod": 0}
     assert "needs a name" in await call_error(client, "get_screen_data", view="character")

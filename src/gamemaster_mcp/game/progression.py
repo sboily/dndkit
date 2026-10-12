@@ -3,17 +3,20 @@
 from collections.abc import Sequence
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import characters, registry, rules
+from gamemaster_mcp.game import characters, registry, rules, seating
 from gamemaster_mcp.game.spellbook import describe_slots
 from gamemaster_mcp.models import Campaign, Character, now
 
 
 def award_experience(campaign: Campaign, refs: Sequence[str], total_xp: int) -> list[str]:
-    """Split *total_xp* evenly between the named characters, or the whole party."""
+    """Split *total_xp* evenly between the named characters, else those at the table.
+
+    Without a roll call, the whole party is at the table (``seating``).
+    """
     targets = (
         registry.find_many(campaign.characters, refs, characters.KIND)
         if refs
-        else list(campaign.characters.values())
+        else seating.present_characters(campaign)
     )
     if not targets:
         raise InvalidChangeError("There is no character to award experience to.")

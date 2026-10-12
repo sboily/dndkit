@@ -19,15 +19,17 @@
       const combat = Views.combat();
       const heading = Views.campaign();
       document.getElementById("heading").append(heading.el);
+      const seating = Views.seating();
       const party = Views.party({ quests: false, campaign: false });
       const dice = Views.dice();
       const journal = Views.journal();
       const join = Views.join();
-      document.getElementById("main").append(combat.el, party.el);
+      document.getElementById("main").append(combat.el, party.el, seating.el);
       document.getElementById("side").append(dice.el, journal.el, join.el);
 
       GM.start(() => {
         GM.live("party", null, heading.render);
+        GM.live("seating", null, seating.render);
         GM.live("combat", null, (data) => { combat.el.hidden = !data.in_combat; combat.render(data); });
         GM.live("party", null, (data) => { document.title = data.campaign; party.render(data); });
         GM.live("dice", null, dice.render);

@@ -20,17 +20,19 @@
       const combat = Views.combat();
       const heading = Views.campaign();
       document.getElementById("heading").append(heading.el);
+      const seating = Views.seating();
       const party = Views.party({ campaign: false });
       const backstage = Views.backstage();
       const dice = Views.dice();
       const journal = Views.journal();
 
-      document.getElementById("play").append(combat.el, party.el);
+      document.getElementById("play").append(combat.el, party.el, seating.el);
       document.getElementById("plans").append(backstage.el);
       document.getElementById("side").append(dice.el, journal.el);
 
       GM.start(() => {
         GM.live("party", null, heading.render);
+        GM.live("seating", null, seating.render);
         GM.live("combat", null, (data) => { combat.el.hidden = !data.in_combat; combat.render(data); });
         GM.live("party", null, (data) => { document.title = `${GM.t("backstage")} — ${data.campaign}`; party.render(data); });
         GM.live("backstage", null, backstage.render);

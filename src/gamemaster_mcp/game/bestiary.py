@@ -5,7 +5,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import registry, rules
+from gamemaster_mcp.game import registry, rules, seating
 from gamemaster_mcp.models import Campaign, Encounter, EncounterGroup, Monster
 
 MONSTER_KIND = "monster"
@@ -77,8 +77,12 @@ def plan_encounter(
 
 
 def difficulty(campaign: Campaign, encounter: Encounter) -> rules.Difficulty | None:
-    """The encounter rated against the current party; None without characters."""
-    levels = [c.character_class.level for c in campaign.characters.values()]
+    """The encounter rated against the characters at the table; None without any.
+
+    Two players out of four make a medium fight a deadly one: absent players'
+    characters do not count, once there has been a roll call (``seating``).
+    """
+    levels = [c.character_class.level for c in seating.present_characters(campaign)]
     if not levels:
         return None
     xps = [

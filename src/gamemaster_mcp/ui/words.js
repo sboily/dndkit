@@ -33,6 +33,12 @@ const I18N = (() => {
     // How hurt a monster looks to the players.
     unhurt: ["unhurt", "indemne"], hurt: ["hurt", "blessé"], bloodied: ["bloodied", "en sang"],
     down: ["down", "hors de combat"],
+    // The table.
+    theTable: ["🪑 The table", "🪑 La table"], noCharacter: ["no character yet", "pas encore de personnage"],
+    nobodySeated: ["Nobody seated yet: the game master asks who is playing.",
+      "Personne n'est encore installé : le maître du jeu demande qui joue."],
+    absentees: ["Absent", "Absents"], knownPlayers: ["Known players", "Joueurs connus"],
+    noPlayer: ["No player", "Sans joueur"], away: ["absent", "absent"], unplayed: ["no player", "sans joueur"],
     // Web pages.
     yourTurn: ["Your turn!", "À toi de jouer !"], journal: ["Adventure log", "Journal"],
     noEvent: ["Nothing logged yet.", "Rien de noté pour l'instant."], from: ["from {name}", "confiée par {name}"],

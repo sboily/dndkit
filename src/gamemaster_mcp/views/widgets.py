@@ -6,7 +6,7 @@ may see is built separately, field by field, in ``views.public``.
 
 from typing import Any
 
-from gamemaster_mcp.game import characters
+from gamemaster_mcp.game import characters, seating
 from gamemaster_mcp.game.dice import DiceLog, RollResult
 from gamemaster_mcp.game.tables import XP_FOR_LEVEL
 from gamemaster_mcp.models import ABILITIES, Campaign, Character, Combatant
@@ -82,7 +82,13 @@ def party(campaign: Campaign) -> Json:
         "round": state.combat_round,
         "current": current.name if current else None,
         "characters": [
-            {"name": c.name, "summary": _summary(c), **vitals(c)}
+            {
+                "name": c.name,
+                "summary": _summary(c),
+                "player": c.player_name,
+                "present": seating.is_present(campaign, c),
+                **vitals(c),
+            }
             for c in sorted(campaign.characters.values(), key=lambda c: c.name)
         ],
         "quests": [
@@ -90,6 +96,34 @@ def party(campaign: Campaign) -> Json:
             for q in campaign.quests.values()
             if q.status == "active"
         ],
+    }
+
+
+def seating_chart(campaign: Campaign) -> Json:
+    """Who sits at the table in seat order, with their characters, and who is missing."""
+    state = campaign.game_state
+    party = sorted(campaign.characters.values(), key=lambda c: c.name)
+    return {
+        "campaign": campaign.name,
+        "session": state.current_session,
+        "called": bool(state.players_present),
+        "seats": [
+            {
+                "player": player,
+                "characters": [
+                    {"name": c.name, "summary": _summary(c)}
+                    for c in seating.characters_of(campaign, player)
+                ],
+            }
+            for player in state.players_present
+        ],
+        # Before the roll call: the players known so far.
+        "absent": [
+            {"name": c.name, "player": c.player_name}
+            for c in party
+            if c.player_name and (not state.players_present or not seating.is_present(campaign, c))
+        ],
+        "unplayed": [c.name for c in party if not c.player_name],
     }
 
 

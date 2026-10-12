@@ -89,6 +89,7 @@ def game_master(sources: Sources) -> Views:
 def _shared(sources: Sources) -> Views:
     return {
         "party": sources.reading(widgets.party),
+        "seating": sources.reading(widgets.seating_chart),
         "journal": sources.reading(public.journal),
         "dice": lambda: widgets.dice(sources.dice),
     }

@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The table</title>
+    <!--gm:shared-->
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="status"></div>
+    <script>
+      const table = Views.seating();
+      document.getElementById("app").append(table.el);
+      GM.start(() => GM.live("seating", null, table.render, 2500));
+    </script>
+  </body>
+</html>

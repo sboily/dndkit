@@ -44,6 +44,13 @@ class Participant(GameModel):
     armor_class: int | None = Field(default=None, ge=0, description="AC, if not in bestiary")
 
 
+class Seat(GameModel):
+    """A player at the table, as a tool call describes them."""
+
+    player: str = Field(min_length=1, description="Person's name, as their voice is named")
+    character: str | None = Field(default=None, description="Character they play")
+
+
 class GameState(GameModel):
     """Where the party is and what is happening right now."""
 
@@ -59,6 +66,7 @@ class GameState(GameModel):
     combat_round: int = Field(default=0, ge=0)
     defeated: list[Combatant] = Field(default_factory=list)  # fallen this combat
     encounter_id: str | None = None  # the planned encounter being fought
+    players_present: list[str] = Field(default_factory=list)  # the roll call, in seat order
     notes: str = ""
     updated_at: datetime = Field(default_factory=now)
 

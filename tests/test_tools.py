@@ -28,7 +28,7 @@ def walk_schemas(node: Any) -> list[dict[str, Any]]:
 
 async def test_tool_catalogue_suits_voice_clients(client: Client) -> None:
     tools = await client.list_tools()
-    assert len(tools) == 52
+    assert len(tools) == 53
     assert all(TOOL_NAME.fullmatch(t.name) for t in tools)
     catalogue = [{"name": t.name, "d": t.description, "p": t.input_schema} for t in tools]
     assert len(json.dumps(catalogue)) / 4 < TOOL_SEARCH_TOKENS

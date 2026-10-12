@@ -22,8 +22,18 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   data directory. Players never see NPC secrets, notes, planned encounters or
   monster statistics; a monster shows as unhurt, hurt, bloodied or down.
 
+- **Who plays**: `seat_players` (with a widget, the table drawn round) records
+  who is at the table tonight and which character each plays, from the names
+  roomkit-ui gives the voices. `get_game_state` says it; the server
+  instructions and the README's game master prompt open each session with a
+  roll call. Party cards show each character's player, absent ones faded.
+- The table also shows on the web pages (`/table/`, `/gm/`).
+
 ### Changed
 
+- After a roll call, encounter difficulty counts the characters at the table
+  only, and `award_experience` without names shares between them (the whole
+  party until then).
 - The widgets and the web pages share their renderers (`ui/components.js`,
   `ui/dicetray.js`) and words (`ui/words.js`); the JSON views moved from
   `tools/screen_views.py` to the `views` package.

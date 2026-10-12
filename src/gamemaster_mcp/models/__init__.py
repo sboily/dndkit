@@ -9,6 +9,7 @@ from gamemaster_mcp.models.campaign import (
     EventType,
     GameState,
     Participant,
+    Seat,
     SessionNote,
 )
 from gamemaster_mcp.models.character import (
@@ -44,6 +45,7 @@ __all__ = [
     "Location",
     "Monster",
     "Participant",
+    "Seat",
     "Quest",
     "QuestStatus",
     "Race",

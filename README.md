@@ -93,7 +93,7 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 52 tool schemas weigh about 6,400 tokens by roomkit's own estimate, under
+The 53 tool schemas weigh about 7,000 tokens by roomkit's own estimate, under
 the 8,000 at which roomkit hides tools behind `find_tools`; optional parameters
 are advertised without their `null` alternative to stay there. Put the system
 prompt below in the assistant's personality.
@@ -117,6 +117,18 @@ prompt below in the assistant's personality.
 ```markdown
 You are the game master of a Dungeons & Dragons 5e session played by voice.
 Speak the players' language, in short spoken sentences: no lists, no markdown.
+
+Several players sit around one microphone; each of their turns opens with
+who said it. Open every session the same way:
+- Greet the table and ask who is playing tonight. When a voice is not named
+  yet, ask who it is and call name_speaker.
+- Call seat_players with start_over and each player with their character.
+  Someone new gets a character first: create_character with their name as
+  player_name.
+- Remind the table where the last session ended (get_sessions), then play.
+Call seat_players again when someone arrives or leaves. A player's "I attack"
+is their character's action; speak to players by name and to characters in
+the story. Absent players' characters stay in the background.
 
 The Gamemaster tools hold the campaign. Trust them over your memory:
 - Before describing a character, place or quest, read it (get_character,
@@ -157,7 +169,7 @@ and a first quest, creating each with its tool as soon as you have it.
 | NPCs | `create_npc`, `get_npc`, `update_npc`, `list_npcs` |
 | Locations | `create_location`, `get_location`, `update_location`, `list_locations` |
 | Quests | `create_quest`, `get_quest`, `update_quest`, `list_quests` |
-| Table | `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition` |
+| Table | `seat_players` 🖥, `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition` |
 | Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `end_combat` |
 | Bestiary | `save_monster`, `get_monsters`, `plan_encounter`, `list_encounters` |
 | Journal | `add_session_note`, `get_sessions`, `add_event`, `get_events` |
@@ -169,6 +181,25 @@ and a first quest, creating each with its tool as soon as you have it.
 healing to characters and monsters alike, and changes nobody if one name is
 unknown. A tool that fails changes nothing, in memory or on disk.
 
+### Who plays
+
+roomkit-ui tells the voices apart (enrolled voices, or Meta Muse labels that
+the user or the model's `name_speaker` names) and opens each spoken turn with
+the speaker's name. The game keeps the rest: a character's `player_name` ties
+it to a person, and `seat_players` records who is at the table tonight, in
+seat order. Players are matched by name, case and accents aside; the server
+keeps no voice data. Once there has been a roll call:
+
+- `get_game_state` says who plays whom, who is absent and which characters
+  nobody plays, so the model finds its way after a break;
+- encounter difficulty (`plan_encounter`, `list_encounters`) counts the
+  characters at the table only: two players out of four turn a medium fight
+  into a deadly one;
+- `award_experience` without names shares the XP between the characters at
+  the table; name absent characters to include them.
+
+Without a roll call, the whole party counts as present.
+
 `delete_campaign` works in two calls. The first deletes nothing: it says what
 the campaign holds and returns a 4-digit code valid for 5 minutes. Only a
 second call with that code deletes, by moving the file to `<data dir>/trash/`,
@@ -176,7 +207,7 @@ from where it can be put back by hand. A wrong code cancels the request.
 
 ## On-screen widgets (MCP Apps)
 
-Four tools carry an MCP App (`_meta.ui.resourceUri`): the client opens their
+Five tools carry an MCP App (`_meta.ui.resourceUri`): the client opens their
 page next to the conversation.
 
 | Tool | Widget |
@@ -184,6 +215,7 @@ page next to the conversation.
 | `roll_dice` | Dice tray: each die tumbles and lands on its face; a natural 20 glows, a natural 1 shakes; with advantage the discarded d20 fades out; recent rolls below. |
 | `start_combat` | Combat tracker, live: initiative order, current turn, hit point bars that flash on damage or healing, AC, conditions, the defeated and their XP. |
 | `get_game_state` | Party board, live: location, date, funds, every character's hit points, spell slots, conditions and death saves, quest progress, combat banner. |
+| `seat_players` | The table, live: the players seated around it with their characters, newcomers without one yet, absent players and characters nobody plays. |
 | `get_character` | Character sheet, live: hit points, AC, proficiency, XP to next level, abilities, conditions, spell slots, spells, inventory. |
 
 Each page is self-contained (no network access), French or English after the
@@ -207,7 +239,7 @@ the game goes on without the pages.
 
 | Address | For | Shows |
 | --- | --- | --- |
-| `/table/` | a shared screen (TV, laptop) | The campaign's name and pitch, the session, place and date; initiative order, the party's hit points and conditions, the dice tray, active quests, the adventure log, and a QR code per character |
+| `/table/` | a shared screen (TV, laptop) | The campaign's name and pitch, the session, place and date; initiative order, the party's hit points and conditions (absent players' characters faded), the table with who sits where, the dice tray, active quests, the adventure log, and a QR code per character |
 | `/p/<code>/` | each player's phone | Their full character sheet, the fight, the dice, quests and log, the party; "Your turn!" and a buzz when their turn comes |
 | `/gm/` | you, on the computer running the game | Everything, to follow what the model does: exact monster hit points and AC, planned encounters and their difficulty, NPC secrets and notes, every quest, the bestiary |
 

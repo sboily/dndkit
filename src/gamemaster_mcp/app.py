@@ -34,6 +34,10 @@ logger = logging.getLogger(__name__)
 INSTRUCTIONS = """\
 Campaign manager for a Dungeons & Dragons 5e game master, built for voice play.
 One campaign is active at a time; list_campaigns and load_campaign switch it.
+Each spoken turn opens with the speaker's name: a player. seat_players says
+who plays which character; "I attack" from a player is their character's
+action. At the start of a session, ask who is at the table and call
+seat_players with start_over; call it again when someone arrives or leaves.
 Characters, NPCs, locations and quests are found by name (case and accents do
 not matter) or by ID. A failed call says why and lists the known names: retry
 with one of them rather than inventing a new entity. Use change_hit_points for

@@ -10,11 +10,17 @@ from pydantic import Field
 
 from gamemaster_mcp.errors import InvalidChangeError
 from gamemaster_mcp.game.dice import DiceLog
+from gamemaster_mcp.models import Campaign
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools.deps import READ_ONLY, get_dice_log, get_store
 from gamemaster_mcp.views import widgets
 
-View = Literal["dice", "combat", "party", "character"]
+View = Literal["dice", "combat", "party", "character", "seating"]
+CAMPAIGN_VIEWS: dict[str, Callable[[Campaign], widgets.Json]] = {
+    "combat": widgets.combat,
+    "party": widgets.party,
+    "seating": widgets.seating_chart,
+}
 
 
 @tool(annotations=READ_ONLY)
@@ -27,16 +33,14 @@ def get_screen_data(
     """JSON for the on-screen widgets. Never needed in conversation."""
     if view == "dice":
         data = widgets.dice(log)
+    elif view == "character" and not name:
+        raise InvalidChangeError("The character view needs a name.")
     else:
         with store.reading() as campaign:
-            if view == "combat":
-                data = widgets.combat(campaign)
-            elif view == "party":
-                data = widgets.party(campaign)
-            elif name:
+            if view == "character" and name:
                 data = widgets.character(campaign, name)
             else:
-                raise InvalidChangeError("The character view needs a name.")
+                data = CAMPAIGN_VIEWS[view](campaign)
     return json.dumps(data, ensure_ascii=False, separators=(",", ":"))
 
 

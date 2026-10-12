@@ -95,9 +95,10 @@ const Views = (() => {
     const el = h("div", { class: "card party" }, head(name, session), facts, banner, grid,
       quests ? section(t("quests"), questList) : null);
 
-    const member = (c) => h("div", { class: "pc" + (c.hp === 0 ? " down" : "") },
+    const member = (c) => h("div", { class: "pc" + (c.hp === 0 ? " down" : "") + (c.present === false ? " away" : "") },
       h("div", { class: "top" }, h("b", {}, c.name), h("span", { class: "muted small" }, `${t("ac")} ${c.ac}`)),
-      h("div", { class: "muted small" }, c.summary),
+      h("div", { class: "muted small" }, c.summary + (c.player ? ` — ${c.player}` : ""),
+        c.present === false ? h("span", { class: "chip away" }, t(c.player ? "away" : "unplayed")) : null),
       GM.hpBar(c.hp, c.hp_max, c.temp),
       c.hp === 0 ? deathSaves(c) : null,
       c.slots.length ? h("div", { class: "small muted" }, slots(c)) : null,
@@ -120,6 +121,47 @@ const Views = (() => {
         : null);
       fill(grid, data.characters.length ? data.characters.map(member) : h("div", { class: "empty" }, t("noParty")));
       fill(questList, data.quests.length ? data.quests.map(progress) : empty("noQuest"));
+    }
+
+    return { el, render };
+  }
+
+  /** Who sits at the table: the players around it with their characters, then who is
+   *  missing. A narrow screen or a big table lists them instead. */
+  function seating() {
+    const session = h("span", { class: "muted small" });
+    const round = h("div", { class: "round" });
+    const others = h("div", { class: "others" });
+    const el = h("div", { class: "card seating" },
+      head(h("span", { class: "title" }, t("theTable")), session), round, others);
+    let seats = 0;
+    const layout = () => round.classList.toggle("list", seats > 8 || el.clientWidth < 440);
+    new ResizeObserver(layout).observe(el);
+
+    function seat(s, index) {
+      const angle = (index / seats) * 2 * Math.PI - Math.PI / 2;  // clockwise from the top
+      const style = `left:${50 + 37 * Math.cos(angle)}%;top:${50 + 38 * Math.sin(angle)}%`;
+      return h("div", { class: "seat" + (s.characters.length ? "" : " new"), style },
+        h("b", {}, s.player),
+        s.characters.length
+          ? s.characters.map((c) => h("span", { class: "plays", title: c.summary }, c.name))
+          : h("span", { class: "muted small" }, t("noCharacter")));
+    }
+
+    const chips = (label, items) => (items.length
+      ? h("div", { class: "row small" }, h("span", { class: "muted" }, `${t(label)}:`), items.map((text) => h("span", { class: "chip" }, text)))
+      : null);
+
+    function render(data) {
+      seats = data.seats.length;
+      session.textContent = `${t("session")} ${data.session}`;
+      fill(round, seats ? [h("div", { class: "top" }, h("span", {}, data.campaign)), data.seats.map(seat)] : null);
+      round.hidden = !seats;
+      layout();
+      fill(others,
+        data.called ? null : h("div", { class: "empty small" }, t("nobodySeated")),
+        chips(data.called ? "absentees" : "knownPlayers", data.absent.map((a) => `${a.player} (${a.name})`)),
+        chips("noPlayer", data.unplayed));
     }
 
     return { el, render };
@@ -248,5 +290,5 @@ const Views = (() => {
     return { el, render };
   }
 
-  return { campaign, combat, party, character, journal, join, backstage, dice: DiceTray };
+  return { campaign, combat, party, seating, character, journal, join, backstage, dice: DiceTray };
 })();

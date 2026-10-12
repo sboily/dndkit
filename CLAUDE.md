@@ -31,7 +31,8 @@ src/gamemaster_mcp/
 │   ├── effects.py     # HP, temporary HP, conditions on characters or combatants
 │   ├── resources.py   # Items, death saves, short and long rests
 │   ├── spellbook.py   # Spell slots and known spells
-│   ├── progression.py # XP awards and level up
+│   ├── progression.py # XP awards (to those at the table) and level up
+│   ├── seating.py     # Who plays which character, the roll call, who is present
 │   ├── combat.py      # Initiative order by index, rounds, defeated, summary
 │   ├── combatants.py  # Participants -> combatants (linked PCs, bestiary stats)
 │   ├── bestiary.py    # Monsters, planned encounters, difficulty
@@ -129,6 +130,12 @@ calls `game` functions on the campaign, and renders a short text answer.
   server: one EventSource per page, since browsers allow few connections per
   host). Style a component under its root class (`.combat`, `.party`...): a web
   page shows several at once.
+- **Players**: roomkit-ui names the voices and opens each spoken turn with the
+  speaker's name; the server keeps no speaker IDs, only names (a character's
+  `player_name`, and `GameState.players_present` for the roll call), compared
+  with `seating.same_person`. Anything that should count only the characters
+  at the table (difficulty, XP) goes through `seating.present_characters`,
+  which is the whole party until a roll call.
 - **Schema budget**: `tests/test_tools.py` keeps the catalogue under roomkit's
   Tool Search threshold. `tools/schema.compact` must also walk `$defs`: FastMCP
   inlines model parameters (`Participant`) only after registration.

@@ -4,6 +4,7 @@ No emoji and little markup: a voice model reads these, then says what
 matters in its own words.
 """
 
+from gamemaster_mcp.game import seating
 from gamemaster_mcp.game.spellbook import describe_slots
 from gamemaster_mcp.models import (
     ABILITIES,
@@ -134,12 +135,40 @@ def game_state(campaign: Campaign) -> str:
             or "none"
         ),
         f"Active quests: {', '.join(active) or 'none'}.",
+        table(campaign),
     ]
     if state.in_combat:
         lines.append("In combat. " + render_combat.initiative(campaign))
     if state.notes:
         lines.append(f"Notes: {state.notes}")
     return "\n".join(lines)
+
+
+def table(campaign: Campaign) -> str:
+    """Who plays which character tonight, so the model knows whom it speaks to."""
+    party = sorted(campaign.characters.values(), key=lambda c: c.name)
+    present = campaign.game_state.players_present
+    if not present:
+        known = [f"{c.player_name} plays {c.name}" for c in party if c.player_name]
+        return "Nobody seated yet: ask who is playing, then seat_players." + (
+            f" Known players: {', '.join(known)}." if known else ""
+        )
+    seats = []
+    for player in present:
+        played = " and ".join(c.name for c in seating.characters_of(campaign, player))
+        seats.append(f"{player} plays {played}" if played else f"{player} has no character yet")
+    lines = [f"At the table: {'; '.join(seats)}."]
+    away = [
+        f"{c.name} ({c.player_name})"
+        for c in party
+        if c.player_name and not seating.is_present(campaign, c)
+    ]
+    if away:
+        lines.append(f"Absent: {', '.join(away)}.")
+    unplayed = [c.name for c in party if not c.player_name]
+    if unplayed:
+        lines.append(f"Nobody plays {', '.join(unplayed)}.")
+    return " ".join(lines)
 
 
 def campaign_contents(entry: CampaignEntry) -> str:

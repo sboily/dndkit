@@ -17,12 +17,14 @@ DICE_APP = "ui://gamemaster/dice.html"
 COMBAT_APP = "ui://gamemaster/combat.html"
 PARTY_APP = "ui://gamemaster/party.html"
 CHARACTER_APP = "ui://gamemaster/character.html"
+SEATING_APP = "ui://gamemaster/seating.html"
 
 _PAGES = {
     DICE_APP: ("dice", "Dice tray: the latest roll, rolling."),
     COMBAT_APP: ("combat", "Combat tracker: initiative, hit points, conditions, live."),
     PARTY_APP: ("party", "Party board: hit points, conditions, location and quests, live."),
     CHARACTER_APP: ("character", "Character sheet, live."),
+    SEATING_APP: ("seating", "The table: who plays which character tonight, live."),
 }
 
 
