@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from gamemaster_mcp.game import bestiary, registry
-from gamemaster_mcp.models import Campaign, Combatant, Encounter, Monster, Participant
+from gamemaster_mcp.models import Campaign, Character, Combatant, Encounter, Monster, Participant
 
 _SYSTEM_RNG = secrets.SystemRandom()
 
@@ -20,7 +20,7 @@ def build(campaign: Campaign, participant: Participant) -> Combatant:
     hit points or armor class. Anyone else keeps what the call gives.
     """
     name = participant.name.strip()
-    character = registry.find_optional(campaign.characters, name)
+    character = character_for(campaign, name)
     if character is not None:
         return Combatant(
             name=character.name, initiative=participant.initiative, character_id=character.id
@@ -52,6 +52,66 @@ def legendary(monster: Monster) -> dict[str, Any]:
         "legendary_actions_left": monster.legendary_actions,
         "legendary_resistances_left": monster.legendary_resistances,
     }
+
+
+def character_for(campaign: Campaign, name: str) -> Character | None:
+    """The party character a combatant name stands for: its name, part of it, or a
+    name that holds it ("Fizbin the gnome")."""
+    found = registry.find_optional(campaign.characters, name)
+    if found is not None:
+        return found
+    words = f" {registry.normalize(name)} "
+    holding = [
+        c for c in campaign.characters.values() if f" {registry.normalize(c.name)} " in words
+    ]
+    return holding[0] if len(holding) == 1 else None
+
+
+def refresh(campaign: Campaign) -> list[str]:
+    """Bring the running fight up to date with the sheets and the bestiary.
+
+    A combatant named after a party character but not linked to its sheet is
+    linked (its hit points, conditions and speed then come from the sheet); a
+    monster fighting without hit points takes its stat block's, once saved.
+    Returns a line per combatant changed.
+    """
+    lines: list[str] = []
+    order = campaign.game_state.initiative_order
+    linked = {c.character_id for c in order if c.character_id}
+    for combatant in order:
+        if combatant.character_id is not None:
+            continue
+        character = character_for(campaign, combatant.name)
+        if character is not None and character.id not in linked:
+            combatant.character_id, combatant.hit_points, combatant.hit_points_max = (
+                character.id,
+                None,
+                None,
+            )
+            linked.add(character.id)
+            lines.append(f"{combatant.name} now plays from {character.name}'s sheet.")
+            continue
+        monster = bestiary.monster_for(campaign, combatant.name)
+        if monster is not None and combatant.hit_points is None:
+            _take_stats(combatant, monster)
+            lines.append(
+                f"{combatant.name} takes the {monster.name} stat block: "
+                f"HP {monster.hit_points}, AC {combatant.armor_class}."
+            )
+    return lines
+
+
+def _take_stats(combatant: Combatant, monster: Monster) -> None:
+    combatant.monster = monster.name
+    combatant.hit_points = combatant.hit_points_max = monster.hit_points
+    if combatant.armor_class is None:
+        combatant.armor_class = monster.armor_class
+    if combatant.speed is None:
+        combatant.speed = bestiary.walking_speed(monster)
+    combatant.xp = monster.xp
+    combatant.size = monster.size
+    for field, value in legendary(monster).items():
+        setattr(combatant, field, value)
 
 
 def from_encounter(

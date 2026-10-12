@@ -147,6 +147,11 @@ calls `game` functions on the campaign, and renders a short text answer.
   with `seating.same_person`. Anything that should count only the characters
   at the table (difficulty, XP) goes through `seating.present_characters`,
   which is the whole party until a roll call.
+- **A fight that drifts**: combatants copy what they need when they join, so
+  a sheet created or a stat block saved later would not reach them.
+  `combatants.refresh` links and fills them; call it from any tool that acts
+  on the fight (the effects, `next_turn`, `save_monster`, `create_character`)
+  and report its lines.
 - **Battle map**: squares are names ("D7"), stored as text (`Battlefield`,
   `Combatant.position`, the top-left square of a big creature) and parsed
   with `grid.parse` against the map. Movement follows the PHB grid rule

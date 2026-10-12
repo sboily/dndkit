@@ -133,6 +133,18 @@
 .sheet .ability .key { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
 .sheet .ability .mod { font: 700 18px var(--serif); color: var(--gold-hi); }
 .sheet .ability .score { font-size: 11px; color: var(--muted); }
+.sheet .identity { margin-top: 2px; }
+.sheet .stats { flex-wrap: wrap; }
+.sheet .stat { min-width: 64px; }
+.sheet .stats.casting .stat { background: color-mix(in srgb, var(--violet) 14%, var(--card-2)); }
+.sheet .spells { display: flex; flex-direction: column; gap: 4px; }
+.sheet .spell { background: var(--card-2); border-radius: 8px; padding: 4px 8px; }
+.sheet .spell summary { cursor: pointer; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.sheet .spell p { margin: 4px 0 2px; }
+.sheet .spell.prepared { box-shadow: inset 3px 0 0 var(--amber); }
+.sheet .item { padding: 2px 0; }
+.sheet .appearance { font-style: italic; }
+.sheet .section p { margin: 0 0 6px; }
 .sheet .xp { height: 5px; background: var(--card-2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
 .sheet .xp i { display: block; height: 100%; background: var(--gold); }
 

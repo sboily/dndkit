@@ -4,7 +4,7 @@ No emoji and little markup: a voice model reads these, then says what
 matters in its own words.
 """
 
-from gamemaster_mcp.game import seating
+from gamemaster_mcp.game import characters, seating
 from gamemaster_mcp.game.spellbook import describe_slots
 from gamemaster_mcp.models import (
     ABILITIES,
@@ -41,10 +41,13 @@ def character_sheet(c: Character) -> str:
         f"Player: {c.player_name or 'unknown'}. Background: {c.background or 'none'}. "
         f"Alignment: {c.alignment or 'none'}.",
         f"Abilities: {scores}.",
-        f"Speed {c.speed} ft. Temporary HP {c.temporary_hit_points}. "
-        f"Proficiency +{c.proficiency_bonus}. "
+        f"Speed {c.speed} ft. Initiative {characters.initiative(c):+d}. "
+        f"Temporary HP {c.temporary_hit_points}. Proficiency +{c.proficiency_bonus}. "
         f"Inspiration: {'yes' if c.inspiration else 'no'}. XP {c.experience_points}.",
     ]
+    casting = spellcasting_line(c)
+    if casting:
+        lines.append(casting)
     if c.conditions or c.exhaustion:
         exhaustion = [f"exhaustion {c.exhaustion}"] if c.exhaustion else []
         lines.append(f"Conditions: {', '.join([*c.conditions, *exhaustion])}.")
@@ -149,6 +152,17 @@ def game_state(campaign: Campaign) -> str:
     if state.notes:
         lines.append(f"Notes: {state.notes}")
     return "\n".join(lines)
+
+
+def spellcasting_line(c: Character) -> str:
+    """ "Casts with intelligence: spell attack +5, save DC 13." or "" for a non-caster."""
+    casting = characters.spellcasting(c)
+    if casting is None:
+        return ""
+    return (
+        f"Casts with {casting.ability}: spell attack {casting.attack:+d}, "
+        f"save DC {casting.save_dc}."
+    )
 
 
 def table(campaign: Campaign) -> str:

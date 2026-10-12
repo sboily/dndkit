@@ -131,3 +131,16 @@ MONSTER_STATS: dict[str, tuple[int, tuple[int, int], int, tuple[int, int], int]]
     "29": (19, (761, 805), 13, (285, 302), 22),
     "30": (19, (806, 850), 14, (303, 320), 23),
 }
+
+# The ability each class casts its spells with (PHB ch. 3).
+CASTING_ABILITY: dict[str, str] = {
+    "artificer": "intelligence",
+    "bard": "charisma",
+    "cleric": "wisdom",
+    "druid": "wisdom",
+    "paladin": "charisma",
+    "ranger": "wisdom",
+    "sorcerer": "charisma",
+    "warlock": "charisma",
+    "wizard": "intelligence",
+}

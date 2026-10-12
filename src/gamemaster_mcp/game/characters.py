@@ -1,6 +1,7 @@
 """Creating, changing and removing player characters."""
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any
 
 from gamemaster_mcp.errors import InvalidChangeError
@@ -15,9 +16,66 @@ def find(campaign: Campaign, ref: str) -> Character:
     return registry.find(campaign.characters, ref, KIND)
 
 
+@dataclass(frozen=True)
+class Spellcasting:
+    """How a character casts: the ability, the spell attack bonus and the save DC."""
+
+    ability: str
+    attack: int
+    save_dc: int
+
+
+def pick(campaign: Campaign, ref: str | None) -> Character:
+    """The character *ref* names; without one, whose turn it is, or the only character."""
+    if ref:
+        return find(campaign, ref)
+    current = campaign.game_state.current_combatant
+    if current is not None and current.character_id in campaign.characters:
+        return campaign.characters[current.character_id]
+    if len(campaign.characters) == 1:
+        return next(iter(campaign.characters.values()))
+    names = registry.known_names(campaign.characters.values())
+    raise InvalidChangeError(f"Which character? Characters: {names}.")
+
+
 def create(campaign: Campaign, character: Character) -> Character:
-    """Add a character; the name must be free."""
+    """Add a character, a caster with its class's slots and casting ability; the name
+    must be free."""
+    if character.spellcasting_ability is None:
+        character.spellcasting_ability = rules.casting_ability(character.character_class.name)
+    if not character.spell_slots:
+        cls = character.character_class
+        character.spell_slots = rules.spell_slots_for(cls.name, cls.level) or {}
     return registry.add(campaign.characters, character, KIND)
+
+
+def spellcasting(character: Character) -> Spellcasting | None:
+    """Spell attack bonus and save DC (PHB ch. 10); None for a character who casts nothing."""
+    ability = _ability_name(character.spellcasting_ability) or rules.casting_ability(
+        character.character_class.name
+    )
+    if ability is None or ability not in character.abilities:
+        return None
+    bonus = character.proficiency_bonus + character.abilities[ability].mod
+    return Spellcasting(ability, bonus, 8 + bonus)
+
+
+def initiative(character: Character) -> int:
+    """The initiative bonus: the Dexterity modifier."""
+    dexterity = character.abilities.get("dexterity")
+    return dexterity.mod if dexterity else 0
+
+
+_FRENCH_ABILITIES = {"for": "strength", "sag": "wisdom"}
+
+
+def _ability_name(text: str | None) -> str | None:
+    """ "INT", "Intelligence" or French "Sagesse" -> the ability's name."""
+    if not text:
+        return None
+    wanted = registry.normalize(text)[:3]
+    found = next((a for a in ABILITIES if a.startswith(wanted)), None)
+    return found or _FRENCH_ABILITIES.get(wanted)
 
 
 def remove(campaign: Campaign, ref: str) -> Character:

@@ -228,7 +228,17 @@ left. Combatants are found by a unique part of their name ("gardien" for
 
 Characters created without hit points or armor class get the PHB's: the
 class hit die at level 1 and its average after, plus Constitution each level;
-10 + Dexterity without armor.
+10 + Dexterity without armor. A caster gets its class's spell slots and
+casting ability, and its sheet (`get_character`, the widget and the player's
+page) gives the spell attack bonus and save DC; the sheet also shows the
+initiative bonus, background, alignment, appearance and story, spells with
+their descriptions, gear, features, proficiencies and languages.
+`get_character` without a name reads whose turn it is.
+
+The running fight keeps up with the campaign: a combatant named after a party
+character (even "Fizbin the gnome") plays from that sheet, including one
+created once the fight began, and a monster that joined without numbers takes
+its stat block as soon as `save_monster` saves it.
 
 ### Battle map
 

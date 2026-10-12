@@ -18,6 +18,7 @@ _SCRIPTS = (
     "dicetray.js",
     "battlemap.js",
     "backstage.js",
+    "sheet.js",
     "components.js",
 )
 _WEB = '<script>window.GM_WEB = { feed: "feed" };</script>\n'

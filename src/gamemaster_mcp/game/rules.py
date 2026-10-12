@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from gamemaster_mcp.game.registry import normalize
 from gamemaster_mcp.game.tables import (
+    CASTING_ABILITY,
     CLASS_ALIASES,
     CLASSES,
     DIFFICULTY_THRESHOLDS,
@@ -114,6 +115,12 @@ def starting_hit_points(class_name: str, level: int, constitution_mod: int) -> i
     """Hit points by the PHB: the whole hit die at level 1, then its average; CON each level."""
     die = hit_die(class_name)
     return max(1, die + constitution_mod + (level - 1) * (die // 2 + 1 + constitution_mod))
+
+
+def casting_ability(class_name: str) -> str | None:
+    """The ability a class casts with ("Magicien" -> "intelligence"); None for non-casters."""
+    key = class_key(class_name)
+    return CASTING_ABILITY.get(key) if key else None
 
 
 def spell_slots_for(class_name: str, level: int) -> dict[int, int] | None:

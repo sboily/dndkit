@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.game import battlefield as battlefields
-from gamemaster_mcp.game import bestiary
+from gamemaster_mcp.game import bestiary, combatants
 from gamemaster_mcp.models import EncounterGroup, Layout, Size
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render_combat
@@ -53,7 +53,10 @@ def save_monster(
     )
     with store.transaction() as campaign:
         monster, created = bestiary.save_monster(campaign, name, fields)
-    return f"{'Saved' if created else 'Updated'} {render_combat.monster(monster)}"
+        caught_up = combatants.refresh(campaign)  # a monster already fighting takes it
+    return "\n".join(
+        [f"{'Saved' if created else 'Updated'} {render_combat.monster(monster)}"] + caught_up
+    )
 
 
 @tool(annotations=READ_ONLY)

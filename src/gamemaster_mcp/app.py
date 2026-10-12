@@ -43,7 +43,10 @@ Characters, NPCs, locations and quests are found by name (case and accents do
 not matter) or by ID. A failed call says why and lists the known names: retry
 with one of them rather than inventing a new entity. Use change_hit_points for
 damage and healing (characters and monsters alike), roll_dice for every roll,
-and log notable moments with add_event. You run the monsters: one the story
+and log notable moments with add_event. Resolve every roll yourself: the attack
+against the target's AC, then the damage, applied with change_hit_points; never
+ask the players for a total or a number the tools hold (get_character gives a
+character's spell attack and save DC). You run the monsters: one the story
 needs and the bestiary lacks is yours to create with save_monster (a challenge
 rating sets its stats; mark the boss), then plan_encounter rates the fight.
 How-to skills: skill://dnd-monsters/SKILL.md (monsters, bosses, sizing a

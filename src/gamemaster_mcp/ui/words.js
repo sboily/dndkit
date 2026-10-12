@@ -34,6 +34,11 @@ const I18N = (() => {
     unhurt: ["unhurt", "indemne"], hurt: ["hurt", "blessé"], bloodied: ["bloodied", "en sang"],
     down: ["down", "hors de combat"],
     speed: ["Speed", "Vitesse"], hidden: ["hidden", "caché"], boss: ["Boss", "Boss"],
+    initiative: ["Initiative", "Initiative"], castsWith: ["Casts with", "Lance avec"],
+    spellAttack: ["Spell attack", "Attaque de sort"], spellDc: ["Spell save DC", "DD des sorts"],
+    intelligence: ["Intelligence", "Intelligence"], wisdom: ["Wisdom", "Sagesse"], charisma: ["Charisma", "Charisme"],
+    features: ["Features", "Capacités"], proficiencies: ["Proficiencies", "Maîtrises"], save: ["Save", "JS"],
+    languages: ["Languages", "Langues"], story: ["Story", "Histoire"], hitDice: ["Hit dice", "Dés de vie"],
     legendaryActions: ["Legendary actions", "Actions légendaires"],
     legendaryResistances: ["Legendary resistances", "Résistances légendaires"],
     // The table.

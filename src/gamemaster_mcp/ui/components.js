@@ -152,7 +152,9 @@ const Views = (() => {
       head(h("span", { class: "title" }, t("theTable")), session), round, others);
     let seats = 0;
     const layout = () => round.classList.toggle("list", seats > 8 || el.clientWidth < 440);
-    new ResizeObserver(layout).observe(el);
+    // Deferred: toggling the layout inside the observer would resize it again in the
+    // same frame, and roomkit shows the browser's loop warning under the widget.
+    new ResizeObserver(() => requestAnimationFrame(layout)).observe(el);
 
     function seat(s, index) {
       const angle = (index / seats) * 2 * Math.PI - Math.PI / 2;  // clockwise from the top
@@ -178,39 +180,6 @@ const Views = (() => {
         data.called ? null : h("div", { class: "empty small" }, t("nobodySeated")),
         chips(data.called ? "absentees" : "knownPlayers", data.absent.map((a) => `${a.player} (${a.name})`)),
         chips("noPlayer", data.unplayed));
-    }
-
-    return { el, render };
-  }
-
-  /** One character's sheet. */
-  function character() {
-    const el = h("div", { class: "card sheet" }, h("div", { class: "empty" }, "…"));
-
-    function render(c) {
-      const stats = [[t("ac"), c.ac], [t("speed"), I18N.distance(c.speed)],
-        [t("proficiency"), signed(c.proficiency)], [t("xp"), c.xp]];
-      const xpRatio = c.next_level_xp ? Math.min(1, c.xp / c.next_level_xp) : 1;
-      fill(el,
-        head(h("span", { class: "title" }, c.inspiration ? `${c.name} ★` : c.name),
-          h("span", { class: "muted small" }, c.summary + (c.player ? ` — ${c.player}` : ""))),
-        h("div", { class: "vitals" }, GM.hpBar(c.hp, c.hp_max, c.temp)),
-        c.hp === 0 ? deathSaves(c) : null,
-        h("div", { class: "stats" }, stats.map(([label, value]) =>
-          h("div", { class: "stat" }, h("b", {}, value), h("span", {}, label)))),
-        c.next_level_xp ? h("div", { class: "muted small" }, `${t("nextLevel")}: ${c.next_level_xp} ${t("xp")}`,
-          h("div", { class: "xp" }, h("i", { style: `width:${xpRatio * 100}%` }))) : null,
-        h("div", { class: "abilities" }, c.abilities.map((a) => h("div", { class: "ability" },
-          h("div", { class: "key" }, t(a.key)), h("div", { class: "mod" }, signed(a.mod)),
-          h("div", { class: "score" }, a.score)))),
-        GM.conditions(c.conditions, c.exhaustion),
-        c.slots.length ? section(t("slots"), h("div", { class: "list" }, slots(c))) : null,
-        c.spells.length ? section(t("spells"), h("div", { class: "list" }, c.spells.map((s) =>
-          h("span", { class: "chip" + (s.prepared ? " warn" : "") },
-            `${s.name} · ${s.level === 0 ? t("cantrip") : `${t("level")} ${s.level}`}`)))) : null,
-        c.inventory.length ? section(t("inventory"), h("div", { class: "list" }, c.inventory.map((i) =>
-          h("span", { class: "chip" }, i.qty > 1 ? `${i.name} ×${i.qty}` : i.name)))) : null,
-      );
     }
 
     return { el, render };
@@ -266,5 +235,6 @@ const Views = (() => {
     return { el, render };
   }
 
-  return { campaign, combat, party, seating, character, journal, join, backstage: Backstage, dice: DiceTray };
+  return { campaign, combat, party, seating, character: CharacterSheet, journal, join, backstage: Backstage,
+    dice: DiceTray };
 })();

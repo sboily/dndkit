@@ -9,7 +9,7 @@ from typing import Any
 from gamemaster_mcp.game import characters, seating
 from gamemaster_mcp.game.dice import DiceLog, RollResult
 from gamemaster_mcp.game.tables import XP_FOR_LEVEL
-from gamemaster_mcp.models import ABILITIES, Campaign, Character, Combatant
+from gamemaster_mcp.models import ABILITIES, Campaign, Character, Combatant, Spell
 from gamemaster_mcp.views.battle import battle_map, unseen
 
 Json = dict[str, Any]
@@ -136,13 +136,18 @@ def seating_chart(campaign: Campaign) -> Json:
 
 
 def character(campaign: Campaign, ref: str) -> Json:
-    """One character's sheet."""
+    """One character's sheet, as its player sees it (the game master's notes left out)."""
     c = characters.find(campaign, ref)
     level = c.character_class.level
+    casting = characters.spellcasting(c)
     return {
         "name": c.name,
         "summary": _summary(c),
         "player": c.player_name,
+        "background": c.background,
+        "alignment": c.alignment,
+        "description": c.description,
+        "bio": c.bio,
         "abilities": [
             {"key": key[:3], "score": c.abilities[key].score, "mod": c.abilities[key].mod}
             for key in ABILITIES
@@ -150,16 +155,36 @@ def character(campaign: Campaign, ref: str) -> Json:
         ],
         "proficiency": c.proficiency_bonus,
         "speed": c.speed,
+        "initiative": characters.initiative(c),
+        "hit_dice": c.hit_dice_remaining,
+        "casting": (
+            {"ability": casting.ability, "attack": casting.attack, "dc": casting.save_dc}
+            if casting
+            else None
+        ),
         "xp": c.experience_points,
         "next_level_xp": XP_FOR_LEVEL.get(level + 1),
         "inspiration": c.inspiration,
-        "inventory": [{"name": i.name, "qty": i.quantity} for i in c.inventory],
-        "spells": [
-            {"name": s.name, "level": s.level, "prepared": s.prepared}
-            for s in sorted(c.spells_known, key=lambda s: (s.level, s.name))
+        "inventory": [
+            {"name": i.name, "qty": i.quantity, "description": i.description} for i in c.inventory
         ],
+        "spells": [_spell(s) for s in sorted(c.spells_known, key=lambda s: (s.level, s.name))],
         "features": c.features_and_traits,
+        "skills": c.skill_proficiencies,
+        "saves": c.saving_throw_proficiencies,
+        "languages": c.languages,
         **vitals(c),
+    }
+
+
+def _spell(s: Spell) -> Json:
+    details = [s.casting_time, str(s.range) if s.range else "", s.duration]
+    return {
+        "name": s.name,
+        "level": s.level,
+        "prepared": s.prepared,
+        "details": " · ".join(d for d in details if d),
+        "description": s.description,
     }
 
 

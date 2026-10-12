@@ -59,7 +59,21 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   instructions tell the model to invent the monsters its story needs.
 - `create_character` without hit points or armor class uses the PHB's: hit
   die and Constitution by level, 10 + Dexterity.
-- Combatants are found by a unique part of their name, as with characters.
+- Combatants are found by a unique part of their name, as with characters,
+  in every tool (`change_hit_points` included).
+- The running fight keeps up with the campaign: a combatant named after a
+  party character, or holding its name ("Fizbin the gnome"), is linked to the
+  sheet, even when the sheet is created after the fight began; a monster that
+  joined without numbers takes its stat block once `save_monster` saves it.
+  `next_turn`, `save_monster`, `create_character` and the hit point and
+  condition tools catch up first and say what changed.
+- Casters get their class's spell slots and casting ability at creation;
+  sheets give the spell attack bonus, save DC and initiative bonus, and the
+  sheet on screen shows background, alignment, appearance, story, spells with
+  their descriptions, gear, features, proficiencies and languages.
+- `get_character` without a name reads whose turn it is, or the only
+  character. The server instructions tell the model to resolve every roll
+  itself and never ask the players for a number the tools hold.
 - `remove_combatant` takes a `reason`: `defeated` or `fled` foes count for XP,
   a `withdrawn` one (a mistake, a change of plan) leaves no trace on the
   defeated list or the map. The map skill and the monsters skill say how to

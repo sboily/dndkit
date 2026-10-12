@@ -3,14 +3,16 @@
 A name is looked up in the running fight first, then among the party. A
 combatant linked to a character is changed on the character's sheet; any
 other combatant keeps its own hit points and conditions, and leaves the
-initiative order when it drops to 0 HP.
+initiative order when it drops to 0 HP. Each change first brings the fight up
+to date (``combatants.refresh``): a sheet created or a stat block saved after
+the fight began takes effect at once.
 """
 
 from collections.abc import Sequence
 from dataclasses import dataclass
 
 from gamemaster_mcp.errors import InvalidChangeError, NotFoundError
-from gamemaster_mcp.game import characters, combat, registry, rules
+from gamemaster_mcp.game import characters, combat, combatants, registry, rules
 from gamemaster_mcp.models import CONDITIONS, Campaign, Character, Combatant, now
 
 
@@ -30,8 +32,7 @@ def resolve(campaign: Campaign, refs: Sequence[str]) -> list[Target]:
     targets: list[Target] = []
     missing: list[str] = []
     for ref in refs:
-        wanted = registry.normalize(ref)
-        fighter = next((c for c in fighters if registry.normalize(c.name) == wanted), None)
+        fighter = combat.find_optional(state, ref) if fighters else None
         if fighter is not None and fighter.character_id is None:
             targets.append(Target(fighter.name, combatant=fighter))
             continue
@@ -50,7 +51,7 @@ def resolve(campaign: Campaign, refs: Sequence[str]) -> list[Target]:
 
 def change_hit_points(campaign: Campaign, refs: Sequence[str], amount: int) -> list[str]:
     """Damage (negative) or heal (positive) each target; one line per target."""
-    lines: list[str] = []
+    lines = combatants.refresh(campaign)
     for target in resolve(campaign, refs):
         if target.character is not None:
             lines.append(characters.change_hp(target.character, amount))
@@ -62,8 +63,8 @@ def change_hit_points(campaign: Campaign, refs: Sequence[str], amount: int) -> l
 def _change_combatant_hp(campaign: Campaign, combatant: Combatant, amount: int) -> str:
     if combatant.hit_points is None:
         raise InvalidChangeError(
-            f"{combatant.name}'s hit points are not tracked: add it with hit_points, "
-            "or save its stat block with save_monster."
+            f"{combatant.name}'s hit points are not tracked: save its stat block with "
+            "save_monster (it then fights with it), then change its hit points again."
         )
     maximum = combatant.hit_points_max or combatant.hit_points
     hp = rules.apply_hp_change(combatant.hit_points, maximum, 0, amount)
@@ -77,7 +78,7 @@ def _change_combatant_hp(campaign: Campaign, combatant: Combatant, amount: int) 
 
 def grant_temporary_hp(campaign: Campaign, refs: Sequence[str], amount: int) -> list[str]:
     """Temporary hit points don't stack: each character keeps the higher value."""
-    lines: list[str] = []
+    lines = combatants.refresh(campaign)
     for target in resolve(campaign, refs):
         if target.character is None:
             raise InvalidChangeError("Temporary hit points are tracked for characters only.")
@@ -96,7 +97,7 @@ def set_condition(
         raise InvalidChangeError(
             f"Unknown condition '{condition}'. Conditions: {', '.join(CONDITIONS)}."
         )
-    lines: list[str] = []
+    lines = combatants.refresh(campaign)
     for target in resolve(campaign, refs):
         holder = target.character or target.combatant
         if holder is None:

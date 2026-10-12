@@ -78,15 +78,21 @@ def find(state: GameState, name: str) -> Combatant:
     """The combatant *name* names (case and accents ignored), or the only one whose
     name holds it ("gardien" for "Gardien de Magma"), as spoken names go."""
     _require_combat(state)
+    found = find_optional(state, name)
+    if found is None:
+        listed = ", ".join(c.name for c in state.initiative_order)
+        raise NotFoundError(f"No combatant named '{name}'. In the fight: {listed}.")
+    return found
+
+
+def find_optional(state: GameState, name: str) -> Combatant | None:
+    """Like ``find``, or None."""
     wanted = registry.normalize(name)
     for combatant in state.initiative_order:
         if registry.normalize(combatant.name) == wanted:
             return combatant
     partial = [c for c in state.initiative_order if wanted in registry.normalize(c.name)]
-    if len(wanted) >= 3 and len(partial) == 1:
-        return partial[0]
-    listed = ", ".join(c.name for c in state.initiative_order)
-    raise NotFoundError(f"No combatant named '{name}'. In the fight: {listed}.")
+    return partial[0] if len(wanted) >= 3 and len(partial) == 1 else None
 
 
 def remove(

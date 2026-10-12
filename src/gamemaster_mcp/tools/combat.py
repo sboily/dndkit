@@ -66,10 +66,11 @@ def next_turn(store: CampaignStore = Depends(get_store)) -> str:
     """End the current turn and give the next combatant theirs."""
     with store.transaction() as campaign:
         state = campaign.game_state
+        caught_up = combatants.refresh(campaign)
         current = combat.next_turn(state)
         prefix = f"Round {state.combat_round} begins. " if state.turn_index == 0 else ""
         line = render_combat.combatant_line(campaign, current)
-    return f"{prefix}{current.name}'s turn: {line}"
+    return "\n".join([*caught_up, f"{prefix}{current.name}'s turn: {line}"])
 
 
 @tool

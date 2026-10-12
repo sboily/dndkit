@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import characters, rules
+from gamemaster_mcp.game import characters, combatants, rules
 from gamemaster_mcp.models import AbilityScore, Character, CharacterClass, Race
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render
@@ -79,14 +79,21 @@ def create_character(
     )
     with store.transaction() as campaign:
         characters.create(campaign, character)
-    return f"Created {render.character_line(character)}."
+        caught_up = combatants.refresh(campaign)  # a fighter of that name joins its sheet
+    casting = render.spellcasting_line(character)
+    return " ".join([f"Created {render.character_line(character)}.", casting, *caught_up]).strip()
 
 
 @tool(annotations=READ_ONLY, meta=app_meta(CHARACTER_APP))
-def get_character(name_or_id: NameOrId, store: CampaignStore = Depends(get_store)) -> str:
-    """Full character sheet: abilities, hit points, inventory, spell slots, notes."""
+def get_character(
+    name_or_id: Annotated[
+        str | None, Field(description="Name or ID; omit for whose turn it is")
+    ] = None,
+    store: CampaignStore = Depends(get_store),
+) -> str:
+    """Full character sheet: abilities, hit points, spell attack and DC, spells, inventory."""
     with store.reading() as campaign:
-        return render.character_sheet(characters.find(campaign, name_or_id))
+        return render.character_sheet(characters.pick(campaign, name_or_id))
 
 
 @tool(annotations=READ_ONLY)
