@@ -70,6 +70,13 @@ const I18N = (() => {
     // Sizes ("medium" is shared with the difficulty ratings below).
     tiny: ["tiny", "très petite"], small: ["small", "petite"],
     large: ["large", "grande"], huge: ["huge", "très grande"], gargantuan: ["gargantuan", "gigantesque"],
+    // The desk, on the backstage.
+    activity: ["Model activity", "Activité du MJ"], noCall: ["No call yet.", "Aucun appel pour l'instant."],
+    failures: ["{n} failed", "{n} en échec"], notebook: ["Notebook", "Carnet"],
+    situation: ["Situation", "Situation"], worldNotes: ["World notes", "Notes du monde"],
+    setting: ["Setting", "Univers"], show: ["Show", "Afficher"], sessions: ["Past sessions", "Sessions passées"],
+    noNotes: ["No notes yet.", "Pas encore de notes."], dm: ["GM", "MJ"], saved: ["saved", "enregistré"],
+    skills: ["skills", "skills"],
     // Backstage.
     backstage: ["Backstage", "Régie"], encounters: ["Planned encounters", "Rencontres prévues"],
     noEncounter: ["Nothing planned.", "Rien de prévu."], npcs: ["NPCs", "PNJ"], noNpc: ["No NPC yet.", "Aucun PNJ."],

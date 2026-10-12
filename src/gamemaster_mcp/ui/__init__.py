@@ -19,6 +19,7 @@ _SCRIPTS = (
     "battlemap.js",
     "backstage.js",
     "world.js",
+    "desk.js",
     "sheet.js",
     "components.js",
 )

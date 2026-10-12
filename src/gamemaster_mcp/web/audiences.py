@@ -6,12 +6,13 @@ A feed asks for some views by name and gets only those its audience lists.
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from gamemaster_mcp.activity import ActivityLog
 from gamemaster_mcp.config import WebSettings
 from gamemaster_mcp.errors import GameError, NotFoundError
 from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.models import Campaign
 from gamemaster_mcp.storage import CampaignStore
-from gamemaster_mcp.views import public, widgets
+from gamemaster_mcp.views import desk, public, widgets
 from gamemaster_mcp.views.backstage import backstage
 from gamemaster_mcp.views.widgets import Json
 from gamemaster_mcp.views.world import world
@@ -32,6 +33,7 @@ class Sources:
     changes: Changes
     links: PlayerLinks
     settings: WebSettings
+    activity: ActivityLog
 
     def reading(self, build: Callable[[Campaign], Json]) -> Render:
         """A render of the active campaign through *build*."""
@@ -78,13 +80,19 @@ def player(sources: Sources, token: str) -> Views:
     }
 
 
-def game_master(sources: Sources) -> Views:
-    """The backstage: exact numbers, plans and secrets."""
+def game_master(sources: Sources, base_url: str) -> Views:
+    """The backstage: exact numbers, plans, secrets, and what the model does."""
+    store = sources.store
     return {
-        **_shared(sources),
+        **table(sources, base_url),  # the join codes too
         "combat": sources.reading(widgets.combat),
         "backstage": sources.reading(backstage),
         "world": sources.reading(world),
+        "sheets": sources.reading(desk.sheets),
+        "notebook": sources.reading(
+            lambda c: desk.notebook(c, store.current_file, store.data_dir)
+        ),
+        "activity": lambda: desk.activity(sources.activity),
     }
 
 

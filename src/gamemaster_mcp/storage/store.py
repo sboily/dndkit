@@ -60,6 +60,12 @@ class CampaignStore:
         with self._lock:
             return self._current
 
+    @property
+    def current_file(self) -> Path | None:
+        """Where the active campaign is saved, if any."""
+        with self._lock:
+            return self._current_path
+
     def list_campaigns(self) -> list[CampaignEntry]:
         """A summary of every campaign file, most recently used first."""
         with self._lock:

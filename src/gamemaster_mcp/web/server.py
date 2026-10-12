@@ -16,6 +16,7 @@ from collections.abc import AsyncIterator, Iterator
 import uvicorn
 from starlette.types import ASGIApp
 
+from gamemaster_mcp.activity import ActivityLog
 from gamemaster_mcp.config import WebSettings
 from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.storage import CampaignStore
@@ -31,14 +32,18 @@ STOP_SECONDS = 5.0
 
 @contextlib.asynccontextmanager
 async def web_pages(
-    settings: WebSettings | None, store: CampaignStore, dice: DiceLog, changes: Changes
+    settings: WebSettings | None,
+    store: CampaignStore,
+    dice: DiceLog,
+    activity: ActivityLog,
+    changes: Changes,
 ) -> AsyncIterator[None]:
     """Serve the pages while the context is open; nothing when *settings* is None."""
     if settings is None:
         yield
         return
     links = PlayerLinks.open(store.data_dir)
-    app = create_app(Sources(store, dice, changes, links, settings))
+    app = create_app(Sources(store, dice, changes, links, settings, activity))
     async with serving(app, settings):
         try:
             yield

@@ -362,7 +362,7 @@ the game goes on without the pages.
 | --- | --- | --- |
 | `/table/` | a shared screen (TV, laptop) | The campaign's name and pitch, the session, place and date; initiative order, the party's hit points and conditions (absent players' characters faded), the table with who sits where, the dice tray, active quests, the adventure log, and a QR code per character |
 | `/p/<code>/` | each player's phone | Their full character sheet, the fight, the dice, quests and log, the party; "Your turn!" and a buzz when their turn comes |
-| `/gm/` | you, on the computer running the game | Everything, to follow what the model does: exact monster hit points and AC, planned encounters and their difficulty, every quest with its objectives and notes, and the world: NPCs with their secrets and ties, locations (the party's marked) with their notes, the bestiary's full stat blocks and how many of each are fighting |
+| `/gm/` | you, on the computer running the game | Everything, to follow and debug what the model does: the **model's activity** (every tool call with its arguments, its answer or error and its time, and the skills the client fetched); exact monster hit points and AC; planned encounters and their difficulty; every quest with its objectives and notes; the notebook (current situation, world notes, setting, past sessions, version, campaign file, last save, skills); the world (NPCs with their secrets and ties, locations with the party's marked, the bestiary's full stat blocks and how many are fighting); every character's full sheet with the game master's notes; the players' join codes |
 
 - **Joining**: players scan their character's code on the table screen. Each
   link carries a code derived from the campaign, the character and a key kept
@@ -374,6 +374,10 @@ the game goes on without the pages.
   party in full, but a monster only as *unhurt*, *hurt*, *bloodied* or *down*,
   and never an NPC's biography or notes, a planned encounter, a monster's
   statistics or the game master's notes.
+- **The activity** lives in memory for the session, like the dice log, and
+  skips the widgets' own `get_screen_data` polling. A call the client refuses
+  before sending it (roomkit checks required arguments) never reaches the
+  server, so it is not there: look at the client's log for those.
 - **The backstage** opens only from the computer running the server (a
   loopback peer). A reverse proxy or tunnel running on that computer would make
   every visitor look local: do not put one in front of the pages.

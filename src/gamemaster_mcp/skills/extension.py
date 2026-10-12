@@ -7,6 +7,7 @@ size), and ``skills/get`` one entry by URI. The catalogue is small and fixed,
 so the listing is complete in one page.
 """
 
+import time
 from collections.abc import Callable, Sequence
 from typing import Any
 
@@ -17,6 +18,7 @@ from mcp.shared.exceptions import MCPError
 from mcp_types import PaginatedRequestParams, RequestParams
 from mcp_types.jsonrpc import INVALID_PARAMS
 
+from gamemaster_mcp.activity import ActivityLog
 from gamemaster_mcp.skills.catalog import SKILL_FILE, Skill, SkillFile, load_catalog
 
 IDENTIFIER = "io.modelcontextprotocol/skills"
@@ -33,8 +35,9 @@ class SkillsExtension(ServerExtension):
 
     identifier = IDENTIFIER
 
-    def __init__(self, skills: Sequence[Skill]) -> None:
+    def __init__(self, skills: Sequence[Skill], activity: ActivityLog | None = None) -> None:
         self._skills = tuple(skills)
+        self._activity = activity
 
     def methods(self) -> Sequence[MethodBinding]:
         return (
@@ -46,6 +49,7 @@ class SkillsExtension(ServerExtension):
         self, _ctx: ServerRequestContext[Any, Any], _params: PaginatedRequestParams
     ) -> dict[str, Any]:
         """Every skill's entry."""
+        self._note("skills/list", "", f"{len(self._skills)} skills", False)
         return {"resultType": "complete", "skills": [s.entry() for s in self._skills]}
 
     async def get_skill(
@@ -54,12 +58,18 @@ class SkillsExtension(ServerExtension):
         """One skill's entry; an unknown URI is invalid params, as for resources/read."""
         for skill in self._skills:
             if skill.uri == params.uri:
+                self._note("skills/get", params.uri, skill.name, False)
                 return {"resultType": "complete", "skill": skill.entry()}
         known = ", ".join(s.uri for s in self._skills)
+        self._note("skills/get", params.uri, "no such skill", True)
         raise MCPError(INVALID_PARAMS, f"No skill at {params.uri}. Skills: {known}.")
 
+    def _note(self, method: str, asked: str, outcome: str, failed: bool) -> None:
+        if self._activity is not None:
+            self._activity.record("skill", method, asked, outcome, failed, time.perf_counter())
 
-def register_skills(server: FastMCP) -> None:
+
+def register_skills(server: FastMCP, activity: ActivityLog | None = None) -> None:
     """Serve the package's skills: their files as resources, and the extension."""
     skills = load_catalog()
     for skill in skills:
@@ -71,7 +81,7 @@ def register_skills(server: FastMCP) -> None:
                 description=str(skill.frontmatter["description"]) if main else None,
                 mime_type=file.mime_type,
             )(_reader(skill, file))
-    server.add_extension(SkillsExtension(skills))
+    server.add_extension(SkillsExtension(skills, activity))
 
 
 def _reader(skill: Skill, file: SkillFile) -> Callable[[], str | bytes]:

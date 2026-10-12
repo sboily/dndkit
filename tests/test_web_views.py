@@ -42,7 +42,7 @@ def test_the_table_and_the_players_see_no_secret(tmp_path: Path) -> None:
 
 def test_the_game_master_sees_everything(tmp_path: Path) -> None:
     sources = make_sources(tmp_path)
-    data = rendered(audiences.game_master(sources))
+    data = rendered(audiences.game_master(sources, "http://127.0.0.1:8765/"))
     text = json.dumps(data)
     for secret in ("SECRET-BIO", "SECRET-NPC", "SECRET-AMBUSH", "SECRET-QUEST"):
         assert secret in text
@@ -55,7 +55,7 @@ def test_the_backstage_world_holds_npcs_places_and_stat_blocks(tmp_path: Path) -
     with sources.store.transaction() as campaign:
         campaign.game_state.current_location = "port"
         campaign.game_state.initiative_order[1].monster = "Goblin"
-    world = rendered(audiences.game_master(sources))["world"]
+    world = rendered(audiences.game_master(sources, "http://127.0.0.1:8765/"))["world"]
     assert [n["name"] for n in world["npcs"]] == ["Mara"] and world["npcs"][0][
         "bio"
     ] == "SECRET-BIO"

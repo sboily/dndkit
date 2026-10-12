@@ -237,6 +237,26 @@
 .world .chip.hostile { color: var(--red); }
 .world .crown { color: var(--gold-hi); }
 
+/* The desk, on the backstage */
+.activity .calls { display: flex; flex-direction: column; max-height: 62vh; overflow-y: auto; }
+.activity .call { border-top: 1px solid var(--line); padding: 3px 0; }
+.activity .call:first-child { border-top: 0; }
+.activity summary { cursor: pointer; display: grid; grid-template-columns: auto auto 1fr auto; gap: 8px; align-items: baseline; font-size: 12px; }
+.activity .when, .activity .ms { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 11px; }
+.activity .tool { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.activity .gist { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.activity .call.failed .tool, .activity .call.failed .gist { color: var(--red); }
+.activity .call.skill .tool { color: var(--violet); }
+.activity pre { margin: 4px 0 2px; padding: 6px 8px; border-radius: 6px; background: var(--card-2); font: 11px/1.4 ui-monospace, Menlo, monospace;
+  white-space: pre-wrap; word-break: break-word; }
+.activity pre.args { color: var(--muted); }
+.notebook .prose { white-space: pre-line; margin: 0 0 4px; }
+.notebook .session summary { cursor: pointer; font-size: 13px; }
+.notebook .server { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 6px; word-break: break-all; }
+.sheets { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); margin-top: 12px; align-items: start; }
+.sheetbox .note { color: var(--muted); padding: 6px 4px 0; }
+.sheetbox .note b { color: var(--text); }
+
 /* Web pages */
 body.web { background: var(--page); min-height: 100vh; box-sizing: border-box; padding: 16px; font-size: 14px; }
 .toggle {

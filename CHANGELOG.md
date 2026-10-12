@@ -71,6 +71,12 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   sheets give the spell attack bonus, save DC and initiative bonus, and the
   sheet on screen shows background, alignment, appearance, story, spells with
   their descriptions, gear, features, proficiencies and languages.
+- The backstage (`/gm/`) becomes the place to debug the model: its activity
+  (every tool call with arguments, answer or error and time, recorded by a
+  FastMCP middleware; skill listings and reads too), the notebook (situation,
+  world notes, setting, past sessions, version, campaign file, last save,
+  published skills), every full sheet with the game master's notes, and the
+  join codes. All of it stays off the players' screens.
 - The backstage (`/gm/`) gains a world section: NPCs (secrets, notes, ties),
   locations (the party's marked, notes) and the bestiary's full stat blocks
   (boss, legendary uses, actions, how many are fighting); quests show their

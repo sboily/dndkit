@@ -14,34 +14,45 @@
       <div class="col" id="side"></div>
     </div>
     <div id="world"></div>
+    <div id="sheets"></div>
     <div id="status"></div>
     <script>
-      // The game master's backstage: exact numbers, plans and secrets, to
-      // follow what the model does. Opens only on the machine running the game.
-      const combat = Views.combat();
+      // The game master's backstage: exact numbers, plans and secrets, the full
+      // sheets, and every call the model makes, to follow it and see why
+      // something did not happen. Opens only on the machine running the game.
       const heading = Views.campaign();
-      document.getElementById("heading").append(heading.el);
-      const seating = Views.seating();
+      const combat = Views.combat();
       const party = Views.party({ campaign: false });
+      const seating = Views.seating();
       const backstage = Views.backstage();
-      const world = Views.world();
+      const notebook = Views.notebook();
+      const activity = Views.activity();
       const dice = Views.dice();
       const journal = Views.journal();
+      const join = Views.join();
+      const world = Views.world();
+      const sheets = Views.sheets();
 
+      document.getElementById("heading").append(heading.el);
       document.getElementById("play").append(combat.el, party.el, seating.el);
-      document.getElementById("plans").append(backstage.el);
-      document.getElementById("side").append(dice.el, journal.el);
+      document.getElementById("plans").append(backstage.el, notebook.el, journal.el);
+      document.getElementById("side").append(activity.el, dice.el, join.el);
       document.getElementById("world").append(world.el);
+      document.getElementById("sheets").append(sheets.el);
 
       GM.start(() => {
         GM.live("party", null, heading.render);
-        GM.live("seating", null, seating.render);
-        GM.live("combat", null, (data) => { combat.el.hidden = !data.in_combat; combat.render(data); });
         GM.live("party", null, (data) => { document.title = `${GM.t("backstage")} — ${data.campaign}`; party.render(data); });
+        GM.live("combat", null, (data) => { combat.el.hidden = !data.in_combat; combat.render(data); });
+        GM.live("seating", null, seating.render);
         GM.live("backstage", null, backstage.render);
-        GM.live("world", null, world.render);
+        GM.live("notebook", null, notebook.render);
+        GM.live("activity", null, activity.render);
         GM.live("dice", null, dice.render);
         GM.live("journal", null, journal.render);
+        GM.live("join", null, join.render);
+        GM.live("world", null, world.render);
+        GM.live("sheets", null, sheets.render);
       });
     </script>
   </body>

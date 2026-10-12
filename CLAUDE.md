@@ -20,6 +20,7 @@ GAMEMASTER_WEB_PORT=8765 uv run gamemaster-mcp   # Also serve the web pages
 ```
 src/gamemaster_mcp/
 ├── app.py        # build_server(): FastMCP, lifespan (store, dice log, web pages), tools, apps
+├── activity.py   # In-memory log of the model's calls, for the backstage
 ├── config.py     # Data dir (env, else platformdirs), stderr logging, WebSettings
 ├── errors.py     # GameError hierarchy, subclasses of FastMCP's ToolError
 ├── models/       # Pydantic models: base, character, world, bestiary, campaign
@@ -52,11 +53,13 @@ src/gamemaster_mcp/
 │   ├── deps.py        # get_store / get_dice_log dependencies, shared annotations
 │   ├── schema.py      # Compacts advertised schemas (drops the null alternative)
 │   ├── apps.py        # ui:// pages, app_meta(), register_apps()
+│   ├── recorder.py    # Middleware writing every tool call and skill read to the activity
 │   ├── screen.py      # get_screen_data, the widgets' data tool
 │   └── render*.py     # Plain-text views of game data (render_map: the map in text)
 ├── views/        # JSON views for screens: widgets (GM, everything), public
 │                 # (what players may see, allow-listed), backstage (GM plans),
-│                 # world (NPCs, places, bestiary: GM only), battle (the map)
+│                 # world (NPCs, places, bestiary: GM only), desk (activity,
+│                 # notebook, full sheets: GM only), battle (the map)
 ├── web/          # Live web pages, inside the MCP process: changes (notices from
 │                 # tool threads), access (player links, QR), audiences (views
 │                 # per page), feed (SSE), routes (Starlette), server (uvicorn)
@@ -65,7 +68,7 @@ src/gamemaster_mcp/
 │                 # skill:// resources, skills/list, skills/get)
 └── ui/           # Pages: widgets and web pages (<name>.html), shared.css,
                   # components.css, words.js, shared.js (transports), dicetray.js,
-                  # battlemap.js, backstage.js, world.js, sheet.js, components.js,
+                  # battlemap.js, backstage.js, world.js, desk.js, sheet.js, components.js,
                   # assembled by ui.page()
 ```
 
@@ -147,6 +150,10 @@ calls `game` functions on the campaign, and renders a short text answer.
   with `seating.same_person`. Anything that should count only the characters
   at the table (difficulty, XP) goes through `seating.present_characters`,
   which is the whole party until a roll call.
+- **Debugging the model**: open `/gm/` (needs `GAMEMASTER_WEB_PORT`). The
+  activity there shows each tool call as the model made it and what it got
+  back, failures in red; `tools/recorder.py` records them and leaves out
+  `get_screen_data`. A new protocol method (like `skills/list`) records itself.
 - **A fight that drifts**: combatants copy what they need when they join, so
   a sheet created or a stat block saved later would not reach them.
   `combatants.refresh` links and fills them; call it from any tool that acts

@@ -60,7 +60,7 @@ def create_app(sources: Sources) -> Starlette:
     async def gm_feed(request: Request) -> Response:
         if not _local(request):
             return _refused(request, 403, "localOnly")
-        return _feed(request, sources, audiences.game_master(sources))
+        return _feed(request, sources, audiences.game_master(sources, str(request.base_url)))
 
     return Starlette(
         routes=[

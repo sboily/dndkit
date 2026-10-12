@@ -15,6 +15,7 @@ from typing import Any
 from fastmcp import FastMCP
 
 from gamemaster_mcp import __version__
+from gamemaster_mcp.activity import ActivityLog
 from gamemaster_mcp.config import (
     WebSettings,
     configure_logging,
@@ -27,6 +28,7 @@ from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import ALL_TOOLS
 from gamemaster_mcp.tools.apps import register_apps
 from gamemaster_mcp.tools.deps import DICE_LOG_KEY, STORE_KEY
+from gamemaster_mcp.tools.recorder import Recorder
 from gamemaster_mcp.tools.schema import compact
 from gamemaster_mcp.web import Changes, web_pages
 
@@ -59,6 +61,8 @@ def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -
     With *web*, the server also serves the live web pages (``web/``).
     """
 
+    activity = ActivityLog()  # in memory, filled by the Recorder middleware
+
     @asynccontextmanager
     async def lifespan(_server: FastMCP) -> AsyncIterator[dict[str, Any]]:
         directory = data_dir or resolve_data_dir()
@@ -66,7 +70,8 @@ def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -
         changes = Changes()
         store = CampaignStore(directory, on_change=changes.notify)
         dice_log = DiceLog(on_record=changes.notify)
-        async with web_pages(web, store, dice_log, changes):
+        activity.on_record = changes.notify
+        async with web_pages(web, store, dice_log, activity, changes):
             yield {STORE_KEY: store, DICE_LOG_KEY: dice_log}
 
     server = FastMCP(
@@ -77,12 +82,13 @@ def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -
         # Unexpected exceptions reach the client as a bare failure; game
         # errors (``GameError``) keep their message, written for the model.
         mask_error_details=True,
+        middleware=[Recorder(activity)],
     )
     for fn in ALL_TOOLS:
         tool = server.add_tool(fn)
         tool.parameters = compact(tool.parameters)
     register_apps(server)
-    register_skills(server)
+    register_skills(server, activity)
     return server
 
 

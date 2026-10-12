@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from gamemaster_mcp.activity import ActivityLog
 from gamemaster_mcp.config import WebSettings
 from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.models import (
@@ -32,6 +33,7 @@ def make_sources(tmp_path: Path, settings: WebSettings | None = None) -> Sources
         changes=changes,
         links=PlayerLinks.open(tmp_path),
         settings=settings or WebSettings(port=0),
+        activity=ActivityLog(),
     )
 
 

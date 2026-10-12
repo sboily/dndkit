@@ -142,6 +142,9 @@ async def test_the_pages_follow_the_tools_live(tmp_path: Path) -> None:
                 await call(mcp, "roll_dice", notation="2d6+1")
                 rolls = (await next_event(lines))["rolls"]
                 assert rolls[-1]["notation"].replace(" ", "") == "2d6+1"
+            async with http.stream("GET", "/gm/feed", params={"views": "activity"}) as response:
+                calls = (await next_event(response.aiter_lines()))["calls"]
+                assert [c["name"] for c in calls] == ["roll_dice", "create_campaign"]
 
 
 @pytest.mark.anyio
