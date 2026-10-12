@@ -64,6 +64,13 @@ def save_bonuses(character: Character) -> list[Proficiency]:
     return [Proficiency(a, _bonus(character, a)) for a in abilities if a]
 
 
+def save_bonus(character: Character, ability: str) -> int:
+    """A saving throw's bonus: the modifier, plus proficiency where the sheet has it."""
+    score = character.abilities.get(ability)
+    proficient = ability in {rules.ability_name(n) for n in character.saving_throw_proficiencies}
+    return (score.mod if score else 0) + (character.proficiency_bonus if proficient else 0)
+
+
 def _bonus(character: Character, ability: str | None) -> int | None:
     if ability is None:
         return None

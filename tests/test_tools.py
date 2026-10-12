@@ -50,7 +50,7 @@ def schema_tokens(tools: list[Any]) -> int:
 
 async def test_tool_catalogue_suits_voice_clients(client: Client) -> None:
     tools = await client.list_tools()
-    assert len(tools) == 59
+    assert len(tools) == 60
     assert all(TOOL_NAME.fullmatch(t.name) for t in tools)
     gated = skill_gated_tools()
     assert gated <= {t.name for t in tools}, "a skill gates a tool that does not exist"

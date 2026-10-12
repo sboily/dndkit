@@ -49,7 +49,7 @@ const Views = (() => {
           f.position ? h("span", { class: "pos" }, f.position) : null,
           f.hidden ? h("span", { class: "chip away" }, t("hidden")) : null),
         vitals(f),
-        GM.conditions(f.conditions, f.exhaustion),
+        GM.conditions(f.conditions, f.exhaustion, f.concentration),
         legendary(f));
     }
 
@@ -125,7 +125,7 @@ const Views = (() => {
       GM.hpBar(c.hp, c.hp_max, c.temp),
       c.hp === 0 ? deathSaves(c) : null,
       c.slots.length ? h("div", { class: "small muted" }, slots(c)) : null,
-      GM.conditions(c.conditions, c.exhaustion));
+      GM.conditions(c.conditions, c.exhaustion, c.concentration));
 
     const progress = (q) => h("div", { class: "quest" }, h("span", {}, q.title),
       h("div", { class: "bar", title: `${q.done}/${q.total}` },

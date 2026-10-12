@@ -210,10 +210,11 @@ const GM = (() => {
     );
   }
 
-  const conditions = (names, exhaustion) =>
+  const conditions = (names, exhaustion, concentration) =>
     h(
       "div",
       { class: "chips" },
+      concentration ? h("span", { class: "chip conc", title: t("concentration") }, `◎ ${concentration}`) : null,
       (names || []).map((name) => h("span", { class: "chip cond" }, t(name))),
       exhaustion ? h("span", { class: "chip warn" }, `${t("exhaustion")} ${exhaustion}`) : null,
     );

@@ -116,6 +116,7 @@ class Character(GameModel):
     death_saves_success: int = Field(default=0, ge=0, le=3)
     death_saves_failure: int = Field(default=0, ge=0, le=3)
     conditions: list[str] = Field(default_factory=list)  # names from CONDITIONS
+    concentration: str | None = None  # the spell held
     exhaustion: int = Field(default=0, ge=0, le=6)
     experience_points: int = Field(default=0, ge=0)
 

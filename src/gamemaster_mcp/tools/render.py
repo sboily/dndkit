@@ -45,6 +45,8 @@ def character_sheet(c: Character) -> str:
         f"Temporary HP {c.temporary_hit_points}. Proficiency +{c.proficiency_bonus}. "
         f"Inspiration: {'yes' if c.inspiration else 'no'}. XP {c.experience_points}.",
     ]
+    if c.concentration:
+        lines.append(f"Concentrating on {c.concentration}.")
     casting = spellcasting_line(c)
     if casting:
         lines.append(casting)

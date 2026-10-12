@@ -40,6 +40,7 @@ def _combatant(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
             "temp": 0,
             "ac": combatant.armor_class,
             "conditions": combatant.conditions,
+            "concentration": combatant.concentration,
         }
     return {
         "name": combatant.name,

@@ -20,6 +20,9 @@ def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
         conditions = combatant.conditions
     if conditions:
         parts.append(", ".join(conditions))
+    held = character.concentration if character is not None else combatant.concentration
+    if held:
+        parts.append(f"concentrating on {held}")
     if combatant.position:
         parts.append(f"at {combatant.position}")
     if combatant.hidden:

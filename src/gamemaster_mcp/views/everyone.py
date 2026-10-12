@@ -182,6 +182,7 @@ def vitals(c: Character) -> Json:
         "temp": c.temporary_hit_points,
         "ac": c.armor_class,
         "conditions": c.conditions,
+        "concentration": c.concentration,
         "exhaustion": c.exhaustion,
         "death_saves": [c.death_saves_success, c.death_saves_failure],
         "slots": [

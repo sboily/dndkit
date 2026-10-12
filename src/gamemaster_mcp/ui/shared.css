@@ -140,6 +140,11 @@ body {
   color: var(--amber);
 }
 
+.chip.conc {
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  color: var(--gold-hi);
+}
+
 .pips {
   display: inline-flex;
   gap: 3px;

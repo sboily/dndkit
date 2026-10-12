@@ -13,7 +13,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from gamemaster_mcp.errors import InvalidChangeError, NotFoundError
-from gamemaster_mcp.game import characters, combat, combatants, registry, rules
+from gamemaster_mcp.game import characters, combat, combatants, concentration, registry, rules
+from gamemaster_mcp.game.concentration import INCAPACITATING
 from gamemaster_mcp.models import CONDITIONS, Campaign, Character, Combatant, now
 
 
@@ -76,10 +77,19 @@ def change_hit_points(campaign: Campaign, refs: Sequence[str], amount: int) -> l
     """Damage (negative) or heal (positive) each target; one line per target."""
     lines = combatants.refresh(campaign)
     for target in resolve(campaign, refs):
+        holder: Character | Combatant
         if target.character is not None:
-            lines.append(characters.change_hp(target.character, amount))
+            holder = target.character
+            lines.append(characters.change_hp(holder, amount))
+            down = holder.hit_points_current == 0
         elif target.combatant is not None:
-            lines.append(_change_combatant_hp(campaign, target.combatant, amount))
+            holder = target.combatant
+            lines.append(_change_combatant_hp(campaign, holder, amount))
+            down = not holder.hit_points
+        else:
+            continue
+        if amount < 0 and (held := concentration.after_damage(holder, target.name, -amount, down)):
+            lines.append(held)
     return lines
 
 
@@ -129,4 +139,20 @@ def set_condition(
         holder.conditions = [*others, condition] if active else others
         listed = ", ".join(holder.conditions) or "no condition"
         lines.append(f"{target.name}: {listed}")
+        if (
+            active
+            and condition in INCAPACITATING
+            and (lost := concentration.lose(holder, target.name))
+        ):
+            lines.append(lost)
     return lines
+
+
+def set_concentration(campaign: Campaign, ref: str, spell: str | None) -> str:
+    """Start or stop concentrating, for a character or a combatant."""
+    combatants.refresh(campaign)
+    (target,) = resolve(campaign, [ref])
+    holder = target.character or target.combatant
+    if holder is None:
+        raise NotFoundError(f"Unknown: '{ref}'.")
+    return concentration.concentrate(holder, target.name, spell)

@@ -93,9 +93,22 @@ def set_condition(
         return "\n".join(effects.set_condition(campaign, names, condition, active))
 
 
+@tool
+def set_concentration(
+    name: Annotated[str, Field(min_length=1, description="Character or monster")],
+    spell: Annotated[str | None, Field(description="The spell held; omit to end it")] = None,
+    store: CampaignStore = Depends(get_store),
+) -> str:
+    """Concentrate on a spell (ending any other), or stop. Damage then asks for the
+    Constitution save; 0 HP or incapacitation ends it."""
+    with store.transaction() as campaign:
+        return effects.set_concentration(campaign, name, spell)
+
+
 TOOLS: list[Callable[..., str]] = [
     get_game_state,
     update_game_state,
     change_hit_points,
     set_condition,
+    set_concentration,
 ]

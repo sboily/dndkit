@@ -47,7 +47,7 @@ function CharacterSheet() {
       h("div", { class: "abilities" }, c.abilities.map((a) => h("div", { class: "ability" },
         h("div", { class: "key" }, t(a.key)), h("div", { class: "mod" }, signed(a.mod)),
         h("div", { class: "score" }, a.score)))),
-      GM.conditions(c.conditions, c.exhaustion),
+      GM.conditions(c.conditions, c.exhaustion, c.concentration),
       c.slots.length ? section(t("slots"), h("div", { class: "list" }, c.slots.map(([level, left, max]) =>
         h("span", { class: "slot" }, `${t("lvl")} ${level} `, GM.pips(left, max))))) : null,
       c.spells.length ? section(t("spells"), h("div", { class: "spells" }, c.spells.map(spell))) : null,
