@@ -3,9 +3,9 @@
 import pytest
 from fastmcp import Client
 
-from gamemaster_mcp.errors import InvalidChangeError, NotFoundError
-from gamemaster_mcp.game import bestiary, combat, combatants, effects
-from gamemaster_mcp.models import Combatant, Participant
+from dndkit.errors import InvalidChangeError, NotFoundError
+from dndkit.game import bestiary, combat, combatants, effects
+from dndkit.models import Combatant, Participant
 from tests.helpers import call, call_error, make_campaign, make_character
 
 pytestmark = pytest.mark.anyio

@@ -2,7 +2,7 @@
 
 roomkit 0.98.0 drives the model as roomkit-ui does (an AIChannel, the README's
 game master prompt, speaker names, the skills read from their folders, Tool
-Search by roomkit-ui's settings) against gamemaster-mcp over stdio, one fresh
+Search by roomkit-ui's settings) against dndkit over stdio, one fresh
 campaign per scenario.
 
     uv run python run.py --port 8091          # a llama-server already serving
@@ -45,7 +45,7 @@ from roomkit.tools import MCPToolProvider
 from scenarios import SCENARIOS, SEED, Call, Scenario
 
 REPO = Path(__file__).resolve().parents[2]
-SKILLS = REPO / "src" / "gamemaster_mcp" / "skills"
+SKILLS = REPO / "src" / "dndkit" / "skills"
 RESULTS = Path(__file__).resolve().parent / "results"
 TURN_TIMEOUT_S = 300
 
@@ -142,10 +142,10 @@ async def play(
         env = {
             "PATH": os.environ["PATH"],
             "HOME": os.environ["HOME"],
-            "GAMEMASTER_STORAGE_DIR": data,
+            "DNDKIT_STORAGE_DIR": data,
         }
         mcp = MCPToolProvider.from_command(
-            "uv", ["run", "--directory", str(REPO), "gamemaster-mcp"], env=env
+            "uv", ["run", "--directory", str(REPO), "dndkit"], env=env
         )
         async with mcp:
             for tool, arguments in scenario.seed if scenario.fresh else [*SEED, *scenario.seed]:

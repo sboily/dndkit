@@ -1,5 +1,5 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/gamemaster_mcp/ui/components.js", "src/gamemaster_mcp/ui/shared.js"],
-  "project": ["src/gamemaster_mcp/ui/**/*.js"]
+  "entry": ["src/dndkit/ui/components.js", "src/dndkit/ui/shared.js"],
+  "project": ["src/dndkit/ui/**/*.js"]
 }

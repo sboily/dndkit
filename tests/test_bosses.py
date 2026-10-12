@@ -3,9 +3,9 @@
 import pytest
 from fastmcp import Client
 
-from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import bestiary, combat, combatants, rules
-from gamemaster_mcp.models import Combatant, Participant
+from dndkit.errors import InvalidChangeError
+from dndkit.game import bestiary, combat, combatants, rules
+from dndkit.models import Combatant, Participant
 from tests.helpers import call, call_error, make_campaign
 
 

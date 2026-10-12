@@ -1,7 +1,7 @@
 [project]
-name = "gamemaster-local-model-poc"
+name = "dndkit-local-model-poc"
 version = "0.1.0"
-description = "How well a local model plays the game master through roomkit and gamemaster-mcp"
+description = "How well a local model plays the game master through roomkit and dndkit"
 requires-python = ">=3.12"
 dependencies = ["roomkit[llamacpp,mcp]==0.98.0"]
 

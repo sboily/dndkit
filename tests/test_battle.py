@@ -5,11 +5,11 @@ import json
 import pytest
 from fastmcp import Client
 
-from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import battlefield, bestiary, combat, grid, movement, rules
-from gamemaster_mcp.game.movement import Order
-from gamemaster_mcp.models import Battlefield, Campaign, Combatant, Monster
-from gamemaster_mcp.views import public, widgets
+from dndkit.errors import InvalidChangeError
+from dndkit.game import battlefield, bestiary, combat, grid, movement, rules
+from dndkit.game.movement import Order
+from dndkit.models import Battlefield, Campaign, Combatant, Monster
+from dndkit.views import public, widgets
 from tests.helpers import call, call_error, make_campaign, make_character
 
 

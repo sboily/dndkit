@@ -40,7 +40,7 @@ jobs:
       - name: Security
         run: uv run bandit -r src/ -c pyproject.toml -q
       - name: Tests
-        run: uv run pytest -q --cov=gamemaster_mcp --cov-branch --cov-report=term:skip-covered
+        run: uv run pytest -q --cov=dndkit --cov-branch --cov-report=term:skip-covered
 
   ui:
     name: Pages' scripts (knip)

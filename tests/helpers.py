@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastmcp import Client
 
-from gamemaster_mcp.models import Campaign, Character, CharacterClass, GameState, Race
+from dndkit.models import Campaign, Character, CharacterClass, GameState, Race
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

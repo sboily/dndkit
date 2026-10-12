@@ -17,16 +17,16 @@ import pytest
 from fastmcp import Client
 from starlette.testclient import TestClient
 
-from gamemaster_mcp import ui
-from gamemaster_mcp.app import build_server
-from gamemaster_mcp.config import WebSettings
-from gamemaster_mcp.game import dice
-from gamemaster_mcp.game.dice import DiceLog
-from gamemaster_mcp.storage import CampaignStore
-from gamemaster_mcp.views import everyone
-from gamemaster_mcp.web import feed
-from gamemaster_mcp.web.changes import ACTIVITY, Changes
-from gamemaster_mcp.web.routes import create_app
+from dndkit import ui
+from dndkit.app import build_server
+from dndkit.config import WebSettings
+from dndkit.game import dice
+from dndkit.game.dice import DiceLog
+from dndkit.storage import CampaignStore
+from dndkit.views import everyone
+from dndkit.web import feed
+from dndkit.web.changes import ACTIVITY, Changes
+from dndkit.web.routes import create_app
 from tests.helpers import call
 from tests.web_helpers import aria_token, make_sources
 
@@ -226,7 +226,7 @@ async def test_a_taken_port_leaves_the_game_running(
         taken.bind(("127.0.0.1", 0))
         taken.listen()
         settings = WebSettings(port=taken.getsockname()[1])
-        with caplog.at_level(logging.WARNING, logger="gamemaster_mcp.web.server"):
+        with caplog.at_level(logging.WARNING, logger="dndkit.web.server"):
             async with Client(build_server(tmp_path, web=settings)) as mcp:
                 await call(mcp, "create_campaign", name="Still here", description="d")
     assert "Web pages are off" in caplog.text

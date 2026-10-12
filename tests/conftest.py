@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from fastmcp import Client
 
-from gamemaster_mcp.app import build_server
-from gamemaster_mcp.storage import CampaignStore
+from dndkit.app import build_server
+from dndkit.storage import CampaignStore
 
 
 @pytest.fixture

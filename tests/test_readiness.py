@@ -3,8 +3,8 @@
 import pytest
 from fastmcp import Client
 
-from gamemaster_mcp.game import characters, readiness
-from gamemaster_mcp.models import (
+from dndkit.game import characters, readiness
+from dndkit.models import (
     AbilityScore,
     CharacterClass,
     Encounter,

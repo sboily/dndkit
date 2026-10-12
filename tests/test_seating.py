@@ -5,10 +5,10 @@ from datetime import UTC, datetime
 import pytest
 from fastmcp import Client
 
-from gamemaster_mcp.errors import NotFoundError
-from gamemaster_mcp.game import bestiary, progression, seating
-from gamemaster_mcp.models import Campaign, Encounter, EncounterGroup, Monster
-from gamemaster_mcp.tools import render
+from dndkit.errors import NotFoundError
+from dndkit.game import bestiary, progression, seating
+from dndkit.models import Campaign, Encounter, EncounterGroup, Monster
+from dndkit.tools import render
 from tests.helpers import call, call_error, make_campaign, make_character
 
 

@@ -5,8 +5,8 @@ import json
 import pytest
 from fastmcp import Client
 
-from gamemaster_mcp.game import characters, combat, combatants
-from gamemaster_mcp.models import AbilityScore, Combatant, Participant
+from dndkit.game import characters, combat, combatants
+from dndkit.models import AbilityScore, Combatant, Participant
 from tests.helpers import call, call_error, make_campaign, make_character
 
 pytestmark = pytest.mark.anyio

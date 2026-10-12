@@ -4,8 +4,8 @@ import random
 
 import pytest
 
-from gamemaster_mcp.errors import DiceError
-from gamemaster_mcp.game import dice, rules
+from dndkit.errors import DiceError
+from dndkit.game import dice, rules
 
 
 def seeded() -> random.Random:

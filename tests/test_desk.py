@@ -7,12 +7,12 @@ import pytest
 from fastmcp import Client, FastMCP
 from fastmcp.exceptions import ToolError
 
-from gamemaster_mcp.activity import ActivityLog
-from gamemaster_mcp.game import combat
-from gamemaster_mcp.models import AdventureEvent, Item
-from gamemaster_mcp.tools.recorder import Recorder
-from gamemaster_mcp.views import desk
-from gamemaster_mcp.web import audiences
+from dndkit.activity import ActivityLog
+from dndkit.game import combat
+from dndkit.models import AdventureEvent, Item
+from dndkit.tools.recorder import Recorder
+from dndkit.views import desk
+from dndkit.web import audiences
 from tests.web_helpers import aria_token, make_sources, rendered
 
 pytestmark = pytest.mark.anyio

@@ -4,10 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from gamemaster_mcp.activity import ActivityLog
-from gamemaster_mcp.config import WebSettings
-from gamemaster_mcp.game.dice import DiceLog
-from gamemaster_mcp.models import (
+from dndkit.activity import ActivityLog
+from dndkit.config import WebSettings
+from dndkit.game.dice import DiceLog
+from dndkit.models import (
     NPC,
     Combatant,
     Encounter,
@@ -16,11 +16,11 @@ from gamemaster_mcp.models import (
     Monster,
     Quest,
 )
-from gamemaster_mcp.storage import CampaignStore
-from gamemaster_mcp.web.access import PlayerLinks
-from gamemaster_mcp.web.audiences import Sources, Views
-from gamemaster_mcp.web.changes import Changes
-from gamemaster_mcp.web.feed import render_once
+from dndkit.storage import CampaignStore
+from dndkit.web.access import PlayerLinks
+from dndkit.web.audiences import Sources, Views
+from dndkit.web.changes import Changes
+from dndkit.web.feed import render_once
 from tests.helpers import make_character
 
 

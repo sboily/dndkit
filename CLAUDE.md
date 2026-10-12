@@ -1,4 +1,4 @@
-# Gamemaster MCP
+# dndkit
 
 FastMCP 4 server (stdio) that keeps a D&D 5e campaign for an AI game master,
 made for voice clients such as roomkit-ui.
@@ -7,22 +7,27 @@ made for voice clients such as roomkit-ui.
 
 ```bash
 uv sync --extra dev                  # Environment with dev tools
-uv run gamemaster-mcp                # Run the server (stdio)
+uv run dndkit                        # Run the server (stdio)
 uv run pytest -q                     # Tests
 uv run ruff check . && uv run ruff format --check .
 uv run mypy src/                     # Strict
 uv run bandit -r src/ -c pyproject.toml
 npm ci && npx knip                   # Unused files and exports in ui/*.js
-GAMEMASTER_WEB_PORT=8765 uv run gamemaster-mcp   # Also serve the web pages
+DNDKIT_WEB_PORT=8765 uv run dndkit   # Also serve the web pages
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of these on every push, Python 3.12
-and 3.13; its actions are pinned by commit.
+and 3.13; its actions are pinned by commit. A tag `v<version>` matching
+`pyproject.toml` publishes to PyPI (`release.yml`, trusted publishing).
+
+The project was gamemaster-mcp before its rename (a fork of
+study-flamingo/gamemaster-mcp): `config.py` still reads the `GAMEMASTER_*`
+variables and the old data directory; everything new says dndkit.
 
 ## Architecture
 
 ```
-src/gamemaster_mcp/
+src/dndkit/
 ├── app.py        # build_server(): FastMCP, lifespan (store, dice log, web pages), tools, apps
 ├── activity.py   # In-memory log of the model's calls, for the backstage
 ├── config.py     # Data dir (env, else platformdirs), stderr logging, WebSettings
@@ -173,7 +178,7 @@ calls `game` functions on the campaign, and renders a short text answer.
   with `seating.same_person`. Anything that should count only the characters
   at the table (difficulty, XP) goes through `seating.present_characters`,
   which is the whole party until a roll call.
-- **Debugging the model**: open `/gm/` (needs `GAMEMASTER_WEB_PORT`). The
+- **Debugging the model**: open `/gm/` (needs `DNDKIT_WEB_PORT`). The
   activity there shows each tool call as the model made it and what it got
   back, failures in red; `tools/recorder.py` records them and leaves out
   `get_screen_data`. A new protocol method (like `skills/list`) records itself.

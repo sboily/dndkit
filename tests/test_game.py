@@ -2,8 +2,8 @@
 
 import pytest
 
-from gamemaster_mcp.errors import AlreadyExistsError, InvalidChangeError, NotFoundError
-from gamemaster_mcp.game import (
+from dndkit.errors import AlreadyExistsError, InvalidChangeError, NotFoundError
+from dndkit.game import (
     characters,
     combat,
     effects,
@@ -13,7 +13,7 @@ from gamemaster_mcp.game import (
     spellbook,
     world,
 )
-from gamemaster_mcp.models import NPC, Combatant, Item, Quest
+from dndkit.models import NPC, Combatant, Item, Quest
 from tests.helpers import make_campaign, make_character
 
 

@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from gamemaster_mcp.config import WebSettings, resolve_web_settings
-from gamemaster_mcp.game import dice
-from gamemaster_mcp.views.battle import health
-from gamemaster_mcp.web import access, audiences
-from gamemaster_mcp.web.access import PlayerLinks
+from dndkit.config import WebSettings, resolve_web_settings
+from dndkit.game import dice
+from dndkit.views.battle import health
+from dndkit.web import access, audiences
+from dndkit.web.access import PlayerLinks
 from tests.web_helpers import aria_token, make_sources, rendered
 
 
@@ -137,16 +137,16 @@ def test_phones_get_a_reachable_address(monkeypatch: pytest.MonkeyPatch) -> None
 
 def test_web_settings_come_from_the_environment() -> None:
     assert resolve_web_settings({}) is None
-    assert resolve_web_settings({"GAMEMASTER_WEB_PORT": "eighty"}) is None
-    assert resolve_web_settings({"GAMEMASTER_WEB_PORT": "99999"}) is None
-    assert resolve_web_settings({"GAMEMASTER_WEB_PORT": "²"}) is None  # a digit, not a number
-    no_scheme = {"GAMEMASTER_WEB_PORT": "8765", "GAMEMASTER_WEB_URL": "table.local:8765"}
+    assert resolve_web_settings({"DNDKIT_WEB_PORT": "eighty"}) is None
+    assert resolve_web_settings({"DNDKIT_WEB_PORT": "99999"}) is None
+    assert resolve_web_settings({"DNDKIT_WEB_PORT": "²"}) is None  # a digit, not a number
+    no_scheme = {"DNDKIT_WEB_PORT": "8765", "DNDKIT_WEB_URL": "table.local:8765"}
     assert resolve_web_settings(no_scheme) == WebSettings(8765)
     settings = resolve_web_settings(
         {
-            "GAMEMASTER_WEB_PORT": " 8765 ",
-            "GAMEMASTER_WEB_HOST": "0.0.0.0",  # nosec B104
-            "GAMEMASTER_WEB_URL": "http://table.local:8765/",
+            "DNDKIT_WEB_PORT": " 8765 ",
+            "DNDKIT_WEB_HOST": "0.0.0.0",  # nosec B104
+            "DNDKIT_WEB_URL": "http://table.local:8765/",
         }
     )
     assert settings == WebSettings(8765, "0.0.0.0", "http://table.local:8765")  # nosec B104

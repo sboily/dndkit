@@ -4,8 +4,8 @@ import random
 
 import pytest
 
-from gamemaster_mcp.errors import InvalidChangeError, NotFoundError
-from gamemaster_mcp.game import (
+from dndkit.errors import InvalidChangeError, NotFoundError
+from dndkit.game import (
     bestiary,
     characters,
     combat,
@@ -18,7 +18,7 @@ from gamemaster_mcp.game import (
     spellbook,
     world,
 )
-from gamemaster_mcp.models import EncounterGroup, Participant, Quest
+from dndkit.models import EncounterGroup, Participant, Quest
 from tests.helpers import make_campaign, make_character
 
 

@@ -11,11 +11,11 @@ from tests.helpers import call, call_error
 pytestmark = pytest.mark.anyio
 
 APP_TOOLS = {
-    "roll_dice": "ui://gamemaster/dice.html",
-    "start_combat": "ui://gamemaster/combat.html",
-    "get_game_state": "ui://gamemaster/party.html",
-    "seat_players": "ui://gamemaster/seating.html",
-    "get_character": "ui://gamemaster/character.html",
+    "roll_dice": "ui://dndkit/dice.html",
+    "start_combat": "ui://dndkit/combat.html",
+    "get_game_state": "ui://dndkit/party.html",
+    "seat_players": "ui://dndkit/seating.html",
+    "get_character": "ui://dndkit/character.html",
 }
 
 

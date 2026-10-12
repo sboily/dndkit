@@ -2,7 +2,15 @@
 
 ## 0.4.0
 
-Live web pages: a table screen, each player's phone, the game master's backstage.
+Renamed **dndkit**, the fork having grown far from gamemaster-mcp. Live web
+pages: a table screen, each player's phone, the game master's backstage.
+
+### Renamed
+
+- The package, the command and the MCP server are `dndkit` (`uvx dndkit`),
+  the variables `DNDKIT_*`. The `GAMEMASTER_*` variables still work, and the
+  `gamemaster-mcp` data directory is used as long as no `dndkit` one exists.
+  The pages' URIs are `ui://dndkit/...`.
 
 ### Added
 

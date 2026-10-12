@@ -1,4 +1,4 @@
-# Gamemaster MCP
+# dndkit
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server that keeps a
 Dungeons & Dragons 5e campaign for an AI game master: characters, NPCs,
@@ -7,8 +7,13 @@ It is built with [FastMCP](https://gofastmcp.com) 4 and made for **voice play**,
 for example as an MCP service in [roomkit-ui](https://github.com/roomkit-live/roomkit-ui),
 while working just as well from Claude Desktop or any MCP client.
 
-This is a fork of [study-flamingo/gamemaster-mcp](https://github.com/study-flamingo/gamemaster-mcp).
-See [CHANGELOG.md](CHANGELOG.md) for what changed.
+dndkit began as a fork of
+[study-flamingo/gamemaster-mcp](https://github.com/study-flamingo/gamemaster-mcp)
+by Joel Casimir, and has since been largely rewritten: voice play with several
+players, rules kept by the server (combat, the battle map, hit dice,
+concentration, a campaign checked before play), skills, on-screen widgets and
+live web pages. It took a name of its own so as not to take the original
+project's. See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ## What it does
 
@@ -45,14 +50,17 @@ says why and lists the known names, so the model can correct itself.
 Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-# Straight from GitHub, no checkout
-uvx --from git+https://github.com/sboily/gamemaster-mcp gamemaster-mcp
+# From PyPI, nothing else to install
+uvx dndkit
+
+# Straight from GitHub
+uvx --from git+https://github.com/sboily/gamemaster-mcp dndkit
 
 # From a checkout
 git clone https://github.com/sboily/gamemaster-mcp.git
 cd gamemaster-mcp
 uv sync
-uv run gamemaster-mcp
+uv run dndkit
 ```
 
 The server speaks MCP over stdio: an MCP client starts it, you don't keep it running yourself.
@@ -61,17 +69,21 @@ The server speaks MCP over stdio: an MCP client starts it, you don't keep it run
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `GAMEMASTER_STORAGE_DIR` | the per-user data directory (below) | Where campaigns are stored |
-| `GAMEMASTER_LOG_LEVEL` | `INFO` | Log level; logs go to stderr |
-| `GAMEMASTER_WEB_PORT` | unset: no web pages | Serve the [live web pages](#live-web-pages) on this port |
-| `GAMEMASTER_WEB_HOST` | `127.0.0.1` | `0.0.0.0` lets phones on the same network open them |
-| `GAMEMASTER_WEB_URL` | guessed | The address phones should use, when the server cannot tell (a DNS name, Tailscale) |
+| `DNDKIT_STORAGE_DIR` | the per-user data directory (below) | Where campaigns are stored |
+| `DNDKIT_LOG_LEVEL` | `INFO` | Log level; logs go to stderr |
+| `DNDKIT_WEB_PORT` | unset: no web pages | Serve the [live web pages](#live-web-pages) on this port |
+| `DNDKIT_WEB_HOST` | `127.0.0.1` | `0.0.0.0` lets phones on the same network open them |
+| `DNDKIT_WEB_URL` | guessed | The address phones should use, when the server cannot tell (a DNS name, Tailscale) |
 
 Default data directory:
 
-- macOS: `~/Library/Application Support/gamemaster-mcp`
-- Linux: `~/.local/share/gamemaster-mcp` (or `$XDG_DATA_HOME/gamemaster-mcp`)
-- Windows: `%LOCALAPPDATA%\gamemaster-mcp`
+- macOS: `~/Library/Application Support/dndkit`
+- Linux: `~/.local/share/dndkit` (or `$XDG_DATA_HOME/dndkit`)
+- Windows: `%LOCALAPPDATA%\dndkit`
+
+Before its rename the project was `gamemaster-mcp`: its `GAMEMASTER_*`
+variables still work, and its data directory is used as long as no `dndkit`
+one exists.
 
 To start a campaign from a prepared world document, drop a `.md` or `.txt` file
 in the `settings/` folder of the data directory and pass its name as
@@ -84,14 +96,14 @@ In **Settings → Integrations → MCP**, add a server:
 
 | Field | Value |
 | --- | --- |
-| Name | `Gamemaster` |
+| Name | `dndkit` |
 | Transport | `stdio` |
 | Command | `uvx` |
-| Arguments | `--from git+https://github.com/sboily/gamemaster-mcp gamemaster-mcp` |
-| Environment variables | `GAMEMASTER_STORAGE_DIR=/Users/you/Games/dnd` (optional)<br>`GAMEMASTER_WEB_PORT=8765` and `GAMEMASTER_WEB_HOST=0.0.0.0` for the web pages (optional) |
+| Arguments | `dndkit` |
+| Environment variables | `DNDKIT_STORAGE_DIR=/Users/you/Games/dnd` (optional)<br>`DNDKIT_WEB_PORT=8765` and `DNDKIT_WEB_HOST=0.0.0.0` for the web pages (optional) |
 
 From a local checkout instead: Command `uv`, Arguments
-`run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
+`run --directory /path/to/gamemaster-mcp dndkit`.
 
 The 62 tool schemas weigh about 8,900 tokens by roomkit's own estimate, just
 over the 8,000 at which roomkit hides tools behind `find_tools` by default:
@@ -122,17 +134,17 @@ out of the catalogue, and out of its token count, until the model activates
 the skill. With the skills on, the catalogue weighs about 7,300 tokens. To
 use them in roomkit-ui before it speaks the Skills extension, add this
 repository (or its checkout) as a skill source in Settings → Skills: they
-live in `src/gamemaster_mcp/skills/`.
+live in `src/dndkit/skills/`.
 
 ### With Claude Desktop
 
 ```json
 {
   "mcpServers": {
-    "gamemaster": {
+    "dndkit": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/sboily/gamemaster-mcp", "gamemaster-mcp"],
-      "env": { "GAMEMASTER_STORAGE_DIR": "/Users/you/Games/dnd" }
+      "args": ["dndkit"],
+      "env": { "DNDKIT_STORAGE_DIR": "/Users/you/Games/dnd" }
     }
   }
 }
@@ -159,7 +171,7 @@ Call seat_players again when someone arrives or leaves. A player's "I attack"
 is their character's action; speak to players by name and to characters in
 the story. Absent players' characters stay in the background.
 
-The Gamemaster tools hold the campaign. Trust them over your memory:
+The dndkit tools hold the campaign. Trust them over your memory:
 - Before describing a character, place or quest, read it (get_character,
   get_location, get_quest, get_game_state).
 - Record every change as it happens: damage and healing with change_hit_points
@@ -398,7 +410,7 @@ and the widget falls back to a text line).
 
 ## Live web pages
 
-With `GAMEMASTER_WEB_PORT` set, the server also serves web pages that follow
+With `DNDKIT_WEB_PORT` set, the server also serves web pages that follow
 the game as it happens: every change made through a tool, and every roll, is
 pushed to the open pages at once (server-sent events). The pages run inside
 the MCP server's process, so they are up while roomkit-ui runs the server and
@@ -427,16 +439,16 @@ the game goes on without the pages.
   server, so it is not there: look at the client's log for those.
 - **The backstage** opens only from the computer running the server: a
   loopback peer, asking for this server by name (`localhost`, its address or
-  `GAMEMASTER_WEB_URL`'s host), so a web page whose domain points at this
+  `DNDKIT_WEB_URL`'s host), so a web page whose domain points at this
   computer (DNS rebinding) is refused. Requests carrying proxy headers are
   refused too, but a reverse proxy or tunnel on that computer that adds none
   would make every visitor look local: do not put one in front of the pages.
 - **Read-only**: the pages never change the game; it changes through the
   conversation, so the model always knows the state.
-- **Phones** need `GAMEMASTER_WEB_HOST=0.0.0.0` and the same network. The table
+- **Phones** need `DNDKIT_WEB_HOST=0.0.0.0` and the same network. The table
   screen then puts this computer's network address in the codes, even when it
   is open at `127.0.0.1`. For players elsewhere, put a private network such as
-  Tailscale between you and set `GAMEMASTER_WEB_URL`; the pages carry no other
+  Tailscale between you and set `DNDKIT_WEB_URL`; the pages carry no other
   authentication.
 - The log names the addresses at startup: `Table screen: http://127.0.0.1:8765/table/`.
 
@@ -458,13 +470,22 @@ uv run bandit -r src/ -c pyproject.toml
 npm ci && npx knip     # unused files and exports in the pages' scripts
 ```
 
-The pages' scripts (`src/gamemaster_mcp/ui/*.js`) are ES modules, so knip can
+The pages' scripts (`src/dndkit/ui/*.js`) are ES modules, so knip can
 follow who imports what; each page inlines them as one script. GitHub Actions
 runs all of the above on every push and pull request (Python 3.12 and 3.13),
 and `pre-commit install` runs most of it before each commit.
 
 [CLAUDE.md](CLAUDE.md) describes the architecture and the project's rules.
 
+### Releasing
+
+Set the version in `pyproject.toml`, give it a section in the changelog, then
+push a tag of that version: `git tag v0.4.0 && git push origin v0.4.0`. The
+release workflow checks that the tag matches, runs the tests, builds, and
+publishes to PyPI by trusted publishing (no token: PyPI trusts
+`.github/workflows/release.yml` in its `pypi` environment).
+
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE). dndkit keeps the copyright of gamemaster-mcp,
+the project it was forked from.

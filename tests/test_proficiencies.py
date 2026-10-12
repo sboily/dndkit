@@ -5,9 +5,9 @@ import json
 import pytest
 from fastmcp import Client
 
-from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import characters, proficiencies, rules
-from gamemaster_mcp.models import AbilityScore, CharacterClass
+from dndkit.errors import InvalidChangeError
+from dndkit.game import characters, proficiencies, rules
+from dndkit.models import AbilityScore, CharacterClass
 from tests.helpers import call, call_error, make_campaign, make_character
 
 pytestmark = pytest.mark.anyio

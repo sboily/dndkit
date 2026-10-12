@@ -1,8 +1,8 @@
-# Gamemaster MCP 🐉 - Project Roadmap
+# dndkit 🐉 - Project Roadmap
 
 ## 🏰 Vision Statement
 
-The Gamemaster MCP server aims to be the ultimate AI-assisted Dungeon Master for DnD 5e, providing:
+The dndkit server aims to be the ultimate AI-assisted Dungeon Master for DnD 5e, providing:
 
 - **For Groups**: A comprehensive toolkit to help human DMs run campaigns more effectively
 - **For Solo Players**: A complete virtual DM experience that facilitates immersive solo play

@@ -224,7 +224,7 @@ wheels = [
 ]
 
 [[package]]
-name = "gamemaster-local-model-poc"
+name = "dndkit-local-model-poc"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

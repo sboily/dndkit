@@ -2,14 +2,14 @@
 
 Does a model running on this machine pick the right tools? This proof of
 concept plays scripted table turns through **roomkit 0.98.0**, the way
-roomkit-ui does, against gamemaster-mcp, and checks each scenario's calls and
+roomkit-ui does, against dndkit, and checks each scenario's calls and
 the campaign they leave.
 
 - **Model**: llama.cpp (roomkit's pinned build), by default
   `ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q8_0`, thinking off as roomkit-ui sets it
   for voice.
 - **Game master**: an `AIChannel` with the README's system prompt, the
-  server's tools over stdio, the skills read from `src/gamemaster_mcp/skills`.
+  server's tools over stdio, the skills read from `src/dndkit/skills`.
 - **Players**: named as roomkit-ui names its voices: Sylvain and Marie are the
   room's participants, each turn carries its speaker (`sender_name`), and the
   prompt ends with roomkit-ui's roster note ("Speaker A is \"Sylvain\", the

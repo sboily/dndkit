@@ -1,10 +1,10 @@
 # Data storage
 
-`CampaignStore` (`src/gamemaster_mcp/storage/store.py`) keeps campaigns as JSON
-files in the data directory: `$GAMEMASTER_STORAGE_DIR`, else the per-user data
-directory (`~/Library/Application Support/gamemaster-mcp` on macOS,
-`~/.local/share/gamemaster-mcp` on Linux, `%LOCALAPPDATA%\gamemaster-mcp` on
-Windows).
+`CampaignStore` (`src/dndkit/storage/store.py`) keeps campaigns as JSON
+files in the data directory: `$DNDKIT_STORAGE_DIR`, else the per-user data
+directory (`~/Library/Application Support/dndkit` on macOS,
+`~/.local/share/dndkit` on Linux, `%LOCALAPPDATA%\dndkit` on
+Windows; the `gamemaster-mcp` one from before the rename while it is alone).
 
 ```
 <data dir>/
@@ -65,7 +65,7 @@ file check alone remains.
 
 ## player-links.key
 
-Created the first time the web pages start (`GAMEMASTER_WEB_PORT`): 32 random
+Created the first time the web pages start (`DNDKIT_WEB_PORT`): 32 random
 bytes, readable by the owner only. Each player's link carries a code derived
 from it, the campaign and the character. Delete the file to change every link;
 a new key is made at the next start.

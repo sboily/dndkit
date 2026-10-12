@@ -3,9 +3,9 @@ encounter tables the SRD leaves out. Spot checks across each table's range."""
 
 import pytest
 
-from gamemaster_mcp.game import characters, concentration, proficiencies, resources, rests, rules
-from gamemaster_mcp.game.tables import SKILLS
-from gamemaster_mcp.models import AbilityScore, CharacterClass
+from dndkit.game import characters, concentration, proficiencies, resources, rests, rules
+from dndkit.game.tables import SKILLS
+from dndkit.models import AbilityScore, CharacterClass
 from tests.helpers import make_campaign, make_character
 
 

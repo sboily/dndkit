@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 from fastmcp import Client
 
-from gamemaster_mcp.errors import InvalidChangeError, NotFoundError
-from gamemaster_mcp.storage import CampaignStore
-from gamemaster_mcp.storage.confirmations import Confirmations
+from dndkit.errors import InvalidChangeError, NotFoundError
+from dndkit.storage import CampaignStore
+from dndkit.storage.confirmations import Confirmations
 from tests.helpers import call, call_error
 
 

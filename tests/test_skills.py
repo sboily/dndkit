@@ -8,9 +8,9 @@ from fastmcp import Client
 from mcp.shared.exceptions import MCPError
 from pydantic import BaseModel, TypeAdapter
 
-from gamemaster_mcp.skills import load_catalog
-from gamemaster_mcp.skills.catalog import frontmatter_of
-from gamemaster_mcp.skills.extension import IDENTIFIER
+from dndkit.skills import load_catalog
+from dndkit.skills.catalog import frontmatter_of
+from dndkit.skills.extension import IDENTIFIER
 
 pytestmark = pytest.mark.anyio
 

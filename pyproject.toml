@@ -3,10 +3,11 @@ requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gamemaster-mcp"
+name = "dndkit"
 version = "0.4.0"
 description = "A D&D 5e campaign management MCP server, built for voice game masters"
-authors = [{ name = "Joel Casimir", email = "y9agf5y5@anonaddy.me" }]
+# Joel Casimir wrote gamemaster-mcp, the project dndkit was forked from.
+authors = [{ name = "Sylvain Boily" }, { name = "Joel Casimir" }]
 maintainers = [{ name = "Sylvain Boily" }]
 license = "MIT"
 license-files = ["LICENSE"]
@@ -41,15 +42,15 @@ dev = [
 ]
 
 [project.scripts]
-gamemaster-mcp = "gamemaster_mcp.app:main"
+dndkit = "dndkit.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"gamemaster_mcp.ui" = ["*.html", "*.css", "*.js"]
+"dndkit.ui" = ["*.html", "*.css", "*.js"]
 # Skill files (Markdown only so far: widen this when a skill ships scripts or assets).
-"gamemaster_mcp.skills" = ["*/*.md", "*/**/*.md"]
+"dndkit.skills" = ["*/*.md", "*/**/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -70,7 +71,7 @@ extend-immutable-calls = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["gamemaster_mcp"]
+known-first-party = ["dndkit"]
 
 [tool.mypy]
 python_version = "3.12"

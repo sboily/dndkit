@@ -1,7 +1,7 @@
 {
-  "name": "gamemaster-mcp-ui",
+  "name": "dndkit-ui",
   "private": true,
-  "description": "Tooling for the pages' scripts (src/gamemaster_mcp/ui); the server is Python.",
+  "description": "Tooling for the pages' scripts (src/dndkit/ui); the server is Python.",
   "type": "module",
   "scripts": {
     "knip": "knip"
