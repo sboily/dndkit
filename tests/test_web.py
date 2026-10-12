@@ -25,7 +25,7 @@ from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.views import everyone
 from gamemaster_mcp.web import feed
-from gamemaster_mcp.web.changes import Changes
+from gamemaster_mcp.web.changes import ACTIVITY, Changes
 from gamemaster_mcp.web.routes import create_app
 from tests.helpers import call
 from tests.web_helpers import aria_token, make_sources
@@ -62,8 +62,11 @@ def test_saved_changes_and_rolls_are_reported_failed_changes_are_not(tmp_path: P
 @pytest.mark.anyio
 async def test_the_stream_sends_every_view_then_what_changed(tmp_path: Path) -> None:
     sources = make_sources(tmp_path)
-    views = {"dice": lambda: everyone.dice(sources.dice), "party": sources.reading(everyone.party)}
-    events = feed.stream(sources.changes, views)
+    views = {
+        "dice": feed.View(lambda: everyone.dice(sources.dice), "dice"),
+        "party": feed.View(sources.reading(everyone.party), "party"),
+    }
+    events = feed.stream(sources.changes, views, sources.renders)
     with anyio.fail_after(5):
         assert await anext(events) == "retry: 2000\n\n"
         first = [await anext(events), await anext(events)]
@@ -75,6 +78,32 @@ async def test_the_stream_sends_every_view_then_what_changed(tmp_path: Path) -> 
         sources.changes.close()
         with pytest.raises(StopAsyncIteration):
             await anext(events)
+
+
+def test_a_view_renders_once_per_change_for_every_feed() -> None:
+    changes, renders = Changes(), feed.Renders()
+    counts = {"party": 0, "activity": 0}
+
+    def counted(name: str) -> feed.Render:
+        def render() -> dict[str, int]:
+            counts[name] += 1
+            return {"n": counts[name]}
+
+        return render
+
+    views = {
+        "party": feed.View(counted("party"), "public/party"),
+        "activity": feed.View(counted("activity"), "gm/activity", ACTIVITY),
+    }
+    for _ in range(10):  # ten pages open
+        renders._all(views, changes.versions())
+    assert counts == {"party": 1, "activity": 1}
+    changes.notify_activity()  # a read-only tool call
+    renders._all(views, changes.versions())
+    assert counts == {"party": 1, "activity": 2}
+    changes.notify()  # a change to the game
+    renders._all(views, changes.versions())
+    assert counts == {"party": 2, "activity": 2}
 
 
 def site(tmp_path: Path, peer: str = "testclient") -> tuple[Any, TestClient]:
@@ -116,7 +145,9 @@ def test_a_failing_view_leaves_the_others_running(tmp_path: Path) -> None:
     def broken() -> object:
         raise KeyError("oops")
 
-    texts = feed._render_all({"broken": broken, "fine": lambda: {"ok": 1}})
+    texts = feed.render_once(
+        {"broken": feed.View(broken, "broken"), "fine": feed.View(lambda: {"ok": 1}, "fine")}
+    )
     assert json.loads(texts["broken"]) == {"error": "viewFailed"}
     assert json.loads(texts["fine"]) == {"ok": 1}
 

@@ -20,7 +20,7 @@ from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.web.access import PlayerLinks
 from gamemaster_mcp.web.audiences import Sources, Views
 from gamemaster_mcp.web.changes import Changes
-from gamemaster_mcp.web.feed import _render_all
+from gamemaster_mcp.web.feed import render_once
 from tests.helpers import make_character
 
 
@@ -89,4 +89,4 @@ def aria_token(sources: Sources) -> str:
 
 def rendered(views: Views) -> dict[str, Any]:
     """Every view's data, as a page would receive it."""
-    return {name: json.loads(text) for name, text in _render_all(views).items()}
+    return {name: json.loads(text) for name, text in render_once(views).items()}

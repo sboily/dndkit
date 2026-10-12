@@ -91,7 +91,7 @@ def _feed(request: Request, sources: Sources, views: Views) -> Response:
     if not wanted or unknown:
         known = ", ".join(sorted(views))
         return PlainTextResponse(f"Ask for views among: {known}.", status_code=400)
-    stream = feed.stream(sources.changes, {name: views[name] for name in wanted})
+    stream = feed.stream(sources.changes, {name: views[name] for name in wanted}, sources.renders)
     return StreamingResponse(stream, media_type="text/event-stream", headers=FEED_HEADERS)
 
 

@@ -140,7 +140,12 @@ calls `game` functions on the campaign, and renders a short text answer.
   `log_config=None` and no signal capture, and a socket bound by us (uvicorn
   exits the process when it cannot bind). Nothing on the web side may stop the
   game. A new way for `CampaignStore` to change the game must call
-  `self._on_change()`, or the pages stay stale.
+  `self._on_change()`, or the pages stay stale. Each streamed view is a
+  `feed.View` with a key (feeds showing the same thing share its text, so a
+  view rendered for the table renders once for every phone; a view that
+  depends on the request, like the join links, puts it in its key) and a
+  topic: `GAME` (store, dice) or `ACTIVITY` (the model's calls, which change
+  nothing else). Pages render in their own small thread pool, never the tools'.
 - **Player views** (`views/everyone.py`, `views/public.py`) list every field
   they send; never pass a model or a GM view through, and never put a secret
   in them (the GM views add theirs on top). `tests/test_web_views.py` fills

@@ -71,7 +71,7 @@ def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -
         changes = Changes()
         store = CampaignStore(directory, on_change=changes.notify)
         dice_log = DiceLog(on_record=changes.notify)
-        activity.on_record = changes.notify
+        activity.on_record = changes.notify_activity
         async with web_pages(web, store, dice_log, activity, changes):
             yield {STORE_KEY: store, DICE_LOG_KEY: dice_log}
 

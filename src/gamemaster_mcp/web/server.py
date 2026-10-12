@@ -28,6 +28,7 @@ from gamemaster_mcp.web.routes import create_app
 logger = logging.getLogger(__name__)
 
 STOP_SECONDS = 5.0
+MAX_CONNECTIONS = 64  # pages and their feeds at once; a table needs a dozen
 
 
 @contextlib.asynccontextmanager
@@ -73,6 +74,7 @@ async def serving(app: ASGIApp, settings: WebSettings) -> AsyncIterator[str | No
         ws="none",
         proxy_headers=False,  # the backstage trusts the peer address only
         server_header=False,
+        limit_concurrency=MAX_CONNECTIONS,  # past it, 503: a flood cannot stall the game
         timeout_graceful_shutdown=1,
     )
     server = _EmbeddedServer(config)
