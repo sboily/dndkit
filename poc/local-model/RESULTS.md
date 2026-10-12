@@ -112,3 +112,8 @@ the table.
 - With skills, the tools a skill gates are the weak spot: the map move and the
   owlbear pass 0 of 6 behind `dnd-battle-map` and `dnd-monsters` (two of those
   six cut by the cap), 5 of 6 with every tool in sight.
+
+With roomkit-ui's cap since (the whole window when the model thinks, now the
+bench's too), the two gated scenarios on `skills`, 2 attempts each: the map
+move 2/2 and the owlbear 1/2, each time after `activate_skill`, against 0/3
+each at 1024 tokens. Turns take 65 to 107 s.

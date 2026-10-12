@@ -127,7 +127,9 @@ def make_provider(args: argparse.Namespace) -> KeptOpen:
         context_size=args.context,
         port=args.port,
         enable_thinking=args.thinking,  # roomkit-ui turns it off for voice
-        max_tokens=1024,
+        # As roomkit-ui caps a turn: thinking spends the cap before the reply, so a
+        # model that thinks gets the whole window (llama-server stops at its end).
+        max_tokens=args.context if args.thinking else 1024,
     )
     return KeptOpen(config, shared=args.port is not None)
 
