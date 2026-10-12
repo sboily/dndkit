@@ -27,9 +27,11 @@ the campaign they leave.
 
 ## Scenarios
 
-Seating, asking an NPC, an attack, a spell with its slot, ending a turn, a
-short rest with Hit Dice, picking up an item, searching (a roll), moving on
-the battle map, preparing a monster, concentration, a shove. Each one's check
+A new campaign prepared from scratch for two beginners (no seed: it passes
+when `check_campaign` finally says it is ready), seating, asking an NPC, an
+attack, a spell with its slot, ending a turn, a short rest with Hit Dice,
+picking up an item, searching (a roll), moving on the battle map, preparing a
+monster, concentration, a shove. Each one's check
 is in `scenarios.py`: the calls it needs, and the state they must leave (the
 goblin hurt, the slot spent, Thrain next to the goblin...).
 
