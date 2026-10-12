@@ -48,3 +48,33 @@ labels each turn with its speaker only once two people have spoken, so the
 one-line scenarios leave the model to guess who talks. The server's MCP
 instructions never reach the model (roomkit RMK-692): only the README prompt
 does.
+
+# Second series: answers that say the next step, labelled turns
+
+Same model and settings, thinking on, `skills` and `full`, 3 attempts. The
+server now hints the closest name in every not-found error, says how to add a
+missing monster, and reminds the roll call; each scenario opens with the
+other player's line already in the room, so roomkit labels every turn with
+its speaker, as at a real table.
+
+| | skills | full |
+| --- | --- | --- |
+| all scenarios | 22/36 | 26/36 |
+| without seating and the map move | 22/30 (73%; 16/20 before) | 26/30 (87%; 17/20 before) |
+| seating, reminder reworded | 1/6 together | |
+| map move, asked plainly ("as far as he can") | 2/3 | 3/3 |
+
+- **The name hints work.** With "Did you mean 'Gobelin'?" in the error, the
+  model fixes the call on its very next try 11 times out of 12 (8 of 19
+  without); name errors fall from 0.40 to 0.26 a run. Names were rarely what
+  failed a scenario, so the total barely moves.
+- **The roll call is still skipped** (1/6): the model reads "Nobody is seated
+  yet. As soon as a player says who they are, call seat_players...", greets,
+  reads the campaign, and plays on. Little is lost meanwhile: until a roll
+  call, the server counts the whole party as present.
+- **"Thrain fonce sur le gobelin" is ambiguous**: with labelled turns the model
+  asks whether he dashes instead of moving, a fair game master's question; the
+  plain wording passes 5 of 6.
+- Turns took longer (median 45 s against 18 s) with the same model and
+  settings; with a background agent answering the table, latency is not the
+  measure here.

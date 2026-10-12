@@ -149,8 +149,8 @@ def quest(q: Quest) -> str:
 
 
 ROLL_CALL = (
-    "{what}: once tonight's players have said who they are, call seat_players with "
-    "start_over and each player with their character."
+    "{what}. As soon as a player says who they are, call seat_players with them and "
+    "their character (start_over the first time tonight); the others join as they speak."
 )
 
 

@@ -294,7 +294,7 @@ SCENARIOS = [
     ),
     Scenario(
         "map_move",
-        [("Sylvain", "Thrain fonce sur le gobelin pour se mettre au contact.")],
+        [("Sylvain", "Thrain avance vers le gobelin, aussi loin qu'il peut.")],
         charged,
         [SEATED, ("set_battlefield", {"width": 8, "height": 6}), FIGHT],
     ),

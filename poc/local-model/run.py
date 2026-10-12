@@ -25,6 +25,9 @@ from typing import Any
 
 from roomkit import (
     ChannelCategory,
+    ChannelType,
+    EventSource,
+    EventStatus,
     HookExecution,
     HookResult,
     HookTrigger,
@@ -141,6 +144,7 @@ async def play(
             calls: list[Call] = []
             replies: list[str] = []
             kit = await table(provider, variant, mcp, calls, replies)
+            await other_player_spoke(kit, scenario)
             started = time.perf_counter()
             for speaker, text in scenario.turns:
                 message = InboundMessage(
@@ -215,6 +219,27 @@ async def table(
     await kit.attach_channel("table", "table")
     await kit.attach_channel("table", "gm", category=ChannelCategory.INTELLIGENCE)
     return kit
+
+
+PLAYERS = ("Sylvain", "Marie")
+
+
+async def other_player_spoke(kit: RoomKit, scenario: Scenario) -> None:
+    """A line from the other player, already in the room's history: roomkit labels
+    each turn with its speaker once two people have spoken (RFC §6.4), as at a real
+    table. Stored, not sent, so the model does not answer it."""
+    speakers = {speaker for speaker, _ in scenario.turns}
+    if len(speakers) > 1:
+        return
+    other = next(p for p in PLAYERS if p not in speakers)
+    event = RoomEvent(
+        room_id="table",
+        source=EventSource(channel_id="table", channel_type=ChannelType.WEBSOCKET),
+        content=TextContent(body="On y va !"),
+        status=EventStatus.DELIVERED,
+        metadata={"sender_name": other},
+    )
+    await kit.store.add_event_auto_index("table", event)
 
 
 async def read_state(mcp: MCPToolProvider) -> dict[str, Any]:
