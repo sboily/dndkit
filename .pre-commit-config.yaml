@@ -28,3 +28,15 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: bandit
+        name: bandit
+        entry: uv run bandit -r src/ -c pyproject.toml -q
+        language: system
+        types: [python]
+        pass_filenames: false
+      - id: knip
+        name: knip (unused scripts and exports in the pages)
+        entry: npx knip
+        language: system
+        files: ^src/gamemaster_mcp/ui/.*\.js$
+        pass_filenames: false

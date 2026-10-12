@@ -1,0 +1,57 @@
+# Every push and pull request: the Python checks (lint, format, types, security,
+# tests with coverage) on each supported Python, and knip on the pages' scripts.
+# Actions are pinned by commit; the comment names the release.
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - name: Install
+        run: uv sync --locked --extra dev
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format
+        run: uv run ruff format --check .
+      - name: Types
+        run: uv run mypy src/
+      - name: Security
+        run: uv run bandit -r src/ -c pyproject.toml -q
+      - name: Tests
+        run: uv run pytest -q --cov=gamemaster_mcp --cov-branch --cov-report=term:skip-covered
+
+  ui:
+    name: Pages' scripts (knip)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Unused files and exports
+        run: npx knip

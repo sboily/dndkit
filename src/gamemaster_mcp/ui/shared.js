@@ -11,7 +11,9 @@
  */
 "use strict";
 
-const GM = (() => {
+import { I18N } from "./words.js";
+
+export const GM = (() => {
   const WEB = window.GM_WEB || null;
   const t = I18N.t;
   const pending = new Map();

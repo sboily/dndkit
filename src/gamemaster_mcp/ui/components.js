@@ -4,7 +4,15 @@
  * updates: the last hit points (to flash a hit or a heal), the last roll. */
 "use strict";
 
-const Views = (() => {
+import { GM } from "./shared.js";
+import { DiceTray } from "./dicetray.js";
+import { BattleMap } from "./battlemap.js";
+import { Backstage } from "./backstage.js";
+import { World } from "./world.js";
+import { Activity, Notebook, Sheets } from "./desk.js";
+import { CharacterSheet } from "./sheet.js";
+
+export const Views = (() => {
   const { h, fill, t } = GM;
   const signed = (n) => (n >= 0 ? `+${n}` : `${n}`);
   const section = (title, ...content) => h("div", { class: "section" }, h("h4", {}, title), ...content);

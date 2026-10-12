@@ -2,7 +2,9 @@
  * its objectives, reward and notes. */
 "use strict";
 
-function Backstage() {
+import { GM } from "./shared.js";
+
+export function Backstage() {
   const { h, fill, t } = GM;
   const section = (title, ...content) => h("div", { class: "section" }, h("h4", {}, title), ...content);
   const empty = (key) => h("div", { class: "empty small" }, t(key));

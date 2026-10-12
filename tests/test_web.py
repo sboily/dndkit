@@ -3,7 +3,9 @@
 import json
 import logging
 import re
+import shutil
 import socket
+import subprocess
 import threading
 from collections.abc import AsyncIterator
 from pathlib import Path
@@ -124,6 +126,26 @@ def test_web_pages_are_self_contained(name: str) -> None:
     html = ui.page(name, web=True)
     assert "<!--gm:shared-->" not in html and "const Views" in html
     assert not re.search(r"""(src|href)=["']https?://""", html), "pages must work offline"
+
+
+def test_the_scripts_are_modules_inlined_in_order() -> None:
+    folder = Path(ui.__file__).parent
+    for index, name in enumerate(ui.SCRIPTS):
+        imported = ui.IMPORT.findall((folder / name).read_text(encoding="utf-8"))
+        assert all(ui.SCRIPTS.index(other) < index for other in imported), name
+    html = ui.page("gm", web=True)
+    assert not re.search(r"^(import|export) ", html, re.MULTILINE)
+    assert "function CharacterSheet()" in html and "const Views = " in html
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="needs Node.js")
+@pytest.mark.parametrize("name", ["dice", "combat", "party", "character", "seating", *WEB_PAGES])
+def test_a_page_s_script_parses(name: str, tmp_path: Path) -> None:
+    html = ui.page(name, web=name in WEB_PAGES)
+    for number, script in enumerate(re.findall(r"<script>(.*?)</script>", html, re.DOTALL)):
+        source = tmp_path / f"{number}.js"
+        source.write_text(script, encoding="utf-8")
+        subprocess.run(["node", "--check", str(source)], check=True, capture_output=True)
 
 
 def test_widgets_keep_calling_mcp_tools() -> None:

@@ -26,3 +26,6 @@ htmlcov/
 # Campaign data from local runs (the default lives in the user data dir)
 dnd_data/
 demo_data/
+
+# Node tooling for the pages (knip)
+node_modules/

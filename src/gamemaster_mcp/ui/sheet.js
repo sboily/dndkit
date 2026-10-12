@@ -3,7 +3,10 @@
  * proficiencies and story. */
 "use strict";
 
-function CharacterSheet() {
+import { I18N } from "./words.js";
+import { GM } from "./shared.js";
+
+export function CharacterSheet() {
   const { h, fill, t } = GM;
   const signed = (n) => (n >= 0 ? `+${n}` : `${n}`);
   const section = (title, ...content) => h("div", { class: "section" }, h("h4", {}, title), ...content);

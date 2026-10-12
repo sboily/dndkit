@@ -408,7 +408,13 @@ uv run pytest
 uv run ruff check . && uv run ruff format --check .
 uv run mypy src/
 uv run bandit -r src/ -c pyproject.toml
+npm ci && npx knip     # unused files and exports in the pages' scripts
 ```
+
+The pages' scripts (`src/gamemaster_mcp/ui/*.js`) are ES modules, so knip can
+follow who imports what; each page inlines them as one script. GitHub Actions
+runs all of the above on every push and pull request (Python 3.12 and 3.13),
+and `pre-commit install` runs most of it before each commit.
 
 [CLAUDE.md](CLAUDE.md) describes the architecture and the project's rules.
 

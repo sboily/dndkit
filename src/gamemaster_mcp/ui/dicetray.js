@@ -2,7 +2,9 @@
  * natural 20 glows, a natural 1 shakes, the die advantage drops fades. */
 "use strict";
 
-function DiceTray() {
+import { GM } from "./shared.js";
+
+export function DiceTray() {
   const { h, fill, t } = GM;
   const MAX_SHOWN = 24;
   const COLORS = { 4: ["#d9674c", "#8f2f1d"], 6: ["#4f8fdc", "#1f4f8f"], 8: ["#5fb57a", "#226b3c"],

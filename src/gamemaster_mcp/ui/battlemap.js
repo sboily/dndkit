@@ -4,7 +4,7 @@
  * acting creature can still reach this turn, and the last area of effect. */
 "use strict";
 
-function BattleMap(map, me) {
+export function BattleMap(map, me) {
   const NS = "http://www.w3.org/2000/svg";
   const CELL = 40;
   const GUTTER = 22;

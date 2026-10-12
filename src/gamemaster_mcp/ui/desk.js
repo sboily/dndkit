@@ -2,8 +2,11 @@
  * and debug it), the campaign's notebook, and every full sheet with its notes. */
 "use strict";
 
+import { GM } from "./shared.js";
+import { CharacterSheet } from "./sheet.js";
+
 /** The model's calls, newest first: tool, arguments, answer or error, time taken. */
-function Activity() {
+export function Activity() {
   const { h, fill, t } = GM;
   const count = h("span", { class: "muted small" });
   const calls = h("div", { class: "calls" });
@@ -29,7 +32,7 @@ function Activity() {
 }
 
 /** Situation, world notes, setting, past sessions, and where the campaign lives. */
-function Notebook() {
+export function Notebook() {
   const { h, fill, t } = GM;
   const section = (title, ...content) => h("div", { class: "section" }, h("h4", {}, title), ...content);
   const body = h("div");
@@ -62,7 +65,7 @@ function Notebook() {
 }
 
 /** Every character's full sheet, with the game master's notes under it. */
-function Sheets() {
+export function Sheets() {
   const { h, fill, t } = GM;
   const el = h("div", { class: "sheets" });
   const shown = new Map();

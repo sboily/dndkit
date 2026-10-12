@@ -12,8 +12,12 @@ uv run pytest -q                     # Tests
 uv run ruff check . && uv run ruff format --check .
 uv run mypy src/                     # Strict
 uv run bandit -r src/ -c pyproject.toml
+npm ci && npx knip                   # Unused files and exports in ui/*.js
 GAMEMASTER_WEB_PORT=8765 uv run gamemaster-mcp   # Also serve the web pages
 ```
+
+CI (`.github/workflows/ci.yml`) runs all of these on every push, Python 3.12
+and 3.13; its actions are pinned by commit.
 
 ## Architecture
 
@@ -143,6 +147,12 @@ calls `game` functions on the campaign, and renders a short text answer.
   every private field with `SECRET` and checks the table and player feeds. The
   backstage is local-only by peer address and by Host (DNS rebinding), and
   refuses proxied requests: keep `proxy_headers=False`.
+- **Page scripts are ES modules** (`import`/`export`, for knip) that
+  `ui.page()` inlines as one classic script: it drops the import lines and the
+  `export` keywords, so a module's top-level names stay global, and keeps
+  `ui.SCRIPTS` order (a module after those it imports; a test checks it). Keep
+  imports on one line, `import { A, B } from "./x.js";`, and export only
+  top-level `const`/`function`/`class` declarations.
 - **Pages share renderers**: a widget and a web page show the same
   `Views.*` component; only the transport differs (`window.GM_WEB` set by the
   server: one EventSource per page, since browsers allow few connections per

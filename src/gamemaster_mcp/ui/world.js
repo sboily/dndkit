@@ -3,7 +3,9 @@
  * blocks. Each entry opens on its details. */
 "use strict";
 
-function World() {
+import { GM } from "./shared.js";
+
+export function World() {
   const { h, fill, t } = GM;
   const empty = (key) => h("div", { class: "empty small" }, t(key));
   const lists = { npcs: h("div"), locations: h("div"), monsters: h("div") };

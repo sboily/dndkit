@@ -3,7 +3,7 @@
  * server message without a translation still shows. */
 "use strict";
 
-const I18N = (() => {
+export const I18N = (() => {
   const FRENCH = (navigator.language || "").toLowerCase().startsWith("fr");
   const WORDS = {
     round: ["Round", "Round"], turn: ["turn", "tour"], hp: ["HP", "PV"], ac: ["AC", "CA"],
