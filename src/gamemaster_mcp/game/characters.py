@@ -1,5 +1,6 @@
 """Creating, changing and removing player characters."""
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -68,6 +69,12 @@ def level_edits(character: Character, level: int) -> dict[str, Any]:
         edits["spell_slots"] = dict(slots)
         edits["spell_slots_used"] = slots_still_used(character, slots)
     return edits
+
+
+def hit_dice_left(character: Character) -> int:
+    """How many Hit Dice are left ("3d8" -> 3); 0 if the sheet says something else."""
+    match = re.match(r"\s*(\d+)\s*d", character.hit_dice_remaining)
+    return int(match.group(1)) if match else 0
 
 
 def slots_still_used(character: Character, slots: Mapping[int, int]) -> dict[int, int]:

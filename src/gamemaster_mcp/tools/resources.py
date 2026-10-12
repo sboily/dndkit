@@ -7,11 +7,13 @@ from fastmcp.dependencies import Depends
 from fastmcp.tools import tool
 from pydantic import Field
 
-from gamemaster_mcp.game import resources
-from gamemaster_mcp.game.resources import DeathSave, RestKind
+from gamemaster_mcp.game import resources, rests
+from gamemaster_mcp.game.dice import DiceLog
+from gamemaster_mcp.game.resources import DeathSave
+from gamemaster_mcp.game.rests import RestKind
 from gamemaster_mcp.models import Item
 from gamemaster_mcp.storage import CampaignStore
-from gamemaster_mcp.tools.deps import NameOrId, get_store
+from gamemaster_mcp.tools.deps import NameOrId, get_dice_log, get_store
 
 
 @tool
@@ -78,12 +80,19 @@ def rest(
     names_or_ids: Annotated[
         list[str] | None, Field(description="Who rests; omit for the whole party")
     ] = None,
+    hit_dice: Annotated[
+        int, Field(ge=0, le=20, description="Short rest: Hit Dice each one spends to heal")
+    ] = 0,
     store: CampaignStore = Depends(get_store),
+    log: DiceLog = Depends(get_dice_log),
 ) -> str:
-    """Rest. Long: full HP, spell slots back, one exhaustion level less. Short: pact slots."""
+    """Rest. Long: full HP and slots, half the Hit Dice back, one exhaustion level less.
+    Short: pact slots, and Hit Dice spent heal (rolled here)."""
     with store.transaction() as campaign:
-        lines = resources.rest(campaign, names_or_ids or [], kind)
-    return "\n".join(lines) or "No characters to rest."
+        rested = rests.rest(campaign, names_or_ids or [], kind, hit_dice)
+    for roll in rested.rolls:
+        log.record(roll)
+    return "\n".join(rested.lines) or "No characters to rest."
 
 
 TOOLS: list[Callable[..., str]] = [

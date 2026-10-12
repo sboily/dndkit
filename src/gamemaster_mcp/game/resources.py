@@ -1,14 +1,12 @@
-"""What characters carry and recover: items, death saves, rests."""
+"""What characters carry and how they hang on: items, death saves."""
 
-from collections.abc import Sequence
 from typing import Literal
 
 from gamemaster_mcp.errors import InvalidChangeError, NotFoundError
-from gamemaster_mcp.game import characters, registry, rules
+from gamemaster_mcp.game import characters, registry
 from gamemaster_mcp.models import Campaign, Character, Item, now
 
 DeathSave = Literal["success", "failure", "nat20", "nat1"]
-RestKind = Literal["short", "long"]
 
 
 def add_item(campaign: Campaign, ref: str, item: Item) -> tuple[Character, Item]:
@@ -65,7 +63,7 @@ def record_death_save(campaign: Campaign, ref: str, outcome: DeathSave) -> str:
     if outcome == "nat20":
         character.hit_points_current = 1
         character.conditions = [c for c in character.conditions if c != "unconscious"]
-        _reset_death_saves(character)
+        reset_death_saves(character)
         return f"{character.name} rolls a natural 20, regains 1 HP and is conscious."
     if outcome == "success":
         character.death_saves_success += 1
@@ -75,7 +73,7 @@ def record_death_save(campaign: Campaign, ref: str, outcome: DeathSave) -> str:
     if character.death_saves_failure >= 3:
         return f"{character.name} dies (3 failed death saves)."
     if character.death_saves_success >= 3:
-        _reset_death_saves(character)
+        reset_death_saves(character)
         return f"{character.name} is stable at 0 HP."
     return (
         f"{character.name}: {character.death_saves_success} successes, "
@@ -83,40 +81,6 @@ def record_death_save(campaign: Campaign, ref: str, outcome: DeathSave) -> str:
     )
 
 
-def _reset_death_saves(character: Character) -> None:
+def reset_death_saves(character: Character) -> None:
     character.death_saves_success = 0
     character.death_saves_failure = 0
-
-
-def rest(campaign: Campaign, refs: Sequence[str], kind: RestKind) -> list[str]:
-    """A short or long rest for the named characters, or everyone when *refs* is empty."""
-    targets = (
-        registry.find_many(campaign.characters, refs, characters.KIND)
-        if refs
-        else list(campaign.characters.values())
-    )
-    rest_one = _long_rest if kind == "long" else _short_rest
-    return [rest_one(character) for character in targets]
-
-
-def _long_rest(character: Character) -> str:
-    """PHB ch. 8: needs at least 1 HP when the rest starts."""
-    if character.hit_points_current == 0:
-        return f"{character.name} is at 0 HP and gains nothing from the rest"
-    character.hit_points_current = character.hit_points_max
-    character.temporary_hit_points = 0
-    character.spell_slots_used = {}
-    character.exhaustion = max(0, character.exhaustion - 1)
-    _reset_death_saves(character)
-    character.updated_at = now()
-    exhaustion = f", exhaustion {character.exhaustion}" if character.exhaustion else ""
-    return f"{character.name}: HP {character.hit_points_max}, spell slots restored{exhaustion}"
-
-
-def _short_rest(character: Character) -> str:
-    """Warlocks get their pact slots back; healing comes from Hit Dice the player rolls."""
-    if rules.class_key(character.character_class.name) == "warlock":
-        character.spell_slots_used = {}
-        character.updated_at = now()
-        return f"{character.name}: pact slots restored; may spend Hit Dice to heal"
-    return f"{character.name}: may spend Hit Dice ({character.hit_dice_remaining}) to heal"

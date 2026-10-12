@@ -4,8 +4,8 @@ import pytest
 from fastmcp import Client
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import characters, combat, progression, world
-from gamemaster_mcp.models import CharacterClass, Combatant
+from gamemaster_mcp.game import characters, combat, progression, rests, world
+from gamemaster_mcp.models import AbilityScore, CharacterClass, Combatant
 from tests.helpers import call, make_campaign, make_character
 
 pytestmark = pytest.mark.anyio
@@ -73,3 +73,31 @@ async def test_create_character_reports_a_level_5_caster_right(client: Client) -
         intelligence=16,
     )
     assert "spell attack +6, save DC 14" in made
+
+
+def test_hit_dice_heal_on_a_short_rest_and_half_come_back_on_a_long_one() -> None:
+    campaign = make_campaign()
+    fighter = make_character(
+        "Borin", hp=40, character_class=CharacterClass(name="Fighter", level=5)
+    )
+    fighter.abilities = {"constitution": AbilityScore(score=14)}
+    characters.create(campaign, fighter)
+    fighter.hit_points_current = 10
+    rested = rests.rest(campaign, ["Borin"], "short", hit_dice=3)
+    faces = rested.rolls[0].terms[0].faces
+    assert fighter.hit_points_current == 10 + sum(face + 2 for face in faces)
+    assert fighter.hit_dice_remaining == "2d10" and "2 Hit Dice left" in rested.lines[0]
+    with pytest.raises(InvalidChangeError, match="has 2 Hit Dice left"):
+        rests.rest(campaign, ["Borin"], "short", hit_dice=3)
+    with pytest.raises(InvalidChangeError, match="short rest"):
+        rests.rest(campaign, ["Borin"], "long", hit_dice=1)
+    rests.rest(campaign, ["Borin"], "long")
+    assert fighter.hit_dice_remaining == "4d10"  # half of 5, rounded down: 2 back
+
+
+async def test_the_rest_tool_rolls_hit_dice_on_the_tray(client: Client) -> None:
+    await call(client, "create_campaign", name="Camp", description="d")
+    await call(client, "create_character", name="Aria", character_class="Wizard", race="Elf")
+    rested = await call(client, "rest", kind="short", hit_dice=1)
+    assert "spent 1d6" in rested and "0 Hit Dice left" in rested
+    assert "1d6" in await call(client, "get_screen_data", view="dice")

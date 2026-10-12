@@ -3,7 +3,16 @@
 import pytest
 
 from gamemaster_mcp.errors import AlreadyExistsError, InvalidChangeError, NotFoundError
-from gamemaster_mcp.game import characters, combat, effects, registry, resources, spellbook, world
+from gamemaster_mcp.game import (
+    characters,
+    combat,
+    effects,
+    registry,
+    resources,
+    rests,
+    spellbook,
+    world,
+)
 from gamemaster_mcp.models import NPC, Combatant, Item, Quest
 from tests.helpers import make_campaign, make_character
 
@@ -119,7 +128,7 @@ def test_spell_slots_are_spent_and_restored_by_a_long_rest() -> None:
         spellbook.use_spell_slot(campaign, "Aria", 1)
     aria.hit_points_current = 3
     aria.exhaustion = 2
-    resources.rest(campaign, [], "long")
+    rests.rest(campaign, [], "long")
     assert (aria.hit_points_current, aria.spell_slots_used, aria.exhaustion) == (8, {}, 1)
 
 
