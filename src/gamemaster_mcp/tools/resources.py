@@ -64,7 +64,8 @@ def record_death_save(
     outcome: Annotated[
         DeathSave,
         Field(
-            description="success (10+), failure (2-9), nat20 (regain 1 HP) or nat1 (two failures)"
+            description="success (10+), failure (2-9), nat20 (regain 1 HP), nat1 (two "
+            "failures), stabilized (Spare the Dying, Medicine DC 10)"
         ),
     ],
     store: CampaignStore = Depends(get_store),

@@ -68,6 +68,7 @@ export const I18N = (() => {
     Persuasion: ["Persuasion", "Persuasion"], Religion: ["Religion", "Religion"],
     "Sleight of Hand": ["Sleight of Hand", "Escamotage"], Stealth: ["Stealth", "Discrétion"], Survival: ["Survival", "Survie"],
     concentration: ["Concentration", "Concentration"],
+    stable: ["Stable at 0 HP", "Stabilisé à 0 PV"],
     secretRoll: ["Secret roll, for the game master", "Jet secret, pour le MJ"],
     viewFailed: ["This part failed: see the server log.", "Cette partie a échoué : voir le journal du serveur."],
     // Adventure log entries.

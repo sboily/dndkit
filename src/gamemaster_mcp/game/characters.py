@@ -119,9 +119,11 @@ def update(
     level = edits.pop("class_level", None)
     if level is not None:
         edits.update(level_edits(character, level))
+    if edits.get("exhaustion") == 6:  # PHB appendix A: death
+        edits.update(hit_points_current=0, death_saves_failure=3, stable=False)
     if character.hit_points_current == 0 and edits.get("hit_points_current", 0) > 0:
         # Back from 0 HP by hand (a spell that raises the dead): a fresh start.
-        edits.update(death_saves_success=0, death_saves_failure=0)
+        edits.update(death_saves_success=0, death_saves_failure=0, stable=False)
         edits.setdefault("conditions", [c for c in character.conditions if c != "unconscious"])
     if "skill_proficiencies" in edits:
         edits["skill_proficiencies"] = proficiencies.skills(edits["skill_proficiencies"])
@@ -142,8 +144,11 @@ def update(
 
 
 def _cap_hit_points(character: Character, edits: dict[str, Any]) -> None:
-    """Refuse current HP above the maximum; a lowered maximum lowers current HP."""
+    """Refuse current HP above the maximum; a lowered maximum (or exhaustion 4)
+    lowers current HP."""
     maximum = edits.get("hit_points_max", character.hit_points_max)
+    if edits.get("exhaustion", character.exhaustion) >= 4:
+        maximum = max(1, maximum // 2)
     current = edits.get("hit_points_current")
     if current is None:
         edits["hit_points_current"] = min(character.hit_points_current, maximum)
@@ -161,28 +166,30 @@ def change_hp(character: Character, delta: int) -> str:
             f"{character.name} is dead: healing does not bring them back. If a spell does "
             "(revivify, raise dead), set their hit points with update_character."
         )
+    maximum = character.hp_maximum
     hp = rules.apply_hp_change(
-        character.hit_points_current,
-        character.hit_points_max,
-        character.temporary_hit_points,
-        delta,
+        character.hit_points_current, maximum, character.temporary_hit_points, delta
     )
     overflow = -delta - (character.temporary_hit_points - hp.temporary)
     overflow -= character.hit_points_current
     character.hit_points_current = hp.current
     character.temporary_hit_points = hp.temporary
     character.updated_at = now()
-    status = f"{character.name}: HP {hp.current}/{character.hit_points_max}"
+    status = f"{character.name}: HP {hp.current}/{maximum}"
     if delta > 0:
         return _healed(character, status) if was_down and hp.current > 0 else status
     if hp.current > 0:
         return status
-    if overflow >= character.hit_points_max:
-        character.death_saves_failure = 3
+    if overflow >= maximum:
+        character.death_saves_failure, character.stable = 3, False
         return f"{status}, killed outright by massive damage"
     if was_down:
         character.death_saves_failure = min(3, character.death_saves_failure + 1)
-        return f"{status}, hit while down: {character.death_saves_failure}/3 death save failures"
+        character.stable = False
+        return (
+            f"{status}, hit while down: {character.death_saves_failure}/3 death save failures "
+            "(a critical hit counts two: record_death_save failure once more)"
+        )
     _add_conditions(character, "unconscious", "prone")
     return f"{status}, unconscious and prone: death saving throws from now on"
 
@@ -190,6 +197,7 @@ def change_hp(character: Character, delta: int) -> str:
 def _healed(character: Character, status: str) -> str:
     character.death_saves_success = 0
     character.death_saves_failure = 0
+    character.stable = False
     character.conditions = [c for c in character.conditions if c != "unconscious"]
     return f"{status}, conscious again (still prone; death saves reset)"
 

@@ -25,8 +25,17 @@ def character_line(c: Character) -> str:
     cls = c.character_class
     return (
         f"{c.name} (id {c.id}): level {cls.level} {c.race.name} {cls.name}, "
-        f"HP {c.hit_points_current}/{c.hit_points_max}, AC {c.armor_class}"
+        f"HP {c.hit_points_current}/{c.hp_maximum}{_down(c)}, AC {c.armor_class}"
     )
+
+
+def _down(c: Character) -> str:
+    """How a character at 0 HP fares: dying, stable or dead."""
+    if c.hit_points_current > 0:
+        return ""
+    if c.death_saves_failure >= 3:
+        return " (dead)"
+    return " (stable)" if c.stable else " (dying)"
 
 
 def character_sheet(c: Character) -> str:
@@ -151,7 +160,7 @@ def game_state(campaign: Campaign) -> str:
         + (
             ", ".join(
                 f"{c.name} (level {c.character_class.level}) "
-                f"HP {c.hit_points_current}/{c.hit_points_max}"
+                f"HP {c.hit_points_current}/{c.hp_maximum}{_down(c)}"
                 for c in party
             )
             or "none"

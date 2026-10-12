@@ -60,7 +60,7 @@ def level_up(campaign: Campaign, ref: str, hit_die_roll: int | None) -> str:
     source = "rolled" if hit_die_roll is not None else "average"
     return (
         f"{character.name} reaches level {level}: +{gain} HP ({source} {roll}, CON {con:+d}), "
-        f"HP {character.hit_points_current}/{character.hit_points_max}, "
+        f"HP {character.hit_points_current}/{character.hp_maximum}, "
         f"proficiency +{character.proficiency_bonus}{slots_note}. "
         f"Check the {cls.name} features gained at level {level}."
     )

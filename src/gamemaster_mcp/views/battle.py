@@ -57,7 +57,7 @@ def _token(campaign: Campaign, combatant: Combatant, current: bool, public: bool
     hp: int | None
     hp_max: int | None
     if character is not None:
-        hp, hp_max = character.hit_points_current, character.hit_points_max
+        hp, hp_max = character.hit_points_current, character.hp_maximum
     else:
         hp, hp_max = combatant.hit_points, combatant.hit_points_max
     token: Json = {

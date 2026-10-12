@@ -9,7 +9,7 @@ def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
     character = campaign.characters.get(combatant.character_id or "")
     parts = [f"initiative {combatant.initiative}"]
     if character is not None:
-        parts.append(f"HP {character.hit_points_current}/{character.hit_points_max}")
+        parts.append(f"HP {character.hit_points_current}/{character.hp_maximum}")
         parts.append(f"AC {character.armor_class}")
         conditions = character.conditions
     else:
@@ -44,6 +44,8 @@ def turn_hint(campaign: Campaign, combatant: Combatant) -> str | None:
         return None
     if character.death_saves_failure >= 3:
         return f"{character.name} is dead: call next_turn."
+    if character.stable:
+        return f"{character.name} is stable at 0 HP: call next_turn."
     return f"{character.name} is down: roll a death save (d20) and call record_death_save."
 
 

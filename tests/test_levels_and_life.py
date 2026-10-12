@@ -4,7 +4,7 @@ import pytest
 from fastmcp import Client
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import characters, combat, progression, rests, world
+from gamemaster_mcp.game import characters, combat, progression, resources, rests, world
 from gamemaster_mcp.models import AbilityScore, CharacterClass, Combatant
 from tests.helpers import call, make_campaign, make_character
 
@@ -101,3 +101,32 @@ async def test_the_rest_tool_rolls_hit_dice_on_the_tray(client: Client) -> None:
     rested = await call(client, "rest", kind="short", hit_dice=1)
     assert "spent 1d6" in rested and "0 Hit Dice left" in rested
     assert "1d6" in await call(client, "get_screen_data", view="dice")
+
+
+def test_a_stable_character_rolls_no_more_death_saves_until_hit_or_healed() -> None:
+    campaign = make_campaign()
+    aria = characters.create(campaign, make_character(hp=10))
+    characters.change_hp(aria, -10)
+    for _ in range(3):
+        resources.record_death_save(campaign, "Aria", "success")
+    assert aria.stable
+    with pytest.raises(InvalidChangeError, match="is stable"):
+        resources.record_death_save(campaign, "Aria", "failure")
+    hit = characters.change_hp(aria, -2)
+    assert "1/3 death save failures (a critical hit counts two" in hit and not aria.stable
+    assert "stable at 0 HP" in resources.record_death_save(campaign, "Aria", "stabilized")
+    characters.change_hp(aria, 4)
+    assert (aria.stable, aria.hit_points_current) == (False, 4)
+
+
+def test_exhaustion_halves_hit_points_at_4_and_kills_at_6() -> None:
+    campaign = make_campaign()
+    aria = characters.create(campaign, make_character(hp=21))
+    tired = characters.update(campaign, "Aria", {"exhaustion": 4}, {})
+    assert (tired.hp_maximum, tired.hit_points_current) == (10, 10)
+    assert characters.change_hp(tired, 50) == "Aria: HP 10/10"
+    rests.rest(campaign, ["Aria"], "long")  # exhaustion 3: the maximum is whole again
+    assert (tired.exhaustion, tired.hit_points_current) == (3, 21)
+    spent = characters.update(campaign, "Aria", {"exhaustion": 6}, {})
+    assert (spent.hit_points_current, spent.death_saves_failure) == (0, 3)
+    assert aria.id == spent.id

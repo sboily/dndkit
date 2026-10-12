@@ -178,13 +178,14 @@ def vitals(c: Character) -> Json:
     """Hit points, defenses and resources: what the whole table may see of a character."""
     return {
         "hp": c.hit_points_current,
-        "hp_max": c.hit_points_max,
+        "hp_max": c.hp_maximum,
         "temp": c.temporary_hit_points,
         "ac": c.armor_class,
         "conditions": c.conditions,
         "concentration": c.concentration,
         "exhaustion": c.exhaustion,
         "death_saves": [c.death_saves_success, c.death_saves_failure],
+        "stable": c.stable,
         "slots": [
             [level, maximum - c.spell_slots_used.get(level, 0), maximum]
             for level, maximum in sorted(c.spell_slots.items())

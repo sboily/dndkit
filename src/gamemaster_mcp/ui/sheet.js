@@ -35,8 +35,9 @@ export function CharacterSheet() {
       [t("spellDc"), c.casting.dc]] : [];
     const xpRatio = c.next_level_xp ? Math.min(1, c.xp / c.next_level_xp) : 1;
     const identity = [c.background, c.alignment].filter(Boolean).join(" · ");
-    const deathSaves = c.hp === 0 ? h("div", { class: "small" }, `${t("deathSaves")} `,
-      GM.pips(c.death_saves[0], 3, "good"), " ", GM.pips(c.death_saves[1], 3, "bad")) : null;
+    const deathSaves = c.hp !== 0 ? null : c.stable ? h("div", { class: "small" }, t("stable")) :
+      h("div", { class: "small" }, `${t("deathSaves")} `,
+        GM.pips(c.death_saves[0], 3, "good"), " ", GM.pips(c.death_saves[1], 3, "bad"));
     fill(el,
       h("div", { class: "head" }, h("span", { class: "title" }, c.inspiration ? `${c.name} ★` : c.name),
         h("span", { class: "muted small" }, c.summary + (c.player ? ` — ${c.player}` : ""))),

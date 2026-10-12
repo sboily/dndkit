@@ -6,7 +6,7 @@ from gamemaster_mcp.errors import InvalidChangeError, NotFoundError
 from gamemaster_mcp.game import characters, registry
 from gamemaster_mcp.models import Campaign, Character, Item, now
 
-DeathSave = Literal["success", "failure", "nat20", "nat1"]
+DeathSave = Literal["success", "failure", "nat20", "nat1", "stabilized"]
 
 
 def add_item(campaign: Campaign, ref: str, item: Item) -> tuple[Character, Item]:
@@ -59,7 +59,16 @@ def record_death_save(campaign: Campaign, ref: str, outcome: DeathSave) -> str:
         )
     if character.death_saves_failure >= 3:
         raise InvalidChangeError(f"{character.name} is dead (3 failed death saves).")
+    if character.stable:
+        raise InvalidChangeError(
+            f"{character.name} is stable: no more death saves. They wake with 1 HP after "
+            "1d4 hours, or when healed."
+        )
     character.updated_at = now()
+    if outcome == "stabilized":  # Spare the Dying, a Medicine check (DC 10)
+        reset_death_saves(character)
+        character.stable = True
+        return f"{character.name} is stable at 0 HP: no more death saves."
     if outcome == "nat20":
         character.hit_points_current = 1
         character.conditions = [c for c in character.conditions if c != "unconscious"]
@@ -74,7 +83,8 @@ def record_death_save(campaign: Campaign, ref: str, outcome: DeathSave) -> str:
         return f"{character.name} dies (3 failed death saves)."
     if character.death_saves_success >= 3:
         reset_death_saves(character)
-        return f"{character.name} is stable at 0 HP."
+        character.stable = True
+        return f"{character.name} is stable at 0 HP: no more death saves."
     return (
         f"{character.name}: {character.death_saves_success} successes, "
         f"{character.death_saves_failure} failures."

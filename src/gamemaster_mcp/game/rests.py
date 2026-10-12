@@ -48,15 +48,15 @@ def _long_rest(character: Character) -> str:
     left = characters.hit_dice_left(character)
     regained = min(cls.level - left, max(1, cls.level // 2))
     character.hit_dice_remaining = f"{left + regained}d{rules.hit_die(cls.name)}"
-    character.hit_points_current = character.hit_points_max
+    character.exhaustion = max(0, character.exhaustion - 1)  # first: it may lift the halving
+    character.hit_points_current = character.hp_maximum
     character.temporary_hit_points = 0
     character.spell_slots_used = {}
-    character.exhaustion = max(0, character.exhaustion - 1)
     reset_death_saves(character)
     character.updated_at = now()
     exhaustion = f", exhaustion {character.exhaustion}" if character.exhaustion else ""
     return (
-        f"{character.name}: HP {character.hit_points_max}, spell slots restored, "
+        f"{character.name}: HP {character.hp_maximum}, spell slots restored, "
         f"Hit Dice {character.hit_dice_remaining}{exhaustion}"
     )
 
@@ -89,7 +89,7 @@ def _spend(character: Character, count: int) -> tuple[str, RollResult]:
     status = (
         characters.change_hp(character, healed)
         if healed
-        else f"{character.name}: HP {character.hit_points_current}/{character.hit_points_max}"
+        else f"{character.name}: HP {character.hit_points_current}/{character.hp_maximum}"
     )
     return (
         f"{status}; spent {count}d{die} {list(result.terms[0].faces)} with CON {con:+d}: "

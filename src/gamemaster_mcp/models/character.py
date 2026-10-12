@@ -115,6 +115,7 @@ class Character(GameModel):
     hit_dice_remaining: str = "1d8"
     death_saves_success: int = Field(default=0, ge=0, le=3)
     death_saves_failure: int = Field(default=0, ge=0, le=3)
+    stable: bool = False  # at 0 HP without death saves (three successes, a Medicine check)
     conditions: list[str] = Field(default_factory=list)  # names from CONDITIONS
     concentration: str | None = None  # the spell held
     exhaustion: int = Field(default=0, ge=0, le=6)
@@ -139,3 +140,8 @@ class Character(GameModel):
     notes: str = ""
     created_at: datetime = Field(default_factory=now)
     updated_at: datetime = Field(default_factory=now)
+
+    @property
+    def hp_maximum(self) -> int:
+        """The hit point maximum now: halved from exhaustion level 4 (PHB appendix A)."""
+        return max(1, self.hit_points_max // 2) if self.exhaustion >= 4 else self.hit_points_max
