@@ -181,6 +181,7 @@ is built for amd64 and arm64).
 ```bash
 curl -O https://raw.githubusercontent.com/sboily/dndkit/main/compose.yaml
 echo "DNDKIT_HTTP_TOKEN=$(openssl rand -hex 32)" > .env
+echo "DNDKIT_WEB_URL=http://192.168.1.20:8765" >> .env   # this computer on your network
 docker compose up -d
 docker compose logs dndkit | grep Backstage   # the game master's link
 ```
@@ -189,8 +190,13 @@ In roomkit-ui, add the server with Transport `streamable_http`, URL
 `http://<the server's address>:8000/mcp`, and the header
 `Authorization: Bearer <the token from .env>`. The server refuses any request
 without that token, and does not start listening beyond its machine without
-one. Set `DNDKIT_WEB_URL` in `.env` when phones reach the pages by another
-address than the table screen's.
+one.
+
+`DNDKIT_WEB_URL` is the address the players' QR codes carry. Inside a
+container the server only knows its own addresses, which phones cannot reach
+(the log's "Phones on this network" names one): without the setting, the codes
+are right only when the table screen is opened at the server's network
+address, never at `localhost`.
 
 The backstage cannot tell the computer running Docker from any other (every
 visitor comes through Docker's gateway), so it opens with its link instead,
