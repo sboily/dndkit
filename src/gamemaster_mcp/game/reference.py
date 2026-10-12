@@ -21,7 +21,7 @@ RULES: dict[str, str] = {
     "Attacks against it have advantage, and a hit from within 5 feet is a critical hit.",
     "petrified": "Turned to stone: incapacitated, can't move or speak, unaware. Attacks "
     "against it have advantage; fails Strength and Dexterity saves; resistance to all "
-    "damage; poison and disease are suspended.",
+    "damage; immune to poison and disease (any already in it is suspended).",
     "poisoned": "Disadvantage on attack rolls and ability checks.",
     "prone": "Can only crawl, or stand up for half its movement. Disadvantage on its "
     "attacks. Attacks against it have advantage within 5 feet, disadvantage beyond.",
@@ -40,8 +40,8 @@ RULES: dict[str, str] = {
     "death saves": "At 0 HP, roll a d20 at the start of each turn: 10 or more is a "
     "success, less a failure. Three successes: stable. Three failures: dead. A 1 counts "
     "as two failures; a 20 brings the creature back with 1 HP. Taking damage at 0 HP is "
-    "a failure (two on a critical hit). Damage left over after 0 HP that equals the hit "
-    "point maximum kills outright.",
+    "a failure (two on a critical hit). Damage left over after 0 HP that equals or "
+    "exceeds the hit point maximum kills outright.",
     "stabilizing": "An action and a DC 10 Wisdom (Medicine) check stabilize a creature at "
     "0 HP. A stable creature regains 1 HP after 1d4 hours.",
     "short rest": "At least one hour. Each character may spend Hit Dice: roll each, add "
@@ -58,8 +58,8 @@ RULES: dict[str, str] = {
     "against one's will doesn't provoke it.",
     "grapple": "Replaces one attack: Athletics against the target's Athletics or "
     "Acrobatics; the target is at most one size larger. Success: the target is grappled.",
-    "shove": "Replaces one attack: Athletics against Athletics or Acrobatics; success "
-    "knocks the target prone or pushes it 5 feet away.",
+    "shove": "Replaces one attack: Athletics against Athletics or Acrobatics; the "
+    "target is at most one size larger. Success knocks it prone or pushes it 5 feet away.",
     "surprise": "Creatures that notice no threat at the start are surprised: no move, "
     "action or reaction on their first turn.",
     "initiative": "Each combatant makes a Dexterity check (d20 + Dexterity modifier); "
