@@ -93,9 +93,9 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 60 tool schemas weigh about 8,650 tokens by roomkit's own estimate, just
+The 61 tool schemas weigh about 8,850 tokens by roomkit's own estimate, just
 over the 8,000 at which roomkit hides tools behind `find_tools` by default:
-enable the skills below (their tools then wait for them: about 7,050 tokens)
+enable the skills below (their tools then wait for them: about 7,250 tokens)
 or raise roomkit's threshold (`tool_search_threshold_tokens`). Optional
 parameters are advertised without their `null` alternative to save room.
 Put the system prompt below in the assistant's personality.
@@ -118,7 +118,7 @@ at both skills' URIs, for hosts that only read resources.
 
 A skill's `allowed_tools` frontmatter is roomkit's: roomkit keeps those tools
 out of the catalogue, and out of its token count, until the model activates
-the skill. With both skills on, the catalogue weighs about 7,050 tokens. To
+the skill. With both skills on, the catalogue weighs about 7,250 tokens. To
 use them in roomkit-ui before it speaks the Skills extension, add this
 repository (or its checkout) as a skill source in Settings → Skills: they
 live in `src/gamemaster_mcp/skills/`.
@@ -182,7 +182,9 @@ The Gamemaster tools hold the campaign. Trust them over your memory:
 - You run the monsters. One the story needs and the bestiary lacks is yours
   to create: save_monster with a challenge rating fitting the party (and
   boss for the boss), then plan_encounter to check the fight's difficulty.
-  Spend a boss's legendary actions and resistances with use_legendary.
+  Spend a boss's legendary actions and resistances with use_legendary, and
+  any creature's reaction (an opportunity attack, Shield) with take_reaction.
+  A condition that lasts a while gets its rounds in set_condition.
 - remove_from_campaign and delete_campaign work in two calls: the first
   says what would be lost and gives a code; ask the players, and call again
   with the code only after a clear yes.
@@ -207,7 +209,7 @@ as soon as you have it.
 | Locations | `create_location`, `get_location`, `update_location`, `list_locations` |
 | Quests | `create_quest`, `get_quest`, `update_quest`, `list_quests` |
 | Table | `seat_players` 🖥, `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition`, `set_concentration` |
-| Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `use_legendary`, `end_combat` |
+| Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `use_legendary`, `take_reaction`, `end_combat` |
 | Battle map | `set_battlefield` 🖥, `place_tokens`, `move_token`, `area_of_effect`, `check_target` |
 | Bestiary | `save_monster`, `get_monsters`, `plan_encounter`, `list_encounters` |
 | Journal | `add_session_note`, `get_sessions`, `add_event`, `get_events` |
@@ -233,6 +235,14 @@ A few rules the tools keep:
   condition ends it.
 - **Secret rolls**: `roll_dice` with `secret` shows on the backstage only, not
   on the table screen, the phones or the dice widget.
+- **Down at 0 HP**: three death save successes or `stabilized` (Spare the
+  Dying, Medicine) leave a character stable, without death saves until hit or
+  healed; sheets say dying, stable or dead.
+- **Exhaustion** 4 halves the hit point maximum, 6 kills.
+- **Reactions**: one a round (`take_reaction`), back at the start of the
+  creature's turn; one that has reacted provokes no more opportunity attacks.
+- **Timed conditions**: `set_condition` with `rounds` ends by itself at the end
+  of the target's turn that many turns on; `next_turn` says so.
 
 ### Monsters and bosses
 

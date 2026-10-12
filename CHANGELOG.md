@@ -108,6 +108,13 @@ Live web pages: a table screen, each player's phone, the game master's backstage
 - **Concentration**: `set_concentration`; damage asks for the Constitution
   save, 0 HP or incapacitation ends the spell; the screens show it.
 - **Secret rolls**: `roll_dice` with `secret`, shown on the backstage only.
+- **Stable** at 0 HP (three successes, or `record_death_save` with
+  `stabilized`): no more death saves until hit or healed.
+- **Exhaustion** 4 halves the hit point maximum; 6 kills.
+- **Reactions**: `take_reaction`, one a round; a creature that has reacted
+  provokes no more opportunity attacks.
+- **Timed conditions**: `set_condition` with `rounds`, counted down and ended
+  by `next_turn`.
 - Open pages no longer slow the tools down: each view renders once per change
   for every page showing it, in threads of its own, and a read-only call only
   refreshes the backstage's activity. With 50 pages open, a tool answers in
