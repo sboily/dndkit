@@ -210,8 +210,24 @@ visitor comes through Docker's gateway), so it opens with its link instead,
 yourself, it shows everything. The code comes from the secret in the data
 volume, like the players' links.
 
-From a checkout, `docker compose up -d --build` builds the image instead of
-pulling `ghcr.io/sboily/dndkit` (published with each release from 0.5.0 on).
+The image is `ghcr.io/sboily/dndkit`, published with each release from 0.5.0
+on, for amd64 and arm64: `0.5.0` is one release, `0.5` the latest of its
+fixes, `latest` the latest release. `compose.yaml` takes `latest`; name a
+version there to choose when to update (`docker compose pull` then
+`docker compose up -d`). Without compose:
+
+```bash
+docker run -d --name dndkit --restart unless-stopped \
+  -p 8000:8000 -p 8765:8765 -v dndkit-data:/data \
+  -e DNDKIT_HTTP_TOKEN="$(openssl rand -hex 32)" \
+  -e DNDKIT_WEB_URL=http://192.168.1.20:8765 \
+  ghcr.io/sboily/dndkit:0.5
+docker exec dndkit env | grep DNDKIT_HTTP_TOKEN   # the token, for roomkit-ui
+```
+
+The container runs as an unprivileged user (uid 1000), and `/health` tells
+Docker whether it is up. From a checkout, `docker compose up -d --build` builds
+the image instead of pulling it.
 
 ### With Claude Desktop
 
@@ -580,6 +596,8 @@ Once, on pypi.org: add a pending trusted publisher for the project `dndkit`
 (owner `sboily`, repository `dndkit`, workflow `release.yml`, environment
 `pypi`). GitHub creates the `pypi` environment at the first release; required
 reviewers set on it (Settings → Environments) hold each release for approval.
+GitHub creates the image's package private at its first push: make it public
+once (the package's settings → Change visibility), or nobody can pull it.
 
 ## License
 
