@@ -4,11 +4,12 @@ Older saves keyed characters, NPCs, locations and quests by name and kept a
 combat order of free-form dicts; the validators here read those saves as-is.
 """
 
+import re
 from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import Field, field_validator
+from pydantic import Field, ValidationError, field_validator
 
 from gamemaster_mcp.models.base import GameModel, new_id, now
 from gamemaster_mcp.models.battle import Battlefield
@@ -100,12 +101,21 @@ class GameState(GameModel):
 
     @field_validator("initiative_order", mode="before")
     @classmethod
-    def _drop_unnamed_legacy_entries(cls, value: Any) -> Any:
-        # Older versions stored any dict the model sent; one without a name
-        # cannot take a turn, and must not stop the campaign from loading.
-        if isinstance(value, list):
-            return [entry for entry in value if not isinstance(entry, dict) or entry.get("name")]
-        return value
+    def _keep_playable_legacy_entries(cls, value: Any) -> Any:
+        # Older versions stored any dict the model sent ({"initiative": "15 (Dex)"},
+        # no name...): what cannot take a turn must not stop the campaign from loading.
+        if not isinstance(value, list):
+            return value
+        kept: list[Any] = []
+        for entry in value:
+            if isinstance(entry, dict):
+                entry = {**entry, "initiative": _legacy_initiative(entry.get("initiative"))}
+                try:
+                    Combatant.model_validate(entry)
+                except ValidationError:
+                    continue
+            kept.append(entry)
+        return kept
 
     @property
     def current_combatant(self) -> Combatant | None:
@@ -113,6 +123,14 @@ class GameState(GameModel):
         if not self.in_combat or not self.initiative_order:
             return None
         return self.initiative_order[self.turn_index % len(self.initiative_order)]
+
+
+def _legacy_initiative(value: Any) -> int:
+    """An old save's initiative as a number: 15, "15 (Dex)", or 0 when missing."""
+    if isinstance(value, int | float) and not isinstance(value, bool):
+        return int(value)
+    match = re.match(r"\s*(-?\d+)", str(value or ""))
+    return int(match.group(1)) if match else 0
 
 
 class SessionNote(GameModel):

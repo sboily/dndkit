@@ -76,7 +76,8 @@ def test_legacy_save_loads_and_migrates(tmp_path: Path) -> None:
     aria = characters.find(campaign, "aria")
     assert set(campaign.characters) == {"PUVYW4Xh"}  # re-keyed by ID
     assert (aria.hit_points_current, aria.spell_slots) == (50, {1: 2})
-    assert [c.name for c in campaign.game_state.initiative_order] == ["Goblin"]
+    order = [(c.name, c.initiative) for c in campaign.game_state.initiative_order]
+    assert order == [("Goblin", 12), ("Orc", 15), ("Rat", 0)]  # a ghost with "lots" of HP: gone
     assert campaign.quests["Qx7aLmPt"].name == "Find the lighthouse"
     with store.transaction() as live:  # any change rewrites it in the new format
         characters.update(live, "Aria", {"notes": "migrated"}, {})

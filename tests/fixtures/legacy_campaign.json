@@ -61,7 +61,13 @@
     "active_quests": [],
     "party_level": 1,
     "party_funds": "0 gp",
-    "initiative_order": [{"name": "Goblin", "initiative": 12}, {"initiative": 3}],
+    "initiative_order": [
+      {"name": "Goblin", "initiative": 12},
+      {"initiative": 3},
+      {"name": "Orc", "initiative": "15 (Dex)"},
+      {"name": "Rat"},
+      {"name": "Ghost", "initiative": 4, "hit_points": "lots"}
+    ],
     "in_combat": true,
     "current_turn": "Goblin",
     "notes": "",
