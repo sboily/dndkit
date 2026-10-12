@@ -152,24 +152,35 @@ def _describe(term: RolledTerm, mode: str) -> str:
     return f"{len(term.faces)}d{term.sides} [{', '.join(map(str, term.faces))}]"
 
 
+@dataclass(frozen=True)
+class LoggedRoll:
+    """A roll in the log: its sequence number, when (unix time), and whether only
+    the game master may see it."""
+
+    number: int
+    at: float
+    result: RollResult
+    secret: bool = False
+
+
 class DiceLog:
     """The last rolls of this session, for the dice app to show; never saved."""
 
     def __init__(self, size: int = 20, on_record: Callable[[], None] | None = None) -> None:
-        self._rolls: deque[tuple[int, float, RollResult]] = deque(maxlen=size)
+        self._rolls: deque[LoggedRoll] = deque(maxlen=size)
         self._counter = itertools.count(1)
         self._lock = threading.Lock()
         self._on_record = on_record or (lambda: None)
 
-    def record(self, result: RollResult) -> int:
+    def record(self, result: RollResult, secret: bool = False) -> int:
         """Keep *result*; returns its sequence number."""
         with self._lock:
             number = next(self._counter)
-            self._rolls.append((number, time.time(), result))
+            self._rolls.append(LoggedRoll(number, time.time(), result, secret))
         self._on_record()
         return number
 
-    def recent(self) -> list[tuple[int, float, RollResult]]:
-        """(number, unix time, result), oldest first."""
+    def recent(self) -> list[LoggedRoll]:
+        """The rolls kept, oldest first."""
         with self._lock:
             return list(self._rolls)

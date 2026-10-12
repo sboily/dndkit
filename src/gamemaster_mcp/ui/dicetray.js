@@ -73,7 +73,7 @@ function DiceTray() {
     });
     const hidden = roll.terms.reduce((n, term) => n + (term.sides ? term.faces.length : 0), 0) - count;
     if (hidden > 0) tray.append(h("span", { class: "chip" }, `+${hidden}`));
-    notation.textContent = roll.notation;
+    notation.textContent = (roll.secret ? "🔒 " : "") + roll.notation;
     mode.textContent = roll.mode === "normal" ? "" : t(roll.mode);
     total.className = "total";
     fill(total, h("span", { class: "muted small" }, t("waiting")));
@@ -83,7 +83,7 @@ function DiceTray() {
       GM.fit();
     }, delay + 800);
     const older = (rolls || []).filter((r) => r.n !== roll.n).slice(-5).reverse();
-    fill(history, older.map((r) => h("span", { class: "chip" }, `${r.notation} → ${r.total}`)));
+    fill(history, older.map((r) => h("span", { class: "chip" }, `${r.secret ? "🔒 " : ""}${r.notation} → ${r.total}`)));
     GM.fit();
   }
 

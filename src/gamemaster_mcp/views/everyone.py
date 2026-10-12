@@ -9,7 +9,7 @@ plan, the game master's notes.
 from typing import Any
 
 from gamemaster_mcp.game import characters, seating
-from gamemaster_mcp.game.dice import DiceLog, RollResult
+from gamemaster_mcp.game.dice import DiceLog, LoggedRoll
 from gamemaster_mcp.game.tables import XP_FOR_LEVEL
 from gamemaster_mcp.models import ABILITIES, Campaign, Character, Item, Spell
 from gamemaster_mcp.views.battle import unseen
@@ -17,15 +17,18 @@ from gamemaster_mcp.views.battle import unseen
 Json = dict[str, Any]
 
 
-def dice(log: DiceLog, limit: int = 6) -> Json:
-    """The latest rolls, newest last."""
-    return {"rolls": [_roll(n, t, r) for n, t, r in log.recent()[-limit:]]}
+def dice(log: DiceLog, limit: int = 6, secrets: bool = False) -> Json:
+    """The latest rolls, newest last; the secret ones only for the game master."""
+    shown = [roll for roll in log.recent() if secrets or not roll.secret]
+    return {"rolls": [_roll(roll) for roll in shown[-limit:]]}
 
 
-def _roll(number: int, at: float, result: RollResult) -> Json:
+def _roll(roll: LoggedRoll) -> Json:
+    result = roll.result
     return {
-        "n": number,
-        "t": at,
+        "n": roll.number,
+        "t": roll.at,
+        "secret": roll.secret,
         "notation": result.notation,
         "total": result.total,
         "mode": result.mode,

@@ -20,12 +20,14 @@ def roll_dice(
     ],
     advantage: Annotated[bool, Field(description="Roll a d20 twice, keep the higher")] = False,
     disadvantage: Annotated[bool, Field(description="Roll a d20 twice, keep the lower")] = False,
+    secret: Annotated[bool, Field(description="Kept off the players' screens")] = False,
     log: DiceLog = Depends(get_dice_log),
 ) -> str:
-    """Roll dice (shown rolling on screen). Advantage and disadvantage cancel out."""
+    """Roll dice (shown rolling on screen). Advantage and disadvantage cancel out. A secret
+    roll (a hidden foe's Stealth, an NPC's lie) shows on the backstage only."""
     result = dice.roll(notation, advantage=advantage, disadvantage=disadvantage)
-    log.record(result)
-    return f"{result.notation}: {result.detail}"
+    log.record(result, secret=secret)
+    return f"{'Secret: ' if secret else ''}{result.notation}: {result.detail}"
 
 
 @tool(annotations=READ_ONLY)

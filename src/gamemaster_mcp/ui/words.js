@@ -59,6 +59,7 @@ const I18N = (() => {
     unknownLink: ["This link no longer matches a character of the active campaign.",
       "Ce lien ne correspond plus à un personnage de la campagne active."],
     offline: ["Connection lost, reconnecting…", "Connexion perdue, reconnexion…"],
+    secretRoll: ["Secret roll, for the game master", "Jet secret, pour le MJ"],
     viewFailed: ["This part failed: see the server log.", "Cette partie a échoué : voir le journal du serveur."],
     // Adventure log entries.
     combat: ["combat", "combat"], roleplay: ["roleplay", "interprétation"], exploration: ["exploration", "exploration"],

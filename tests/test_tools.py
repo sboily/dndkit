@@ -142,6 +142,7 @@ async def test_quests_show_progress_and_active_ones(client: Client) -> None:
 
 async def test_utilities_need_no_campaign(client: Client) -> None:
     assert "= " in await call(client, "roll_dice", notation="2d6+1d4+3")
+    assert (await call(client, "roll_dice", notation="d20", secret=True)).startswith("Secret: d20")
     assert "Invalid dice notation" in await call_error(client, "roll_dice", notation="1d20abc")
     assert (await call(client, "lookup_rule", topic="à terre")).startswith("prone:")
     assert "Topics:" in await call_error(client, "lookup_rule", topic="dragon breath")

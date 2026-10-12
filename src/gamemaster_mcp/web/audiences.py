@@ -87,6 +87,7 @@ def game_master(sources: Sources, base_url: str) -> Views:
     return {
         **table(sources, base_url),  # the join codes too
         "combat": sources.reading(widgets.combat),
+        "dice": lambda: everyone.dice(sources.dice, secrets=True),
         "backstage": sources.reading(backstage),
         "world": sources.reading(world),
         "sheets": sources.reading(desk.sheets),

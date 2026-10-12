@@ -22,6 +22,7 @@
       // This widget shows the roll its own call made, not merely the latest one.
       GM.start(async () => {
         const args = await GM.toolInput();
+        if (args.secret) return GM.status(`🔒 ${GM.t("secretRoll")}`); // not for the table's eyes
         const wanted = normalize(args.notation);
         let rolls = [];
         let roll = null;

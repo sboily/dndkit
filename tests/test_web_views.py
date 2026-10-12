@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from gamemaster_mcp.config import WebSettings, resolve_web_settings
+from gamemaster_mcp.game import dice
 from gamemaster_mcp.views.battle import health
 from gamemaster_mcp.web import access, audiences
 from gamemaster_mcp.web.access import PlayerLinks
@@ -148,3 +149,19 @@ def test_web_settings_come_from_the_environment() -> None:
         }
     )
     assert settings == WebSettings(8765, "0.0.0.0", "http://table.local:8765")  # nosec B104
+
+
+def test_a_secret_roll_shows_on_the_backstage_only(tmp_path: Path) -> None:
+    sources = make_sources(tmp_path)
+    sources.dice.record(dice.roll("d20+7"), secret=True)
+    sources.dice.record(dice.roll("2d6"))
+    gm = rendered(audiences.game_master(sources, "http://127.0.0.1:8765/"))
+    assert [(r["notation"], r["secret"]) for r in gm["dice"]["rolls"]] == [
+        ("d20+7", True),
+        ("2d6", False),
+    ]
+    for views in (
+        audiences.table(sources, "http://127.0.0.1:8765/"),
+        audiences.player(sources, aria_token(sources)),
+    ):
+        assert [r["notation"] for r in rendered(views)["dice"]["rolls"]] == ["2d6"]
