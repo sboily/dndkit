@@ -133,6 +133,17 @@ def test_the_backstage_opens_on_this_machine(tmp_path: Path) -> None:
     assert client.get("/gm/", headers={"host": "localhost:8765"}).status_code == 200
 
 
+def test_the_backstage_opens_from_anywhere_with_its_link(tmp_path: Path) -> None:
+    sources, client = site(tmp_path, peer="172.17.0.1")  # through Docker's gateway
+    assert client.get("/gm/").status_code == 403
+    link = f"/gm/{sources.links.backstage_token()}/"
+    page = client.get(link)
+    assert page.status_code == 200 and 'window.GM_WEB = { feed: "feed" }' in page.text
+    assert client.get(f"{link}feed").status_code == 400  # let in, asked for no view
+    assert client.get(f"/gm/{'a' * 16}/").status_code == 403
+    assert client.get(f"/gm/{aria_token(sources)}/").status_code == 403  # a player's link
+
+
 def test_the_backstage_refuses_a_rebound_name_or_a_proxy(tmp_path: Path) -> None:
     _, client = site(tmp_path, peer="127.0.0.1")
     rebound = {"host": "evil.example:8765"}  # a hostile page's domain, resolved to us

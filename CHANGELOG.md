@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+A server of its own: dndkit over HTTP, in Docker.
+
+### Added
+
+- **HTTP transport**: `DNDKIT_TRANSPORT=http` serves MCP at `/mcp`
+  (Streamable HTTP) and `/health`, for clients on other computers. With
+  `DNDKIT_HTTP_TOKEN`, every request must carry it as a bearer token; the
+  server will not listen beyond its machine without one.
+- **Docker**: an image (non-root, campaigns in `/data`, a health check) and a
+  `compose.yaml`; the release publishes it to `ghcr.io/sboily/dndkit` for
+  amd64 and arm64, and CI builds and tries it at every push.
+- **The backstage's link**, `/gm/<code>/`, written in the server's log: the
+  backstage opens from another computer, or from behind Docker's gateway,
+  where it cannot tell this computer from others.
+
 ## 0.4.0 (2026-10-12)
 
 Renamed **dndkit**, the fork having grown far from gamemaster-mcp. Live web

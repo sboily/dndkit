@@ -3,6 +3,7 @@
     /table/       the shared screen: public views and the players' join codes
     /p/<token>/   one player's phone: public views and that character's sheet
     /gm/          the game master's backstage, only from this machine
+    /gm/<token>/  the backstage from anywhere, with its link (in the server's log)
 
 Each page is self-contained HTML (``ui.page``) that opens one event stream,
 ``feed?views=a,b``, relative to its own address. Every page is read-only:
@@ -58,13 +59,19 @@ def create_app(sources: Sources) -> Starlette:
             return _refused(request, 404, "unknownLink")
         return _feed(request, sources, audiences.player(sources, token))
 
+    def backstage(request: Request) -> bool:
+        token = request.path_params.get("token")
+        if token is not None:
+            return sources.links.opens_backstage(token)
+        return _local(request, sources.settings)
+
     async def gm_page(request: Request) -> Response:
-        if not _local(request, sources.settings):
+        if not backstage(request):
             return _refused(request, 403, "localOnly")
         return _page("gm")
 
     async def gm_feed(request: Request) -> Response:
-        if not _local(request, sources.settings):
+        if not backstage(request):
             return _refused(request, 403, "localOnly")
         return _feed(request, sources, audiences.game_master(sources, str(request.base_url)))
 
@@ -77,6 +84,8 @@ def create_app(sources: Sources) -> Starlette:
             Route("/p/{token}/feed", player_feed),
             Route("/gm/", gm_page),
             Route("/gm/feed", gm_feed),
+            Route("/gm/{token}/", gm_page),
+            Route("/gm/{token}/feed", gm_feed),
         ]
     )
 
@@ -122,8 +131,10 @@ REFUSALS = {  # English, French
         "Ce lien ne correspond à aucun personnage de la campagne active.",
     ),
     "localOnly": (
-        "The backstage opens only on the computer running the game.",
-        "La régie ne s'ouvre que sur l'ordinateur qui fait tourner la partie.",
+        "The backstage opens only on the computer running the game, or with its "
+        "link from the server's log.",
+        "La régie ne s'ouvre que sur l'ordinateur qui fait tourner la partie, ou "
+        "avec son lien, dans le journal du serveur.",
     ),
 }
 

@@ -17,9 +17,11 @@ from fastmcp import FastMCP
 from dndkit import __version__
 from dndkit.activity import ActivityLog
 from dndkit.config import (
+    SettingsError,
     WebSettings,
     configure_logging,
     resolve_data_dir,
+    resolve_http_settings,
     resolve_web_settings,
 )
 from dndkit.game.dice import DiceLog
@@ -30,6 +32,7 @@ from dndkit.tools.apps import register_apps
 from dndkit.tools.deps import DICE_LOG_KEY, STORE_KEY
 from dndkit.tools.recorder import Recorder
 from dndkit.tools.schema import compact
+from dndkit.transport import BearerToken, add_health, serve
 from dndkit.web import Changes, web_pages
 
 logger = logging.getLogger(__name__)
@@ -59,10 +62,13 @@ skill://dnd-monsters/SKILL.md (save_monster, plan_encounter: monsters, bosses,
 sizing a fight) and skill://dnd-battle-map/SKILL.md (the map tools)."""
 
 
-def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -> FastMCP:
+def build_server(
+    data_dir: Path | None = None, web: WebSettings | None = None, token: str | None = None
+) -> FastMCP:
     """The MCP server; campaigns live in *data_dir*, else the configured directory.
 
-    With *web*, the server also serves the live web pages (``web/``).
+    With *web*, the server also serves the live web pages (``web/``). With
+    *token*, served over HTTP, every MCP request must carry it.
     """
 
     activity = ActivityLog()  # in memory, filled by the Recorder middleware
@@ -90,16 +96,28 @@ def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -
         # errors (``GameError``) keep their message, written for the model.
         mask_error_details=True,
         middleware=[Recorder(activity)],
+        auth=BearerToken(token) if token else None,
     )
     for fn in ALL_TOOLS:
         tool = server.add_tool(fn)
         tool.parameters = compact(tool.parameters)
     register_apps(server)
     register_skills(server, activity)
+    add_health(server)
     return server
 
 
 def main() -> None:
-    """Run the server over stdio, the transport MCP clients launch."""
+    """Run the server: over stdio, the transport MCP clients launch, or over HTTP
+    (``DNDKIT_TRANSPORT=http``) as a server of its own."""
     configure_logging()
-    build_server(web=resolve_web_settings()).run(show_banner=False)
+    try:
+        http = resolve_http_settings()
+    except SettingsError as error:
+        logger.error("%s", error)
+        raise SystemExit(2) from None
+    server = build_server(web=resolve_web_settings(), token=http.token if http else None)
+    if http is None:
+        server.run(show_banner=False)
+    else:
+        serve(server, http)

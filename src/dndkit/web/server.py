@@ -45,7 +45,10 @@ async def web_pages(
         return
     links = PlayerLinks.open(store.data_dir)
     app = create_app(Sources(store, dice, changes, links, settings, activity))
-    async with serving(app, settings):
+    async with serving(app, settings) as url:
+        if url:
+            elsewhere = settings.public_url or url
+            logger.info("Backstage from anywhere: %s/gm/%s/", elsewhere, links.backstage_token())
         try:
             yield
         finally:
