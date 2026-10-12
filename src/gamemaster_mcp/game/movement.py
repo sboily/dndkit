@@ -72,8 +72,13 @@ def move(
     start = battlefield.square_of(state, mover)
     if start is None:
         raise InvalidChangeError(f"{mover.name} is not on the map: place_tokens first.")
-    if sum(target is not None for target in (order.to, order.toward, order.away_from)) != 1:
-        raise InvalidChangeError("Say where: to a square, toward someone or away_from someone.")
+    given = sum(target is not None for target in (order.to, order.toward, order.away_from))
+    if given != 1:
+        raise InvalidChangeError(
+            "Give only one of to, toward and away_from."
+            if given
+            else "Say where: to a square, toward someone or away_from someone."
+        )
     if forced:
         return _forced(campaign, mover, start, order)
     mover.dashed = mover.dashed or dash

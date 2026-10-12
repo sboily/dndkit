@@ -55,9 +55,15 @@ def save_monster(
     with store.transaction() as campaign:
         monster, created = bestiary.save_monster(campaign, name, fields)
         caught_up = combatants.refresh(campaign)  # a monster already fighting takes it
-    return "\n".join(
-        [f"{'Saved' if created else 'Updated'} {render_combat.monster(monster)}"] + caught_up
-    )
+    saved = f"{'Saved' if created else 'Updated'} {render_combat.monster(monster)}"
+    estimated = created and challenge_rating and (armor_class is None or hit_points is None)
+    return "\n".join([saved, *([ESTIMATED] if estimated else []), *caught_up])
+
+
+ESTIMATED = (
+    "AC and HP come from the challenge rating (DMG table). A book monster has its own: "
+    "save them with save_monster if it is one."
+)
 
 
 @tool(annotations=READ_ONLY)

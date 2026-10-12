@@ -79,7 +79,8 @@ def next_turn(store: CampaignStore = Depends(get_store)) -> str:
         current = combat.next_turn(state)
         prefix = f"Round {state.combat_round} begins. " if state.turn_index == 0 else ""
         line = render_combat.combatant_line(campaign, current)
-    return "\n".join([*caught_up, f"{prefix}{current.name}'s turn: {line}"])
+        hint = render_combat.turn_hint(campaign, current)
+    return "\n".join([*caught_up, f"{prefix}{current.name}'s turn: {line}", *filter(None, [hint])])
 
 
 @tool

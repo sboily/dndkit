@@ -173,6 +173,8 @@ def use_legendary(state: GameState, name: str, resistance: bool, cost: int) -> C
             raise InvalidChangeError(f"{creature.name} has no legendary resistance left.")
         creature.legendary_resistances_left -= 1
         return creature
+    if not creature.legendary_actions:
+        raise InvalidChangeError(f"{creature.name} has no legendary actions.")
     if creature is state.current_combatant:
         raise InvalidChangeError("Legendary actions come at the end of another creature's turn.")
     if creature.legendary_actions_left < cost:

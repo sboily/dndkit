@@ -135,10 +135,14 @@ def game_state(campaign: Campaign) -> str:
         f"Campaign {campaign.name}, session {state.current_session}.",
         f"Location: {state.current_location or 'unknown'}. "
         f"In-game date: {state.current_date_in_game or 'unknown'}.",
-        f"Party level {state.party_level}, funds {state.party_funds}.",
+        f"Funds {state.party_funds}.",
         "Party: "
         + (
-            ", ".join(f"{c.name} HP {c.hit_points_current}/{c.hit_points_max}" for c in party)
+            ", ".join(
+                f"{c.name} (level {c.character_class.level}) "
+                f"HP {c.hit_points_current}/{c.hit_points_max}"
+                for c in party
+            )
             or "none"
         ),
         f"Active quests: {', '.join(active) or 'none'}.",

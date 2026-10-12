@@ -21,6 +21,7 @@ from gamemaster_mcp.tools.deps import (
     provided,
 )
 
+SETTING_PREVIEW = 1500  # a voice model reads the rest when it needs it
 Setting = Annotated[str | None, Field(description="World and tone, in prose or markdown")]
 SettingFile = Annotated[
     str | None,
@@ -52,16 +53,23 @@ def create_campaign(
 
 
 @tool(annotations=READ_ONLY)
-def get_campaign_info(store: CampaignStore = Depends(get_store)) -> str:
+def get_campaign_info(
+    full: Annotated[bool, Field(description="The whole setting, not its start")] = False,
+    store: CampaignStore = Depends(get_store),
+) -> str:
     """Describe the active campaign: pitch, setting, sizes and world notes."""
     with store.reading() as c:
+        setting = c.setting or "not described yet"
+        if not full and len(setting) > SETTING_PREVIEW:
+            rest = len(setting) - SETTING_PREVIEW
+            setting = f"{setting[:SETTING_PREVIEW]}… ({rest} more characters: full=true)"
         lines = [
             f"{c.name} (id {c.id}): {c.description}",
             f"Game master: {c.dm_name or 'unknown'}.",
             f"{len(c.characters)} characters, {len(c.npcs)} NPCs, {len(c.locations)} locations, "
             f"{len(c.quests)} quests, {len(c.sessions)} session notes, "
             f"{len(c.events)} log events.",
-            f"Setting: {c.setting or 'not described yet'}",
+            f"Setting: {setting}",
         ]
         if c.world_notes:
             lines.append(f"World notes: {c.world_notes}")

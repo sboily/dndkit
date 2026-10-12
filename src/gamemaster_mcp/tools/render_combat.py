@@ -34,6 +34,16 @@ def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
     return "; ".join(parts)
 
 
+def turn_hint(campaign: Campaign, combatant: Combatant) -> str | None:
+    """What a character down at 0 HP does on their turn."""
+    character = campaign.characters.get(combatant.character_id or "")
+    if character is None or character.hit_points_current > 0:
+        return None
+    if character.death_saves_failure >= 3:
+        return f"{character.name} is dead: call next_turn."
+    return f"{character.name} is down: roll a death save (d20) and call record_death_save."
+
+
 def initiative(campaign: Campaign) -> str:
     """The initiative order, the current combatant marked."""
     state = campaign.game_state

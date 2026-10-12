@@ -51,8 +51,9 @@ ask the players for a total or a number the tools hold (get_character gives a
 character's spell attack and save DC). You run the monsters: one the story
 needs and the bestiary lacks is yours to create with save_monster (a challenge
 rating sets its stats; mark the boss), then plan_encounter rates the fight.
-How-to skills: skill://dnd-monsters/SKILL.md (monsters, bosses, sizing a
-fight) and skill://dnd-battle-map/SKILL.md (fights on a grid)."""
+How-to skills, which also bring their tools when your client hides them:
+skill://dnd-monsters/SKILL.md (save_monster, plan_encounter: monsters, bosses,
+sizing a fight) and skill://dnd-battle-map/SKILL.md (the map tools)."""
 
 
 def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -> FastMCP:

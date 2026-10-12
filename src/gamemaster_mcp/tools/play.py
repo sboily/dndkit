@@ -36,17 +36,15 @@ def update_game_state(
     current_location: Annotated[str | None, Field(description="Party's location")] = None,
     current_session: Annotated[int | None, Field(ge=1, description="Session number")] = None,
     current_date_in_game: Annotated[str | None, Field(description="In-game date")] = None,
-    party_level: Annotated[int | None, Field(ge=1, le=20, description="Party level")] = None,
     party_funds: Annotated[str | None, Field(description="Shared funds, e.g. '120 gp'")] = None,
     notes: Annotated[str | None, Field(description="Current situation, replaces notes")] = None,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Record where the party is, the date, the session, party level, funds or situation."""
+    """Record where the party is, the date, the session, funds or the situation."""
     changes = provided(
         current_location=current_location,
         current_session=current_session,
         current_date_in_game=current_date_in_game,
-        party_level=party_level,
         party_funds=party_funds,
         notes=notes,
     )

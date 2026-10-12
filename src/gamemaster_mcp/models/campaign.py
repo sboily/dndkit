@@ -84,7 +84,7 @@ class GameState(GameModel):
     current_session: int = Field(default=1, ge=1)
     current_date_in_game: str | None = None
     current_location: str | None = None
-    party_level: int = Field(default=1, ge=1, le=20)
+    party_level: int = Field(default=1, ge=1, le=20)  # legacy: each sheet has its level
     party_funds: str = "0 gp"
     in_combat: bool = False
     initiative_order: list[Combatant] = Field(default_factory=list)

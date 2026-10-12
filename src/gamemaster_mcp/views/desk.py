@@ -45,7 +45,6 @@ def notebook(campaign: Campaign, saved_in: Path | None, data_dir: Path) -> Json:
         "world_notes": campaign.world_notes,
         "setting": campaign.setting,
         "dm": campaign.dm_name,
-        "party_level": state.party_level,
         "sessions": [
             {
                 "number": s.session_number,

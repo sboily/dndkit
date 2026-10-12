@@ -53,7 +53,7 @@ function Notebook() {
       !n.situation && !n.world_notes && !n.setting && !n.sessions.length
         ? h("div", { class: "empty small" }, t("noNotes")) : null,
       h("div", { class: "server muted small" },
-        `${t("level")} ${n.party_level}` + (n.dm ? ` · ${t("dm")} ${n.dm}` : ""), h("br"),
+        n.dm ? [`${t("dm")} ${n.dm}`, h("br")] : null,
         `gamemaster-mcp ${server.version} · ${server.file || "—"} · ${t("saved")} ${server.saved}`, h("br"),
         `${server.data_dir} · ${t("skills")}: ${server.skills.join(", ") || "—"}`));
   }
