@@ -1,5 +1,6 @@
 # Every push and pull request: the Python checks (lint, format, types, security,
-# tests with coverage) on each supported Python, and knip on the pages' scripts.
+# tests with coverage) on each supported Python, knip on the pages' scripts, and
+# the Docker image built and tried (MCP with its token, the web pages).
 # Actions are pinned by commit; the comment names the release.
 name: CI
 
@@ -55,3 +56,38 @@ jobs:
         run: npm ci
       - name: Unused files and exports
         run: npx knip
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    env:
+      TOKEN: ci-token-for-the-docker-smoke-test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build
+        run: docker build --tag dndkit:ci .
+      - name: Start
+        run: |
+          docker run --detach --name dndkit --env DNDKIT_HTTP_TOKEN="$TOKEN" \
+            --publish 8000:8000 --publish 8765:8765 dndkit:ci
+          for _ in $(seq 60); do
+            test "$(docker inspect --format '{{.State.Health.Status}}' dndkit)" = healthy && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: MCP takes the token, and only it
+        run: |
+          mcp=http://127.0.0.1:8000/mcp
+          headers=(-H "content-type: application/json" -H "accept: application/json, text/event-stream")
+          init='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"1"}}}'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$mcp" "${headers[@]}" -d "$init")" = 401
+          curl -fsS -X POST "$mcp" "${headers[@]}" -H "authorization: Bearer $TOKEN" -d "$init" | grep -q '"name":"dndkit"'
+      - name: Web pages and the backstage's link
+        run: |
+          curl -fsS http://127.0.0.1:8765/table/ | grep -q GM_WEB
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/gm/)" = 403
+          link=$(docker logs dndkit 2>&1 | grep -o '/gm/[a-z2-7]\{16\}/' | head -1)
+          curl -fsS "http://127.0.0.1:8765$link" | grep -q GM_WEB
+      - name: Server log
+        if: always()
+        run: docker logs dndkit

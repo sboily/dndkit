@@ -1,0 +1,28 @@
+# dndkit as a server of its own, for a table that plays from several computers
+# or a home server: MCP over HTTP for roomkit-ui (or any MCP client), the web
+# pages for the table screen and the players' phones.
+#
+#   echo "DNDKIT_HTTP_TOKEN=$(openssl rand -hex 32)" > .env
+#   docker compose up -d
+#   docker compose logs dndkit | grep Backstage   # the game master's link
+#
+# Clients reach MCP at http://<this computer>:8000/mcp with the header
+# "Authorization: Bearer <the token>". Campaigns stay in the dndkit-data volume.
+services:
+  dndkit:
+    image: ghcr.io/sboily/dndkit:latest
+    build: .
+    restart: unless-stopped
+    environment:
+      DNDKIT_HTTP_TOKEN: ${DNDKIT_HTTP_TOKEN:?put DNDKIT_HTTP_TOKEN in .env (openssl rand -hex 32)}
+      # The address phones use, when it is not the one the table screen opened
+      # (a name, Tailscale): http://192.168.1.20:8765
+      DNDKIT_WEB_URL: ${DNDKIT_WEB_URL:-}
+    ports:
+      - "8000:8000" # MCP, at /mcp: every request carries the token
+      - "8765:8765" # the web pages: /table/, the phones' links, the backstage's
+    volumes:
+      - dndkit-data:/data
+
+volumes:
+  dndkit-data:

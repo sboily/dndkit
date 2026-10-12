@@ -63,7 +63,7 @@ says why and lists the known names, so the model can correct itself.
 Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-# From PyPI (from the first release, 0.4.0)
+# From PyPI
 uvx dndkit
 
 # Straight from GitHub
@@ -77,7 +77,9 @@ uv run dndkit
 ```
 
 The server speaks MCP over stdio: an MCP client starts it, you don't keep it
-running yourself. `uvx` fetches it on first use and keeps it cached.
+running yourself. `uvx` fetches it on first use and keeps it cached. To run it
+as a server of its own, for several computers or on a home server, see
+[Docker](#docker).
 
 ### Configuration
 
@@ -88,6 +90,10 @@ running yourself. `uvx` fetches it on first use and keeps it cached.
 | `DNDKIT_WEB_PORT` | unset: no web pages | Serve the [live web pages](#live-web-pages) on this port |
 | `DNDKIT_WEB_HOST` | `127.0.0.1` | `0.0.0.0` lets phones on the same network open them |
 | `DNDKIT_WEB_URL` | guessed | The address phones should use, when the server cannot tell (a DNS name, Tailscale) |
+| `DNDKIT_TRANSPORT` | `stdio` | `http`: a server of its own, MCP at `/mcp` (Streamable HTTP) and `/health` |
+| `DNDKIT_HTTP_HOST` | `127.0.0.1` | Where HTTP listens; beyond this machine it takes a token |
+| `DNDKIT_HTTP_PORT` | `8000` | The HTTP port |
+| `DNDKIT_HTTP_TOKEN` | unset | The token every MCP request must carry (`Authorization: Bearer ...`); 16 characters at least, `openssl rand -hex 32` makes one |
 
 Default data directory:
 
@@ -164,6 +170,36 @@ out of the catalogue, and out of its token count, until the model activates
 the skill. With the skills on, the catalogue weighs about 7,300 tokens.
 roomkit-ui lists them under the server's name; a client that does not speak
 the extension can load them from `src/dndkit/skills/` as a skill folder.
+
+### Docker
+
+The image runs dndkit as a server of its own: MCP over HTTP on port 8000 and
+the web pages on 8765, campaigns in a volume. It suits a table that plays from
+several computers, or a server that stays on (a NAS, a Raspberry Pi: the image
+is built for amd64 and arm64).
+
+```bash
+curl -O https://raw.githubusercontent.com/sboily/dndkit/main/compose.yaml
+echo "DNDKIT_HTTP_TOKEN=$(openssl rand -hex 32)" > .env
+docker compose up -d
+docker compose logs dndkit | grep Backstage   # the game master's link
+```
+
+In roomkit-ui, add the server with Transport `streamable_http`, URL
+`http://<the server's address>:8000/mcp`, and the header
+`Authorization: Bearer <the token from .env>`. The server refuses any request
+without that token, and does not start listening beyond its machine without
+one. Set `DNDKIT_WEB_URL` in `.env` when phones reach the pages by another
+address than the table screen's.
+
+The backstage cannot tell the computer running Docker from any other (every
+visitor comes through Docker's gateway), so it opens with its link instead,
+`/gm/<code>/`, which the server writes in its log at each start: keep it to
+yourself, it shows everything. The code comes from the secret in the data
+volume, like the players' links.
+
+From a checkout, `docker compose up -d --build` builds the image instead of
+pulling `ghcr.io/sboily/dndkit` (published with each release from 0.5.0 on).
 
 ### With Claude Desktop
 
@@ -462,10 +498,11 @@ the game goes on without the pages.
   skips the widgets' own `get_screen_data` polling. A call the client refuses
   before sending it (roomkit checks required arguments) never reaches the
   server, so it is not there: look at the client's log for those.
-- **The backstage** opens only from the computer running the server: a
-  loopback peer, asking for this server by name (`localhost`, its address or
-  `DNDKIT_WEB_URL`'s host), so a web page whose domain points at this
-  computer (DNS rebinding) is refused. Requests carrying proxy headers are
+- **The backstage** opens at `/gm/` only from the computer running the
+  server: a loopback peer, asking for this server by name (`localhost`, its
+  address or `DNDKIT_WEB_URL`'s host), so a web page whose domain points at
+  this computer (DNS rebinding) is refused. From anywhere else it opens with
+  its link, `/gm/<code>/`, written in the server's log at each start. Requests carrying proxy headers are
   refused too, but a reverse proxy or tunnel on that computer that adds none
   would make every visitor look local: do not put one in front of the pages.
 - **Read-only**: the pages never change the game; it changes through the
@@ -520,9 +557,11 @@ Unreleased section or an existing tag. The tag runs
 `.github/workflows/release.yml`: it checks that the tag matches the version,
 sits on `main` and has its changelog section, runs the tests and builds, then
 publishes to PyPI by trusted publishing (no token: PyPI trusts the workflow in
-its `pypi` environment) and makes the GitHub release, its notes the version's
-changelog section, the built files attached. A failed step stops what follows:
-nothing reaches GitHub's releases before PyPI has the version.
+its `pypi` environment), pushes the Docker image to `ghcr.io/sboily/dndkit`
+(the version, `<major>.<minor>` and `latest`, for amd64 and arm64), and makes
+the GitHub release, its notes the version's changelog section, the built files
+attached. A failed step stops what follows: nothing reaches GitHub's releases
+before PyPI and the registry have the version.
 
 Once, on pypi.org: add a pending trusted publisher for the project `dndkit`
 (owner `sboily`, repository `dndkit`, workflow `release.yml`, environment

@@ -14,6 +14,7 @@ uv run mypy src/                     # Strict
 uv run bandit -r src/ -c pyproject.toml
 npm ci && npx knip                   # Unused files and exports in ui/*.js
 DNDKIT_WEB_PORT=8765 uv run dndkit   # Also serve the web pages
+DNDKIT_TRANSPORT=http uv run dndkit  # MCP over HTTP at :8000/mcp (Docker's way)
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of these on every push, Python 3.12
@@ -33,7 +34,8 @@ variables and the old data directory; everything new says dndkit.
 src/dndkit/
 ├── app.py        # build_server(): FastMCP, lifespan (store, dice log, web pages), tools, apps
 ├── activity.py   # In-memory log of the model's calls, for the backstage
-├── config.py     # Data dir (env, else platformdirs), stderr logging, WebSettings
+├── config.py     # Data dir (env, else platformdirs), stderr logging, WebSettings, HttpSettings
+├── transport.py  # MCP over HTTP: the bearer token, /health
 ├── errors.py     # GameError hierarchy, subclasses of FastMCP's ToolError
 ├── text.py       # normalize(): how two spellings of a name compare, for every layer
 ├── models/       # Pydantic models: base, character, world, bestiary, battle, campaign
@@ -219,5 +221,12 @@ calls `game` functions on the campaign, and renders a short text answer.
 - **Schema budget**: `tests/test_tools.py` keeps the catalogue under roomkit's
   Tool Search threshold. `tools/schema.compact` must also walk `$defs`: FastMCP
   inlines model parameters (`Participant`) only after registration.
+- **HTTP and Docker**: stdio stays the default. Over HTTP (`transport.py`)
+  the lifespan runs once for every client, so they share one store, as
+  several stdio processes share the data dir. A token is required beyond
+  loopback; `/health` is the only route without it. Behind Docker every peer
+  is the gateway, so the backstage opens with its link (`/gm/<code>/`, from
+  the same secret as the players' links); never loosen `_local` for Docker.
+  No Docker here: CI's `docker` job builds the image and tries it.
 - **Setting files** are read only from `<data dir>/settings/`, by bare file
   name; symlinks out of it are refused.
