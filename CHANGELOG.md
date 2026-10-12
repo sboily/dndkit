@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 (2026-10-12)
 
 Renamed **dndkit**, the fork having grown far from gamemaster-mcp. Live web
 pages: a table screen, each player's phone, the game master's backstage.
