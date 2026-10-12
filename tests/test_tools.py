@@ -19,7 +19,7 @@ TOOL_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
 TOOL_SEARCH_TOKENS = 8000
 # The whole catalogue, skills off: past this, the tools need trimming.
 CATALOGUE_CEILING = 9000
-SKILLS = Path(__file__).parents[1] / "skills"
+SKILLS = Path(__file__).parents[1] / "src" / "gamemaster_mcp" / "skills"
 
 
 def walk_schemas(node: Any) -> list[dict[str, Any]]:

@@ -22,6 +22,7 @@ from gamemaster_mcp.config import (
     resolve_web_settings,
 )
 from gamemaster_mcp.game.dice import DiceLog
+from gamemaster_mcp.skills import register_skills
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import ALL_TOOLS
 from gamemaster_mcp.tools.apps import register_apps
@@ -44,7 +45,9 @@ with one of them rather than inventing a new entity. Use change_hit_points for
 damage and healing (characters and monsters alike), roll_dice for every roll,
 and log notable moments with add_event. You run the monsters: one the story
 needs and the bestiary lacks is yours to create with save_monster (a challenge
-rating sets its stats; mark the boss), then plan_encounter rates the fight."""
+rating sets its stats; mark the boss), then plan_encounter rates the fight.
+How-to skills: skill://dnd-monsters/SKILL.md (monsters, bosses, sizing a
+fight) and skill://dnd-battle-map/SKILL.md (fights on a grid)."""
 
 
 def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -> FastMCP:
@@ -76,6 +79,7 @@ def build_server(data_dir: Path | None = None, web: WebSettings | None = None) -
         tool = server.add_tool(fn)
         tool.parameters = compact(tool.parameters)
     register_apps(server)
+    register_skills(server)
     return server
 
 

@@ -95,20 +95,33 @@ From a local checkout instead: Command `uv`, Arguments
 
 The 59 tool schemas weigh about 8,200 tokens by roomkit's own estimate, just
 over the 8,000 at which roomkit hides tools behind `find_tools` by default:
-enable the battle map skill (its tools then wait for it, about 7,400 tokens)
+enable the skills below (their tools then wait for them: about 6,650 tokens)
 or raise roomkit's threshold (`tool_search_threshold_tokens`). Optional
 parameters are advertised without their `null` alternative to save room.
 Put the system prompt below in the assistant's personality.
 
 #### Skills
 
-`skills/` holds Agent Skills for roomkit-ui (Settings → Skills: add this
-repository, or its local checkout, as a source, then enable them):
+The server ships two Agent Skills, how-to guides the model loads when it
+needs them, and publishes them by the official MCP Skills extension
+([SEP-2640](https://modelcontextprotocol.io/seps/2640-skills-extension),
+`io.modelcontextprotocol/skills`): it declares the extension in its
+capabilities, serves every skill file as a `skill://<name>/<file>` resource,
+and answers `skills/list` and `skills/get` with each skill's frontmatter and
+the SHA-256 digest and size of its files. The server instructions also point
+at both skills' URIs, for hosts that only read resources.
 
-- `dnd-battle-map` teaches the game master to run a fight on the map, and
-  gates `set_battlefield`, `place_tokens`, `move_token`, `area_of_effect` and
-  `check_target`: roomkit keeps them out of the catalogue (and out of its
-  token count) until the model activates the skill.
+| Skill | Teaches | Gates (roomkit) |
+| --- | --- | --- |
+| `dnd-monsters` | Inventing monsters and bosses sized to the party, preparing and rating a fight, legendary actions and resistances, lair actions | `save_monster`, `plan_encounter` |
+| `dnd-battle-map` | Fights on the grid: laying out the room, placing and hiding combatants, moving by the rules, areas of effect, cover | `set_battlefield`, `place_tokens`, `move_token`, `area_of_effect`, `check_target` |
+
+A skill's `allowed_tools` frontmatter is roomkit's: roomkit keeps those tools
+out of the catalogue, and out of its token count, until the model activates
+the skill. With both skills on, the catalogue weighs about 6,650 tokens. To
+use them in roomkit-ui before it speaks the Skills extension, add this
+repository (or its checkout) as a skill source in Settings → Skills: they
+live in `src/gamemaster_mcp/skills/`.
 
 ### With Claude Desktop
 

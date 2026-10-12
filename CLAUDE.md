@@ -60,11 +60,13 @@ src/gamemaster_mcp/
 ├── web/          # Live web pages, inside the MCP process: changes (notices from
 │                 # tool threads), access (player links, QR), audiences (views
 │                 # per page), feed (SSE), routes (Starlette), server (uvicorn)
+├── skills/       # Agent Skills (<name>/SKILL.md) and their publication over MCP:
+│                 # catalog (frontmatter, files, digests), extension (SEP-2640:
+│                 # skill:// resources, skills/list, skills/get)
 └── ui/           # Pages: widgets and web pages (<name>.html), shared.css,
                   # components.css, words.js, shared.js (transports), dicetray.js,
                   # battlemap.js, backstage.js, components.js (renderers),
                   # assembled by ui.page()
-skills/           # Agent Skills for roomkit-ui (dnd-battle-map gates the map tools)
 ```
 
 Layers only call downwards: `tools` → `game` → `models`; `tools` → `storage`;
@@ -164,7 +166,13 @@ calls `game` functions on the campaign, and renders a short text answer.
   docstring from the schema: put the words in the parameter's description.
 - **Skills**: a skill's `allowed_tools` hides those tools from roomkit's
   catalogue until the skill is activated. A tool must still work without the
-  skill (other clients have none): never rely on the skill's text.
+  skill (other clients have none): never rely on the skill's text. Skills are
+  published by SEP-2640: a folder's name must be its frontmatter `name`, the
+  listing's frontmatter is the file's verbatim, and digests are of the bytes
+  served (text is read back exactly as stored). A skill file that is not
+  Markdown needs `pyproject.toml`'s package data widened. `tests/test_tools.py`
+  counts the budget with the gates; `tests/test_skills.py` checks the
+  extension end to end.
 - **Schema budget**: `tests/test_tools.py` keeps the catalogue under roomkit's
   Tool Search threshold. `tools/schema.compact` must also walk `$defs`: FastMCP
   inlines model parameters (`Participant`) only after registration.

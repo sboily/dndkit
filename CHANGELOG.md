@@ -42,8 +42,14 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   reach, cover by the DMG corner rule, disadvantage from an adjacent foe or a
   hidden target), hidden foes kept off the players' screens until revealed,
   and encounters planned with their map and their monsters' squares.
-- `skills/dnd-battle-map`, an Agent Skill for roomkit-ui that teaches the map
-  and keeps its five tools out of the catalogue until a fight needs them.
+- **Skills over MCP**: the server publishes its Agent Skills by the official
+  MCP Skills extension (SEP-2640, `io.modelcontextprotocol/skills`): the
+  capability, `skill://` resources, and `skills/list` and `skills/get` with
+  SHA-256 digests. The server instructions point at them.
+- `dnd-battle-map` teaches the map and gates its five tools; `dnd-monsters`
+  teaches inventing monsters and bosses sized to the party and running
+  legendary actions, and gates `save_monster` and `plan_encounter`. With both
+  on, roomkit's catalogue weighs about 6,650 tokens.
 - **Bosses**: `save_monster` takes `boss`, `legendary_actions` and
   `legendary_resistances` (a boss gets 3 and 3 unless told); `use_legendary`
   spends them in combat, actions coming back at the start of the boss's turn.
@@ -67,7 +73,8 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   `tools/screen_views.py` to the `views` package.
 - `CampaignStore` and `DiceLog` take a change callback.
 - New dependencies: `starlette` and `uvicorn` (already installed with FastMCP),
-  `segno` for the QR codes; `httpx` for the tests.
+  `segno` for the QR codes, `pyyaml` for skill frontmatter; `httpx` and
+  `types-pyyaml` for development.
 
 ## 0.3.0
 
