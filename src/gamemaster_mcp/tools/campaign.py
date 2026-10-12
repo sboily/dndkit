@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import world
+from gamemaster_mcp.game import readiness, world
 from gamemaster_mcp.game.world import EntityKind
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render
@@ -73,6 +73,29 @@ def get_campaign_info(
         ]
         if c.world_notes:
             lines.append(f"World notes: {c.world_notes}")
+    return "\n".join(lines)
+
+
+@tool(annotations=READ_ONLY)
+def check_campaign(store: CampaignStore = Depends(get_store)) -> str:
+    """Before play: what breaks the 5e rules or is missing (sheets, quest, places, fights)."""
+    with store.reading() as campaign:
+        found = readiness.check(campaign)
+        name, players = campaign.name, len(campaign.characters)
+    if not found:
+        return (
+            f"{name} is ready to play, {players} characters. At the session's start, "
+            "ask who is at the table (seat_players)."
+        )
+    lines = [f"Before playing {name}:"]
+    for certain, title in ((True, "Against the rules:"), (False, "Probably forgotten:")):
+        group = [f for f in found if f.certain is certain]
+        if group:
+            lines += [title, *(f"- {f.subject}: {f.problem}. Fix: {f.fix}." for f in group)]
+    lines.append(
+        "Fix them with those tools, asking the player what is theirs to choose "
+        "(scores, gear, spells), then call check_campaign again."
+    )
     return "\n".join(lines)
 
 
@@ -176,6 +199,7 @@ def delete_campaign(
 TOOLS: list[Callable[..., str]] = [
     create_campaign,
     get_campaign_info,
+    check_campaign,
     list_campaigns,
     load_campaign,
     update_campaign,

@@ -48,6 +48,7 @@ src/gamemaster_mcp/
 │   ├── areas.py       # Spheres, cubes, cones, lines: squares and who is caught
 │   ├── combatants.py  # Participants -> combatants (linked PCs, bestiary stats)
 │   ├── bestiary.py    # Monsters, planned encounters, difficulty
+│   ├── readiness.py   # What a campaign lacks before play (check_campaign)
 │   ├── world.py       # NPCs, locations, quests, remove_entity
 │   ├── journal.py     # Session notes, adventure log
 │   ├── dice.py        # Notation parser, roller, in-memory DiceLog

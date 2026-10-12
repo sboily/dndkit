@@ -132,6 +132,16 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   `seat_players` say to take tonight's roll call.
 - **CI**: GitHub Actions run ruff, mypy, bandit and the tests on Python 3.12
   and 3.13, and knip on the pages' scripts, now ES modules.
+- **`check_campaign`**, before play: what breaks the 5e rules (hit points the
+  hit dice cannot give, AC under Unarmored Defense, a caster with no spells,
+  a class not in the book, a planned fight's missing monster) and what a
+  first campaign forgets (armor, scores left at 10, skills, gear, the
+  player's name, a quest, a place, an NPC, a monster's attacks, a deadly or
+  trivial fight), each with the tool that fixes it.
+- **The `dnd-game-master` skill**, to load first in a D&D game: the game
+  master leads and acts, what the tools hold, how a session opens and ends,
+  and a session zero by the rules (the standard array, each class's armor,
+  weapon, skills and spells at level 1, a small world, `check_campaign`).
 
 ### Changed
 
@@ -181,6 +191,10 @@ Live web pages: a table screen, each player's phone, the game master's backstage
 - Old mid-combat saves with odd initiative entries load.
 - French class names in the feminine (Magicienne, Guerrière, Rôdeuse...) are
   known: their characters got a d8 and no spell slots.
+- Rule reminders checked against the SRD 5.1 (`tests/test_srd.py` holds every
+  table): massive damage kills when what is left over equals or exceeds the
+  hit point maximum, petrified creatures are immune to poison and disease, a
+  shove reaches one size larger at most.
 
 ## 0.3.0
 

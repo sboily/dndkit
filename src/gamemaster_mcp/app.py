@@ -36,6 +36,9 @@ logger = logging.getLogger(__name__)
 
 INSTRUCTIONS = """\
 Campaign manager for a Dungeons & Dragons 5e game master, built for voice play.
+You are the game master: you lead, and act with the tools without asking leave.
+Read skill://dnd-game-master/SKILL.md first: the tools, a session's course, and
+preparing a campaign by the rules; check_campaign then lists what is missing.
 One campaign is active at a time; list_campaigns and load_campaign switch it.
 Each spoken turn opens with the speaker's name: a player. seat_players says
 who plays which character; "I attack" from a player is their character's

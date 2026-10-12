@@ -93,32 +93,33 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 61 tool schemas weigh about 8,850 tokens by roomkit's own estimate, just
+The 62 tool schemas weigh about 8,870 tokens by roomkit's own estimate, just
 over the 8,000 at which roomkit hides tools behind `find_tools` by default:
-enable the skills below (their tools then wait for them: about 7,250 tokens)
+enable the skills below (their tools then wait for them: about 7,300 tokens)
 or raise roomkit's threshold (`tool_search_threshold_tokens`). Optional
 parameters are advertised without their `null` alternative to save room.
 Put the system prompt below in the assistant's personality.
 
 #### Skills
 
-The server ships two Agent Skills, how-to guides the model loads when it
+The server ships three Agent Skills, how-to guides the model loads when it
 needs them, and publishes them by the official MCP Skills extension
 ([SEP-2640](https://modelcontextprotocol.io/seps/2640-skills-extension),
 `io.modelcontextprotocol/skills`): it declares the extension in its
 capabilities, serves every skill file as a `skill://<name>/<file>` resource,
 and answers `skills/list` and `skills/get` with each skill's frontmatter and
 the SHA-256 digest and size of its files. The server instructions also point
-at both skills' URIs, for hosts that only read resources.
+at each skill's URI, for hosts that only read resources.
 
 | Skill | Teaches | Gates (roomkit) |
 | --- | --- | --- |
+| `dnd-game-master` | To load first: the game master leads and acts, what the tools hold, opening and ending a session, a session zero by the rules (scores, armor, weapon, skills and spells for each class), `check_campaign` before play | nothing |
 | `dnd-monsters` | Inventing monsters and bosses sized to the party, preparing and rating a fight, legendary actions and resistances, lair actions | `save_monster`, `plan_encounter` |
 | `dnd-battle-map` | Fights on the grid: laying out the room, placing and hiding combatants, moving by the rules, areas of effect, cover | `set_battlefield`, `place_tokens`, `move_token`, `area_of_effect`, `check_target` |
 
 A skill's `allowed_tools` frontmatter is roomkit's: roomkit keeps those tools
 out of the catalogue, and out of its token count, until the model activates
-the skill. With both skills on, the catalogue weighs about 7,250 tokens. To
+the skill. With the skills on, the catalogue weighs about 7,300 tokens. To
 use them in roomkit-ui before it speaks the Skills extension, add this
 repository (or its checkout) as a skill source in Settings → Skills: they
 live in `src/gamemaster_mcp/skills/`.
@@ -142,6 +143,9 @@ live in `src/gamemaster_mcp/skills/`.
 ```markdown
 You are the game master of a Dungeons & Dragons 5e session played by voice.
 Speak the players' language, in short spoken sentences: no lists, no markdown.
+You lead the game: you decide when a roll is needed, make it and apply it
+with the tools, without asking leave. Before anything else, activate the
+dnd-game-master skill.
 
 Several players sit around one microphone; each of their turns opens with
 who said it. Open every session the same way:
@@ -197,14 +201,15 @@ Starting a new campaign, run a short session zero, one question at a time:
 the campaign's name and pitch, then each player's character (name, race,
 class, level, ability scores, then their skills with update_character), the
 starting location, a first NPC and a first quest, creating each with its tool
-as soon as you have it.
+as soon as you have it (the dnd-game-master skill has the rules for each).
+Then call check_campaign and fix what it lists before the first scene.
 ```
 
 ## Tools
 
 | Area | Tools |
 | --- | --- |
-| Campaign | `create_campaign`, `get_campaign_info`, `list_campaigns`, `load_campaign`, `update_campaign`, `delete_campaign`, `remove_from_campaign` |
+| Campaign | `create_campaign`, `get_campaign_info`, `check_campaign`, `list_campaigns`, `load_campaign`, `update_campaign`, `delete_campaign`, `remove_from_campaign` |
 | Characters | `create_character`, `get_character` 🖥, `list_characters`, `update_character` |
 | Resources | `add_item_to_character`, `remove_item_from_character`, `record_death_save`, `rest` |
 | Spells | `set_spell_slots`, `use_spell_slot`, `set_known_spell` |
@@ -227,6 +232,10 @@ unknown. A tool that fails changes nothing, in memory or on disk.
 
 A few rules the tools keep:
 
+- **Before play**: `check_campaign` lists what breaks the 5e rules (hit
+  points the hit dice cannot give, AC under Unarmored Defense, a caster with
+  no spells) and what a first campaign forgets (a fighter without armor,
+  scores left at 10, no weapon, no quest or place), each with its fix.
 - **Proficiencies**: `update_character` takes skills, saving throws (English
   or French names: *Discrétion*, *Sagesse*), languages and features; a new
   character is proficient in its class's saves. The sheets give each

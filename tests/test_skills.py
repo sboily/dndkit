@@ -32,7 +32,7 @@ async def ask(client: Client, method: str, **params: Any) -> dict[str, Any]:
 
 def test_each_skill_is_named_after_its_folder() -> None:
     skills = {s.name: s for s in load_catalog()}
-    assert set(skills) == {"dnd-battle-map", "dnd-monsters"}
+    assert set(skills) == {"dnd-battle-map", "dnd-game-master", "dnd-monsters"}
     for skill in skills.values():
         assert skill.frontmatter["name"] == skill.name and skill.frontmatter["description"]
         assert skill.files[0].path == "SKILL.md"
@@ -60,6 +60,7 @@ async def test_listed_digests_match_what_resources_read_returns(client: Client) 
     listed = await ask(client, "skills/list")
     assert [s["frontmatter"]["name"] for s in listed["skills"]] == [
         "dnd-battle-map",
+        "dnd-game-master",
         "dnd-monsters",
     ]
     for entry in listed["skills"]:
