@@ -596,8 +596,9 @@ Once, on pypi.org: add a pending trusted publisher for the project `dndkit`
 (owner `sboily`, repository `dndkit`, workflow `release.yml`, environment
 `pypi`). GitHub creates the `pypi` environment at the first release; required
 reviewers set on it (Settings → Environments) hold each release for approval.
-GitHub creates the image's package private at its first push: make it public
-once (the package's settings → Change visibility), or nobody can pull it.
+The image's package takes the repository's visibility: public, it was from the
+first push (0.5.0). Should a pull ever ask for a login, make it public in the
+package's settings (Change visibility).
 
 ## License
 
