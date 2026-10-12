@@ -24,8 +24,8 @@ def combat(campaign: Campaign) -> Json:
         "order": [
             _fighter(campaign, c, c is current) for c in state.initiative_order if not unseen(c)
         ],
-        "defeated": [c.name for c in state.defeated],
-        "xp": sum(c.xp for c in state.defeated),
+        "defeated": [c.name for c in state.defeated if not unseen(c)],
+        "xp": sum(c.xp for c in state.defeated if not unseen(c)),
         "map": battle_map(campaign, public=True),
     }
 

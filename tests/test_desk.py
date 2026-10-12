@@ -88,8 +88,8 @@ def test_the_backstage_keeps_the_last_fight_and_the_whole_log(tmp_path: Path) ->
         aria = next(iter(campaign.characters.values()))
         aria.equipment = {"main hand": Item(name="Staff", item_type="weapon", weight=4)}
     gm = rendered(audiences.game_master(sources, "http://127.0.0.1:8765/"))
-    assert gm["combat"]["last"]["defeated"] == ["Goblin"]
-    assert gm["combat"]["last"]["fighters"] == ["Aria", "Goblin"]
+    assert gm["combat"]["last"]["defeated"] == ["SECRET-SCOUT", "Goblin"]  # all, for the GM
+    assert gm["combat"]["last"]["fighters"] == ["Aria", "SECRET-SCOUT", "Goblin"]
     assert gm["backstage"]["encounters"][0]["status"] == "done"
     assert gm["journal"]["events"][0]["importance"] == 5
     equipped = gm["sheets"]["sheets"][0]["equipment"][0]

@@ -60,12 +60,16 @@ def resolve_web_settings(env: Mapping[str, str] = os.environ) -> WebSettings | N
     raw_port = env.get(ENV_WEB_PORT, "").strip()
     if not raw_port:
         return None
-    if not raw_port.isdigit() or int(raw_port) > 65535:
+    if not (raw_port.isascii() and raw_port.isdigit()) or int(raw_port) > 65535:
         # The game must still run: only the web pages are lost to a typo.
         logger.warning("Web pages are off: %s=%r is not a port number.", ENV_WEB_PORT, raw_port)
         return None
+    public_url = env.get(ENV_WEB_URL, "").strip().rstrip("/") or None
+    if public_url and not public_url.startswith(("http://", "https://")):
+        logger.warning("Ignoring %s=%r: not an http(s) address.", ENV_WEB_URL, public_url)
+        public_url = None
     return WebSettings(
         port=int(raw_port),
         host=env.get(ENV_WEB_HOST, "").strip() or DEFAULT_WEB_HOST,
-        public_url=env.get(ENV_WEB_URL, "").strip().rstrip("/") or None,
+        public_url=public_url,
     )

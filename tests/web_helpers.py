@@ -38,7 +38,8 @@ def make_sources(tmp_path: Path, settings: WebSettings | None = None) -> Sources
 
 
 def fill_with_secrets(store: CampaignStore) -> None:
-    """Aria fights a bloodied goblin (3/7 HP, AC 15); every private field says SECRET."""
+    """Aria fights a bloodied goblin (3/7 HP, AC 15), a hidden scout has fled unseen;
+    every private field says SECRET."""
     with store.transaction() as campaign:
         aria = make_character("Aria", hp=12, notes="SECRET-CHARACTER-NOTE")
         campaign.characters[aria.id] = aria
@@ -65,6 +66,7 @@ def fill_with_secrets(store: CampaignStore) -> None:
                 name="Goblin", initiative=12, hit_points=3, hit_points_max=7, armor_class=15
             ),
         ]
+        state.defeated = [Combatant(name="SECRET-SCOUT", initiative=9, xp=700, hidden=True)]
 
 
 def _collection(entity: object) -> str:

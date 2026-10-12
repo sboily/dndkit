@@ -35,7 +35,7 @@ function DiceTray() {
 
   function dieElement(sides, face, delay, classes) {
     const die = h("div", { class: `die d${sides} ${classes}`, style: `animation-delay:${delay}ms` });
-    die.innerHTML = svgDie(sides); // static markup from SHAPES only, no outside text
+    die.innerHTML = svgDie(Number(sides)); // static markup from SHAPES only, no outside text
     die.querySelectorAll(".edge").forEach((edge) => edge.setAttribute("fill", "none"));
     const number = h("span", { class: "face" }, "?");
     die.append(number, h("span", { class: "kind" }, `d${sides}`));

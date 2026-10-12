@@ -16,6 +16,7 @@ const GM = (() => {
   const t = I18N.t;
   const pending = new Map();
   const inputWaiters = [];
+  const RETRY_AFTER_REFUSAL_MS = 10000;
   const resultHandlers = [];
   let nextId = 1;
   let ready = false;
@@ -122,11 +123,15 @@ const GM = (() => {
   /** The web pages' one event stream: every view a page shows, sent at each change. */
   const feed = {
     renders: new Map(),
+    errors: new Map(), // view -> its last error, until it renders again
     source: null,
     add(view, render) {
       if (!this.renders.has(view)) this.renders.set(view, []);
       this.renders.get(view).push(render);
       if (!this.source) this.source = Promise.resolve().then(() => this.open());
+    },
+    show() {
+      status([...new Set(this.errors.values())].join(" · "));
     },
     open() {
       const views = [...this.renders.keys()].join(",");
@@ -134,14 +139,23 @@ const GM = (() => {
       for (const [view, renders] of this.renders) {
         source.addEventListener(view, (event) => {
           const data = JSON.parse(event.data);
-          if (data.error) return status(t(data.error));
-          status("");
-          renders.forEach((render) => render(data));
+          if (data.error) this.errors.set(view, t(data.error));
+          else {
+            this.errors.delete(view);
+            renders.forEach((render) => render(data));
+          }
+          this.show();
         });
       }
-      // The browser reconnects by itself; the server then sends every view again.
-      source.onerror = () => status(t("offline"));
-      source.onopen = () => status("");
+      // The browser reconnects by itself, and the server then sends every view
+      // again; after a refusal (a link that no longer matches) it gives up, so
+      // the page tries again a little later.
+      source.onerror = () => {
+        status(t("offline"));
+        if (source.readyState !== EventSource.CLOSED) return;
+        setTimeout(() => this.open(), RETRY_AFTER_REFUSAL_MS);
+      };
+      source.onopen = () => this.show();
     },
   };
 

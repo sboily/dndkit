@@ -9,6 +9,8 @@ Each page is self-contained HTML (``ui.page``) that opens one event stream,
 the game changes only through the MCP tools, so the model always knows.
 """
 
+from urllib.parse import urlsplit
+
 import anyio.to_thread
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -22,6 +24,7 @@ from starlette.responses import (
 from starlette.routing import Route
 
 from gamemaster_mcp import ui
+from gamemaster_mcp.config import WebSettings
 from gamemaster_mcp.web import audiences, feed
 from gamemaster_mcp.web.access import is_loopback
 from gamemaster_mcp.web.audiences import Sources, Views
@@ -35,6 +38,7 @@ PAGE_HEADERS = {
         "img-src data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"
     ),
 }
+PROXY_HEADERS = ("forwarded", "x-forwarded-for", "x-forwarded-host", "via")
 FEED_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 
 
@@ -55,10 +59,12 @@ def create_app(sources: Sources) -> Starlette:
         return _feed(request, sources, audiences.player(sources, token))
 
     async def gm_page(request: Request) -> Response:
-        return _page("gm") if _local(request) else _refused(request, 403, "localOnly")
+        if not _local(request, sources.settings):
+            return _refused(request, 403, "localOnly")
+        return _page("gm")
 
     async def gm_feed(request: Request) -> Response:
-        if not _local(request):
+        if not _local(request, sources.settings):
             return _refused(request, 403, "localOnly")
         return _feed(request, sources, audiences.game_master(sources, str(request.base_url)))
 
@@ -94,12 +100,20 @@ async def _player(sources: Sources, request: Request) -> str | None:
     return await anyio.to_thread.run_sync(sources.player, token)
 
 
-def _local(request: Request) -> bool:
-    """A request from this machine: a loopback peer, or one using our own address."""
-    if request.client is None:
+def _local(request: Request, settings: WebSettings) -> bool:
+    """A request from this machine, for this server.
+
+    The peer is a loopback address or our own. The Host must name this server
+    too: a hostile page whose domain resolves to 127.0.0.1 (DNS rebinding)
+    would send its own domain. Anything that went through a proxy is refused.
+    """
+    if request.client is None or any(h in request.headers for h in PROXY_HEADERS):
         return False
-    server = request.scope.get("server") or ("", 0)
-    return is_loopback(request.client.host) or request.client.host == server[0]
+    server = (request.scope.get("server") or ("", 0))[0]
+    peer = request.client.host
+    host = urlsplit(f"//{request.headers.get('host', '')}").hostname or ""
+    ours = {server, urlsplit(settings.public_url or "").hostname}
+    return (is_loopback(peer) or peer == server) and (is_loopback(host) or host in ours)
 
 
 REFUSALS = {  # English, French

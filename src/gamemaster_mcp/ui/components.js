@@ -68,6 +68,7 @@ const Views = (() => {
 
     function render(data) {
       const current = data.order.find((f) => f.current);
+      if (!data.in_combat) last.clear(); // the next fight's "Goblin 1" is another goblin
       title.textContent = data.in_combat ? `⚔ ${t("round")} ${data.round}` : "⚔";
       turn.textContent = current ? t("turnOf", { name: current.name }) : "";
       fill(map, data.map ? BattleMap(data.map, me()) : null);

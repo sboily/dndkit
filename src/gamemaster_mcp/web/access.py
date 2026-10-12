@@ -6,6 +6,7 @@ guessed, and all change if that file is deleted.
 """
 
 import base64
+import functools
 import hashlib
 import hmac
 import ipaddress
@@ -60,11 +61,16 @@ def join(campaign: Campaign, links: PlayerLinks, base_url: str, reachable: bool)
     players = []
     for character in sorted(campaign.characters.values(), key=lambda c: c.name):
         url = f"{base_url}/p/{links.token(campaign, character)}/"
-        qr = segno.make(url, error="m").svg_data_uri(scale=4, dark="#1d1a22", light="#ffffff")
         players.append(
-            {"name": character.name, "player": character.player_name, "url": url, "qr": qr}
+            {"name": character.name, "player": character.player_name, "url": url, "qr": _qr(url)}
         )
     return {"reachable": reachable, "players": players}
+
+
+@functools.lru_cache(maxsize=64)
+def _qr(url: str) -> str:
+    """A link's QR code as an image URI; the same links come back at every change."""
+    return segno.make(url, error="m").svg_data_uri(scale=4, dark="#1d1a22", light="#ffffff")
 
 
 def phone_base_url(settings: WebSettings, base_url: str) -> tuple[str, bool]:

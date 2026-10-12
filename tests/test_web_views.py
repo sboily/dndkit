@@ -142,6 +142,9 @@ def test_web_settings_come_from_the_environment() -> None:
     assert resolve_web_settings({}) is None
     assert resolve_web_settings({"GAMEMASTER_WEB_PORT": "eighty"}) is None
     assert resolve_web_settings({"GAMEMASTER_WEB_PORT": "99999"}) is None
+    assert resolve_web_settings({"GAMEMASTER_WEB_PORT": "²"}) is None  # a digit, not a number
+    no_scheme = {"GAMEMASTER_WEB_PORT": "8765", "GAMEMASTER_WEB_URL": "table.local:8765"}
+    assert resolve_web_settings(no_scheme) == WebSettings(8765)
     settings = resolve_web_settings(
         {
             "GAMEMASTER_WEB_PORT": " 8765 ",

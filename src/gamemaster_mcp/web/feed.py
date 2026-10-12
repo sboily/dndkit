@@ -1,6 +1,7 @@
 """Server-sent events: each view's JSON at once, then again whenever it changes."""
 
 import json
+import logging
 from collections.abc import AsyncIterator, Callable, Mapping
 from typing import Any
 
@@ -10,6 +11,8 @@ from gamemaster_mcp.errors import GameError, NoActiveCampaignError
 from gamemaster_mcp.web.changes import Changes
 
 Render = Callable[[], Any]
+
+logger = logging.getLogger(__name__)
 
 HEARTBEAT_SECONDS = 15.0
 RETRY_MILLISECONDS = 2000
@@ -44,10 +47,14 @@ def _render_all(views: Mapping[str, Render]) -> dict[str, str]:
 
 
 def _render(render: Render) -> str:
+    """One view's JSON; a view that fails sends its error alone, the others go on."""
     try:
         data = render()
     except NoActiveCampaignError:
         data = {"error": "noCampaign"}  # a word the pages translate
     except GameError as exc:
         data = {"error": str(exc)}
+    except Exception:
+        logger.exception("A web view failed")
+        data = {"error": "viewFailed"}
     return json.dumps(data, ensure_ascii=False, separators=(",", ":"))

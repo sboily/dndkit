@@ -99,6 +99,24 @@ def test_pages_and_their_guards(tmp_path: Path) -> None:
 def test_the_backstage_opens_on_this_machine(tmp_path: Path) -> None:
     _, client = site(tmp_path, peer="127.0.0.1")
     assert client.get("/gm/").status_code == 200
+    assert client.get("/gm/", headers={"host": "localhost:8765"}).status_code == 200
+
+
+def test_the_backstage_refuses_a_rebound_name_or_a_proxy(tmp_path: Path) -> None:
+    _, client = site(tmp_path, peer="127.0.0.1")
+    rebound = {"host": "evil.example:8765"}  # a hostile page's domain, resolved to us
+    assert client.get("/gm/feed?views=world", headers=rebound).status_code == 403
+    for header in ("x-forwarded-for", "forwarded", "via"):
+        assert client.get("/gm/", headers={header: "1.2.3.4"}).status_code == 403
+
+
+def test_a_failing_view_leaves_the_others_running(tmp_path: Path) -> None:
+    def broken() -> object:
+        raise KeyError("oops")
+
+    texts = feed._render_all({"broken": broken, "fine": lambda: {"ok": 1}})
+    assert json.loads(texts["broken"]) == {"error": "viewFailed"}
+    assert json.loads(texts["fine"]) == {"ok": 1}
 
 
 @pytest.mark.parametrize("name", WEB_PAGES)

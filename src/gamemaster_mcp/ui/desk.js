@@ -79,6 +79,8 @@ function Sheets() {
       fill(notes, sheet.notes ? [h("b", {}, `${t("notes")} `), sheet.notes] : null);
       return box;
     });
+    const names = new Set(data.sheets.map((sheet) => sheet.name));
+    [...shown.keys()].filter((name) => !names.has(name)).forEach((name) => shown.delete(name));
     fill(el, cards);
   }
 
