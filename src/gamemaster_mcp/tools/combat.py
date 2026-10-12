@@ -32,14 +32,18 @@ def start_combat(
     with store.transaction() as campaign:
         fighters = [combatants.build(campaign, p) for p in participants or []]
         planned = bestiary.find_encounter(campaign, encounter) if encounter else None
+        state = campaign.game_state
         if planned is not None:
             fighters += combatants.from_encounter(campaign, planned)
             planned.status = "running"
+            if planned.battlefield is not None:
+                state.battlefield = planned.battlefield.model_copy(deep=True)
         if not fighters:
             raise InvalidChangeError("Give participants, an encounter, or both.")
-        state = campaign.game_state
         first = combat.start(state, fighters, planned.id if planned else None)
-        battlefield.place_the_rest(state)
+        if state.battlefield is not None:
+            battlefield.settle(state)
+            battlefield.place_the_rest(state)
         order = render_combat.initiative(campaign)
     return f"Combat started. {first.name} acts first.\n{order}"
 

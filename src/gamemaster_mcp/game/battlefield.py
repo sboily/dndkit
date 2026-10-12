@@ -24,18 +24,42 @@ def require(state: GameState) -> Battlefield:
     return state.battlefield
 
 
-def lay_out(
-    state: GameState, width: int, height: int, walls: Iterable[str], difficult: Iterable[str]
-) -> list[Combatant]:
-    """Replace the map; returns those who had to move (off the map or into a wall)."""
+def build(width: int, height: int, walls: Iterable[str], difficult: Iterable[str]) -> Battlefield:
+    """A map with its terrain squares checked and listed one by one."""
     field = Battlefield(width=width, height=height)
     blocked = _names(field, walls)
     field.walls = blocked
     field.difficult = [s for s in _names(field, difficult) if s not in blocked]
-    state.battlefield = field
-    displaced = [c for c in state.initiative_order if c.position and not _fits(state, c)]
-    for combatant in displaced:
-        combatant.position = None
+    return field
+
+
+def lay_out(
+    state: GameState, width: int, height: int, walls: Iterable[str], difficult: Iterable[str]
+) -> list[Combatant]:
+    """Replace the map; returns those who lost their square (off the map, in a wall)."""
+    state.battlefield = build(width, height, walls, difficult)
+    return settle(state)
+
+
+def settle(state: GameState) -> list[Combatant]:
+    """Take off the map whoever stands off it, in a wall or on someone placed before."""
+    field = require(state)
+    walls = wall_squares(field)
+    taken: set[Square] = set()
+    displaced = []
+    for combatant in state.initiative_order:
+        if combatant.position is None:
+            continue
+        try:
+            held = set(footprint_of(state, combatant) or [])
+        except InvalidChangeError:  # off the map
+            held = set()
+        if not held or held & (walls | taken) or any(not grid.inside(s, field) for s in held):
+            combatant.position = None
+            displaced.append(combatant)
+            continue
+        combatant.position = grid.name(min(held, key=lambda s: (s[1], s[0])))  # "d 7" -> "D7"
+        taken |= held
     return displaced
 
 
@@ -123,14 +147,6 @@ def _place_at_edge(state: GameState, combatant: Combatant) -> bool:
                 combatant.position = grid.name((column, row))
                 return True
     return False
-
-
-def _fits(state: GameState, combatant: Combatant) -> bool:
-    try:
-        top_left = square_of(state, combatant)
-    except InvalidChangeError:  # off the new map
-        return False
-    return top_left is not None and free(state, combatant, top_left)
 
 
 def _names(field: Battlefield, areas: Iterable[str]) -> list[str]:

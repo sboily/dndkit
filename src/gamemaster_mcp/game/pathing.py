@@ -41,7 +41,9 @@ class Route:
 class Ground:
     """The map as one mover sees it: walls, difficult terrain, the others."""
 
-    def __init__(self, campaign: Campaign, mover: Combatant, provokes: bool) -> None:
+    def __init__(
+        self, campaign: Campaign, mover: Combatant, provokes: bool, as_players_see: bool = False
+    ) -> None:
         state = campaign.game_state
         self.field = battlefield.require(state)
         self.walls = battlefield.wall_squares(self.field)
@@ -50,6 +52,8 @@ class Ground:
         self.others = [
             _meet(campaign, mover, other, held, provokes)
             for other, held in battlefield.others(state, mover)
+            # The players' screens must not give a hidden foe away by a hole in the map.
+            if not (as_players_see and other.hidden and not battlefield.is_party(other))
         ]
 
     def squares(self, top_left: Square) -> frozenset[Square]:
@@ -137,11 +141,12 @@ def _meet(
 ) -> Other:
     hostile = battlefield.is_party(other) != battlefield.is_party(mover)
     apart = abs(grid.SIZE_RANK[other.size] - grid.SIZE_RANK[mover.size]) >= 2
-    reacts = provokes and hostile and _can_react(campaign, other)
+    reacts = provokes and hostile and can_react(campaign, other)
     return Other(other, frozenset(held), not hostile or apart, other.reach if reacts else None)
 
 
-def _can_react(campaign: Campaign, combatant: Combatant) -> bool:
+def can_react(campaign: Campaign, combatant: Combatant) -> bool:
+    """Whether *combatant* can take a reaction: conscious, not incapacitated."""
     character = campaign.characters.get(combatant.character_id or "")
     conditions = set(character.conditions if character else combatant.conditions)
     hit_points = character.hit_points_current if character else combatant.hit_points

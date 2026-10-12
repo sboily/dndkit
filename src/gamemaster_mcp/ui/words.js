@@ -33,7 +33,7 @@ const I18N = (() => {
     // How hurt a monster looks to the players.
     unhurt: ["unhurt", "indemne"], hurt: ["hurt", "blessé"], bloodied: ["bloodied", "en sang"],
     down: ["down", "hors de combat"],
-    speed: ["Speed", "Vitesse"],
+    speed: ["Speed", "Vitesse"], hidden: ["hidden", "caché"],
     // The table.
     theTable: ["🪑 The table", "🪑 La table"], noCharacter: ["no character yet", "pas encore de personnage"],
     nobodySeated: ["Nobody seated yet: the game master asks who is playing.",

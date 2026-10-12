@@ -1,7 +1,7 @@
 """Pydantic models for campaigns, characters and the world."""
 
 from gamemaster_mcp.models.base import GameModel, new_id, now
-from gamemaster_mcp.models.battle import Battlefield, Placement
+from gamemaster_mcp.models.battle import Battlefield, Layout, Placement
 from gamemaster_mcp.models.bestiary import (
     Encounter,
     EncounterGroup,
@@ -50,6 +50,7 @@ __all__ = [
     "GameModel",
     "GameState",
     "Item",
+    "Layout",
     "Location",
     "Monster",
     "Participant",

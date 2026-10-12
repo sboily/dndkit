@@ -58,6 +58,9 @@
 .battlemap .token.current circle { stroke: var(--gold-hi); stroke-width: 4; animation: turn 1.4s ease-in-out infinite; }
 .battlemap .token.me circle { stroke: var(--text); stroke-width: 3; stroke-dasharray: 5 3; }
 .battlemap .token.down { opacity: .35; }
+.battlemap .token.hidden { opacity: .5; }
+.battlemap .token.hidden circle { stroke-dasharray: 3 3; stroke: var(--text); }
+.battlemap .area { fill: color-mix(in srgb, #ff7a2f 32%, transparent); stroke: #ff7a2f; stroke-width: .5; }
 .battlemap .life { fill: rgba(0,0,0,.35); }
 .battlemap .life-left { fill: var(--green); }
 .battlemap .life-left.mid { fill: var(--amber); }

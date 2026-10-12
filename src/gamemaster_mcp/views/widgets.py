@@ -10,7 +10,7 @@ from gamemaster_mcp.game import characters, seating
 from gamemaster_mcp.game.dice import DiceLog, RollResult
 from gamemaster_mcp.game.tables import XP_FOR_LEVEL
 from gamemaster_mcp.models import ABILITIES, Campaign, Character, Combatant
-from gamemaster_mcp.views.battle import battle_map
+from gamemaster_mcp.views.battle import battle_map, unseen
 
 Json = dict[str, Any]
 
@@ -66,6 +66,7 @@ def _combatant(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
         "pc": character is not None,
         "current": current,
         "position": combatant.position,
+        "hidden": combatant.hidden,
         **stats,
     }
 
@@ -83,7 +84,8 @@ def party(campaign: Campaign) -> Json:
         "funds": state.party_funds,
         "in_combat": state.in_combat,
         "round": state.combat_round,
-        "current": current.name if current else None,
+        # The players' pages show this too: a hidden foe's turn names no one.
+        "current": current.name if current and not unseen(current) else None,
         "characters": [
             {
                 "name": c.name,

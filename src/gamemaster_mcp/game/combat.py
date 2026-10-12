@@ -69,6 +69,8 @@ def next_turn(state: GameState) -> Combatant:
     if state.turn_index >= len(state.initiative_order):
         state.turn_index = 0
         state.combat_round += 1
+    if state.battlefield is not None:  # the last area of effect is spent
+        state.battlefield.area, state.battlefield.area_label = [], None
     return _begin_turn(state.initiative_order[state.turn_index])
 
 

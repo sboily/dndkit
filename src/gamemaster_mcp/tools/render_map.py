@@ -5,7 +5,9 @@ the scene and rule on the next action: squares, distances, who is in reach.
 """
 
 from gamemaster_mcp.game import battlefield, grid
+from gamemaster_mcp.game.areas import Area
 from gamemaster_mcp.game.movement import Move
+from gamemaster_mcp.game.sight import COVER_BONUS, Sightline
 from gamemaster_mcp.models import Campaign, Combatant, GameState
 
 KEYS = "abcdefghijklmnopqrstuvwxyz"
@@ -23,7 +25,8 @@ def battle_map(campaign: Campaign) -> str:
             marks[square] = key
         side = "party" if battlefield.is_party(combatant) else "foe"
         size = "" if combatant.size == "medium" else f", {combatant.size}"
-        legend.append(f"{key} {combatant.name} ({side}{size}) {combatant.position}")
+        hidden = ", hidden" if combatant.hidden else ""
+        legend.append(f"{key} {combatant.name} ({side}{size}{hidden}) {combatant.position}")
     columns = [grid.name((x, 0))[0] for x in range(field.width)]
     rows = [
         f"{y + 1:>2} "
@@ -91,6 +94,47 @@ def move(campaign: Campaign, done: Move) -> str:
         target, feet = done.short_of
         text += f" {target} is still {feet} ft away."
     return f"{text} Now: {nearby(campaign, who)}."
+
+
+def area(done: Area) -> str:
+    """Who an area of effect catches, the party first."""
+    party = [_named(c) for c in done.caught if battlefield.is_party(c)]
+    foes = [_named(c) for c in done.caught if not battlefield.is_party(c)]
+    if not done.caught:
+        return f"The {done.label} catches no one ({len(done.squares)} squares)."
+    caught = "; ".join(
+        part
+        for part in (
+            f"party: {', '.join(party)}" if party else "",
+            f"foes: {', '.join(foes)}" if foes else "",
+        )
+        if part
+    )
+    return f"The {done.label} catches {caught} ({len(done.squares)} squares)."
+
+
+def sightline(seen: Sightline) -> str:
+    """The facts bearing on an attack, in the order a ruling needs them."""
+    who, at = seen.attacker.name, seen.target.name
+    parts = [f"{who} to {at}: {seen.feet} ft{', within reach' if seen.in_reach else ''}."]
+    if seen.cover == "total":
+        parts.append(f"{at} has total cover: it cannot be targeted directly.")
+    elif seen.cover != "none":
+        bonus = COVER_BONUS[seen.cover]
+        parts.append(f"{at} has {seen.cover} cover: +{bonus} AC and Dexterity saves.")
+    if seen.pressed_by:
+        parts.append(
+            f"{', '.join(seen.pressed_by)} adjacent to {who}: ranged attacks have disadvantage."
+        )
+    if seen.target.hidden:
+        parts.append(f"{at} is hidden: attacks at disadvantage, if {who} guesses the square.")
+    if seen.attacker.hidden:
+        parts.append(f"{who} attacks from hiding: advantage; the attack reveals them.")
+    return " ".join(parts)
+
+
+def _named(combatant: Combatant) -> str:
+    return f"{combatant.name} (hidden)" if combatant.hidden else combatant.name
 
 
 def _placed(state: GameState) -> list[Combatant]:

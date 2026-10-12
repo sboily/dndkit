@@ -7,8 +7,9 @@ from fastmcp.dependencies import Depends
 from fastmcp.tools import tool
 from pydantic import Field
 
+from gamemaster_mcp.game import battlefield as battlefields
 from gamemaster_mcp.game import bestiary
-from gamemaster_mcp.models import EncounterGroup, Size
+from gamemaster_mcp.models import EncounterGroup, Layout, Size
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render_combat
 from gamemaster_mcp.tools.deps import READ_ONLY, get_store, provided
@@ -71,11 +72,18 @@ def plan_encounter(
     description: Text = None,
     location: Annotated[str | None, Field(description="Where it happens")] = None,
     notes: Text = None,
+    battlefield: Annotated[
+        Layout | None, Field(description="Its battle map; monsters may then have squares")
+    ] = None,
     store: CampaignStore = Depends(get_store),
 ) -> str:
     """Prepare (or change) a fight and rate its difficulty for the party.
-    Run it later with start_combat(encounter=...)."""
+    Run it later with start_combat(encounter=...), which lays out its map."""
     fields = provided(description=description, location=location, notes=notes)
+    if battlefield is not None:
+        fields["battlefield"] = battlefields.build(
+            battlefield.width, battlefield.height, battlefield.walls, battlefield.difficult
+        )
     with store.transaction() as campaign:
         encounter, created = bestiary.plan_encounter(campaign, name, monsters, fields)
         text = render_combat.encounter(campaign, encounter)

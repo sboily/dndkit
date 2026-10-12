@@ -1,6 +1,7 @@
 /* The battle map in SVG: 5-foot squares named like a chessboard (A1 top left),
  * walls, difficult terrain, a token per combatant (the party gold, its foes
- * red), and the squares the acting creature can still reach this turn. */
+ * red, the hidden ones faint on the game master's screen), the squares the
+ * acting creature can still reach this turn, and the last area of effect. */
 "use strict";
 
 function BattleMap(map, me) {
@@ -33,7 +34,7 @@ function BattleMap(map, me) {
     const cx = at(t.x) + radius;
     const cy = at(t.y) + radius;
     const classes = ["token", t.party ? "party" : "foe", t.current && "current", t.down && "down",
-      me && t.name === me && "me", t.health].filter(Boolean).join(" ");
+      t.hidden && "hidden", me && t.name === me && "me", t.health].filter(Boolean).join(" ");
     const ratio = t.hp_max ? Math.max(0, Math.min(1, t.hp / t.hp_max)) : null;
     const bar = ratio === null ? null : [
       s("rect", { x: cx - radius + 6, y: cy + radius - 7, width: 2 * radius - 12, height: 4, class: "life" }),
@@ -59,6 +60,7 @@ function BattleMap(map, me) {
     map.difficult.map(square("rough")),
     s("path", { d: lines.join(""), class: "grid" }),
     map.walls.map(square("wall")),
+    (map.area || []).map(square("area")),
     Array.from({ length: map.width }, (_, x) =>
       s("text", { x: at(x) + CELL / 2, y: GUTTER - 7, class: "label" }, String.fromCharCode(65 + x))),
     Array.from({ length: map.height }, (_, y) =>

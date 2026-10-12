@@ -38,6 +38,8 @@ src/gamemaster_mcp/
 │   ├── battlefield.py # The map: terrain, who stands where, placement at the edges
 │   ├── pathing.py     # Routes for one mover (Dijkstra), opportunity attacks
 │   ├── movement.py    # Speed, standing up, Dash/Disengage, to/toward/away, forced
+│   ├── sight.py       # Lines across the map: line of effect, cover, check_target facts
+│   ├── areas.py       # Spheres, cubes, cones, lines: squares and who is caught
 │   ├── combatants.py  # Participants -> combatants (linked PCs, bestiary stats)
 │   ├── bestiary.py    # Monsters, planned encounters, difficulty
 │   ├── world.py       # NPCs, locations, quests, remove_entity
@@ -152,6 +154,14 @@ calls `game` functions on the campaign, and renders a short text answer.
   `toward`), except `toward`, which goes as far as it can. Movement resets in
   `combat._begin_turn`. The players' map (`views.battle`, `public=True`) has
   no hit points for foes and shows reachable squares on the party's turns only.
+- **Hidden foes**: `views.battle.unseen` says what the players must not see.
+  Every public view drops those foes (order, tokens, the party banner's
+  current turn), and the reachable squares are computed as if they were not
+  there (`Ground(as_players_see=True)`). A new public view must do the same.
+- **Input models**: a tool takes a small model for structured input (`Layout`,
+  `Placement`, `Seat`) and never a stored model, whose internal fields would
+  be advertised (`Battlefield.area`). `schema.compact` drops a model's
+  docstring from the schema: put the words in the parameter's description.
 - **Skills**: a skill's `allowed_tools` hides those tools from roomkit's
   catalogue until the skill is activated. A tool must still work without the
   skill (other clients have none): never rely on the skill's text.

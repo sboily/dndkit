@@ -2,6 +2,7 @@
 
 import json
 import re
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -13,8 +14,12 @@ pytestmark = pytest.mark.anyio
 
 # roomkit-ui drops tools named outside this pattern.
 TOOL_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
-# roomkit hides tools behind find_tools above about this many schema tokens.
+# roomkit hides tools behind find_tools above about this many schema tokens
+# (its default threshold, which roomkit-ui may raise).
 TOOL_SEARCH_TOKENS = 8000
+# The whole catalogue, skills off: past this, the tools need trimming.
+CATALOGUE_CEILING = 9000
+SKILLS = Path(__file__).parents[1] / "skills"
 
 
 def walk_schemas(node: Any) -> list[dict[str, Any]]:
@@ -26,12 +31,32 @@ def walk_schemas(node: Any) -> list[dict[str, Any]]:
     return []
 
 
+def skill_gated_tools() -> set[str]:
+    """Tools the repository's skills gate: roomkit leaves them out until activated."""
+    names: set[str] = set()
+    for skill in SKILLS.glob("*/SKILL.md"):
+        front = skill.read_text(encoding="utf-8").split("---")[1]
+        names |= set(re.findall(r"^\s*-\s*(\w+)\s*$", front, re.MULTILINE))
+    return names
+
+
+def schema_tokens(tools: list[Any]) -> int:
+    """roomkit's estimate: a quarter of the characters, per name, description, schema."""
+    return sum(
+        len(t.name) // 4 + len(t.description or "") // 4 + len(json.dumps(t.input_schema)) // 4 + 3
+        for t in tools
+    )
+
+
 async def test_tool_catalogue_suits_voice_clients(client: Client) -> None:
     tools = await client.list_tools()
-    assert len(tools) == 56
+    assert len(tools) == 58
     assert all(TOOL_NAME.fullmatch(t.name) for t in tools)
-    catalogue = [{"name": t.name, "d": t.description, "p": t.input_schema} for t in tools]
-    assert len(json.dumps(catalogue)) / 4 < TOOL_SEARCH_TOKENS
+    gated = skill_gated_tools()
+    assert gated <= {t.name for t in tools}, "a skill gates a tool that does not exist"
+    # With the skills enabled, roomkit sends the tools they do not gate.
+    assert schema_tokens([t for t in tools if t.name not in gated]) < TOOL_SEARCH_TOKENS
+    assert schema_tokens(tools) < CATALOGUE_CEILING
     for tool in tools:
         root = tool.input_schema
         assert "$defs" not in root and "store" not in root["properties"], tool.name

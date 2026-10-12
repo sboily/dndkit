@@ -93,10 +93,12 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 56 tool schemas weigh about 7,600 tokens by roomkit's own estimate, under
-the 8,000 at which roomkit hides tools behind `find_tools` by default;
+The 58 tool schemas weigh about 7,980 tokens by roomkit's own estimate, under
+the 8,000 at which roomkit hides tools behind `find_tools` by default, and
+about 7,160 with the battle map skill enabled (its tools wait for it);
 optional parameters are advertised without their `null` alternative to stay
-there. Put the system prompt below in the assistant's personality.
+there. roomkit's threshold can be raised (`tool_search_threshold_tokens`).
+Put the system prompt below in the assistant's personality.
 
 #### Skills
 
@@ -104,9 +106,9 @@ there. Put the system prompt below in the assistant's personality.
 repository, or its local checkout, as a source, then enable them):
 
 - `dnd-battle-map` teaches the game master to run a fight on the map, and
-  gates `set_battlefield`, `place_tokens` and `move_token`: roomkit keeps them
-  out of the catalogue (and out of its token count) until the model activates
-  the skill.
+  gates `set_battlefield`, `place_tokens`, `move_token`, `area_of_effect` and
+  `check_target`: roomkit keeps them out of the catalogue (and out of its
+  token count) until the model activates the skill.
 
 ### With Claude Desktop
 
@@ -183,7 +185,7 @@ and a first quest, creating each with its tool as soon as you have it.
 | Quests | `create_quest`, `get_quest`, `update_quest`, `list_quests` |
 | Table | `seat_players` 🖥, `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition` |
 | Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `end_combat` |
-| Battle map | `set_battlefield` 🖥, `place_tokens`, `move_token` |
+| Battle map | `set_battlefield` 🖥, `place_tokens`, `move_token`, `area_of_effect`, `check_target` |
 | Bestiary | `save_monster`, `get_monsters`, `plan_encounter`, `list_encounters` |
 | Journal | `add_session_note`, `get_sessions`, `add_event`, `get_events` |
 | Utility | `roll_dice` 🖥, `lookup_rule`, `get_screen_data` (for the widgets) |
@@ -220,6 +222,27 @@ chosen squares (an ambush). `move_token` moves a combatant by the 5e rules
 - `toward` someone stops within reach or as close as it can ("still 15 ft
   away"); `away_from` backs off; `next_turn` restores the next combatant's
   movement.
+
+Around the moves:
+
+- `area_of_effect` says who a spell or a breath catches: a `sphere` (or
+  cylinder) of radius R `at` a square or a creature holds every square within
+  R feet as the grid counts them; a `cube` is centred there, or set against
+  its `source`'s side facing `toward`; a `cone` (as wide as it is far) and a
+  `line` start at the edge of the caster's space, and take a square when at
+  least half of it is covered (DMG). Walls stop an area. Everyone caught is
+  named, allies first; the area shows on the map until the next turn.
+- `check_target` gives what an attack needs: distance, reach, cover by the
+  DMG corner rule (walls give half, three-quarters or total cover, creatures
+  half at most), a foe adjacent to a ranged attacker, hidden attacker or
+  target.
+- Hidden foes (`place_tokens` with `hidden`, or a planned group's `hidden`)
+  stay off the players' screens altogether: no token, no line in the
+  initiative they see, no turn named, no hole in the squares a character can
+  reach. The game master's screens show them faint. `hidden: false` reveals.
+- `plan_encounter` can carry a `battlefield` and, per monster group, the
+  squares `at` which they start (checked against the map, its walls and each
+  other); `start_combat` with that encounter lays it all out.
 
 The model reads the map in text: `set_battlefield` and `place_tokens` return
 a grid with a legend, every move says what it cost, what is left and who is

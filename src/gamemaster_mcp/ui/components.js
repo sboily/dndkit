@@ -45,7 +45,8 @@ const Views = (() => {
         h("div", { class: "init" }, f.initiative),
         h("div", { class: "name" }, f.current ? h("span", { class: "arrow" }, "▶") : null, f.name,
           f.ac !== null && f.ac !== undefined ? h("span", { class: "ac" }, `${t("ac")} ${f.ac}`) : null,
-          f.position ? h("span", { class: "pos" }, f.position) : null),
+          f.position ? h("span", { class: "pos" }, f.position) : null,
+          f.hidden ? h("span", { class: "chip away" }, t("hidden")) : null),
         vitals(f),
         GM.conditions(f.conditions, f.exhaustion));
     }

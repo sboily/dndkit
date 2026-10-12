@@ -1,7 +1,7 @@
 """Plain-text views of fights, monsters and encounters."""
 
 from gamemaster_mcp.game import bestiary, rules
-from gamemaster_mcp.models import Campaign, Combatant, Encounter, Monster
+from gamemaster_mcp.models import Campaign, Combatant, Encounter, EncounterGroup, Monster
 
 
 def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
@@ -22,6 +22,8 @@ def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
         parts.append(", ".join(conditions))
     if combatant.position:
         parts.append(f"at {combatant.position}")
+    if combatant.hidden:
+        parts.append("hidden from the players")
     return "; ".join(parts)
 
 
@@ -54,15 +56,22 @@ def monster(m: Monster) -> str:
 
 def encounter(campaign: Campaign, e: Encounter) -> str:
     """An encounter with its monsters and its difficulty for the current party."""
-    groups = ", ".join(f"{g.count} {g.monster}" for g in e.monsters) or "no monster"
+    groups = ", ".join(_group(g) for g in e.monsters) or "no monster"
     where = f" at {e.location}" if e.location else ""
     line = f"{e.name} [{e.status}]{where}: {groups}."
+    if e.battlefield is not None:
+        line += f" On a {e.battlefield.width}x{e.battlefield.height} battle map."
     rated = bestiary.difficulty(campaign, e)
     if rated is not None:
         line += f" {difficulty(rated)}"
     if e.description:
         line += f" {e.description}"
     return line
+
+
+def _group(g: EncounterGroup) -> str:
+    details = [*(["hidden"] if g.hidden else []), *([f"at {', '.join(g.at)}"] if g.at else [])]
+    return f"{g.count} {g.monster}" + (f" ({'; '.join(details)})" if details else "")
 
 
 def difficulty(rated: rules.Difficulty) -> str:

@@ -41,6 +41,7 @@ class Combatant(GameModel):
     speed: int | None = Field(default=None, ge=0)  # feet; None: 30
     reach: int = Field(default=5, ge=5)
     position: str | None = None
+    hidden: bool = False  # unseen by the players: kept off their screens
     movement_used: int = Field(default=0, ge=0)
     dashed: bool = False
     disengaged: bool = False

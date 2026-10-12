@@ -50,7 +50,7 @@ def from_encounter(
     combatants: list[Combatant] = []
     for group in encounter.monsters:
         monster = bestiary.find_monster(campaign, group.monster)
-        for _ in range(group.count):
+        for number in range(group.count):
             combatants.append(
                 Combatant(
                     name=monster.name,
@@ -62,6 +62,8 @@ def from_encounter(
                     xp=monster.xp,
                     size=monster.size,
                     speed=bestiary.walking_speed(monster),
+                    position=group.at[number].upper() if number < len(group.at) else None,
+                    hidden=group.hidden,
                 )
             )
     return combatants

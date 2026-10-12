@@ -5,8 +5,8 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import registry, rules, seating
-from gamemaster_mcp.models import Campaign, Encounter, EncounterGroup, Monster
+from gamemaster_mcp.game import battlefield, grid, registry, rules, seating
+from gamemaster_mcp.models import Battlefield, Campaign, Encounter, EncounterGroup, Monster
 
 MONSTER_KIND = "monster"
 ENCOUNTER_KIND = "encounter"
@@ -48,6 +48,27 @@ def save_monster(campaign: Campaign, name: str, fields: Mapping[str, Any]) -> tu
     ), True
 
 
+def _check_squares(
+    campaign: Campaign, field: Battlefield | None, groups: Sequence[Mapping[str, Any]]
+) -> None:
+    """Planned squares must be on the encounter's map, off its walls, one creature each."""
+    planned = [(g["monster"], square) for g in groups for square in g.get("at") or []]
+    if not planned:
+        return
+    if field is None:
+        raise InvalidChangeError("Squares need a map: give the encounter a battlefield.")
+    taken = battlefield.wall_squares(field)
+    for group in groups:
+        if len(group.get("at") or []) > group["count"]:
+            raise InvalidChangeError(f"More squares than {group['monster']} monsters.")
+    for monster, square in planned:
+        size = find_monster(campaign, monster).size
+        held = set(grid.footprint(grid.parse(square, field), size))
+        if held & taken or any(not grid.inside(s, field) for s in held):
+            raise InvalidChangeError(f"{monster} cannot stand on {square.upper()}.")
+        taken |= held
+
+
 def walking_speed(monster: Monster) -> int | None:
     """The walking speed in a stat block's speed text ("30 ft., fly 60 ft." -> 30)."""
     match = re.match(r"\s*(\d+)", monster.speed or "")
@@ -71,9 +92,14 @@ def plan_encounter(
         # One error naming every unknown monster, then the bestiary's own spelling.
         registry.find_many(campaign.monsters, [g.monster for g in groups], MONSTER_KIND)
         values["monsters"] = [
-            {"monster": find_monster(campaign, g.monster).name, "count": g.count} for g in groups
+            {**g.model_dump(), "monster": find_monster(campaign, g.monster).name} for g in groups
         ]
     existing = registry.find_optional(campaign.encounters, name)
+    _check_squares(
+        campaign,
+        values.get("battlefield") or (existing.battlefield if existing else None),
+        values.get("monsters") or (existing.model_dump()["monsters"] if existing else []),
+    )
     if existing is not None:
         return registry.update(campaign.encounters, existing.id, ENCOUNTER_KIND, values), False
     if not values.get("monsters"):

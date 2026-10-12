@@ -31,7 +31,7 @@ def battle_map(campaign: Campaign, public: bool) -> Json | None:
     tokens = [
         _token(campaign, c, c is current, public)
         for c in state.initiative_order
-        if c.position is not None
+        if c.position is not None and not (public and unseen(c))
     ]
     shows_moves = current is not None and (not public or battlefield.is_party(current))
     return {
@@ -39,9 +39,16 @@ def battle_map(campaign: Campaign, public: bool) -> Json | None:
         "height": field.height,
         "walls": [list(s) for s in sorted(battlefield.wall_squares(field))],
         "difficult": [list(s) for s in sorted(battlefield.difficult_squares(field))],
+        "area": [list(grid.parse(s, field)) for s in field.area],
+        "area_label": field.area_label,
         "tokens": tokens,
-        "moves": _moves(campaign, current) if shows_moves and current else [],
+        "moves": _moves(campaign, current, public) if shows_moves and current else [],
     }
+
+
+def unseen(combatant: Combatant) -> bool:
+    """A foe hidden from the players: kept off their screens altogether."""
+    return combatant.hidden and not battlefield.is_party(combatant)
 
 
 def _token(campaign: Campaign, combatant: Combatant, current: bool, public: bool) -> Json:
@@ -61,6 +68,7 @@ def _token(campaign: Campaign, combatant: Combatant, current: bool, public: bool
         "party": battlefield.is_party(combatant),
         "current": current,
         "down": hp == 0,
+        "hidden": combatant.hidden,
     }
     if public and character is None:
         token["health"] = health(hp, hp_max)
@@ -69,13 +77,13 @@ def _token(campaign: Campaign, combatant: Combatant, current: bool, public: bool
     return token
 
 
-def _moves(campaign: Campaign, mover: Combatant) -> list[list[int]]:
+def _moves(campaign: Campaign, mover: Combatant, public: bool) -> list[list[int]]:
     """The squares *mover* can still reach this turn."""
     start = battlefield.square_of(campaign.game_state, mover)
     left = movement.movement_left(campaign, mover)
     if start is None or left == 0:
         return []
-    ground = pathing.Ground(campaign, mover, provokes=False)
+    ground = pathing.Ground(campaign, mover, provokes=False, as_players_see=public)
     return [
         list(square)
         for square, route in pathing.routes(ground, start).items()

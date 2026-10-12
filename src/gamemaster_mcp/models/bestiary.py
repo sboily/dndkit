@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import Field
 
 from gamemaster_mcp.models.base import GameModel, new_id
+from gamemaster_mcp.models.battle import Battlefield
 
 EncounterStatus = Literal["planned", "running", "done"]
 Size = Literal["tiny", "small", "medium", "large", "huge", "gargantuan"]
@@ -31,6 +32,8 @@ class EncounterGroup(GameModel):
 
     monster: str = Field(min_length=1, description="Bestiary monster name")
     count: int = Field(default=1, ge=1, le=50, description="How many")
+    at: list[str] = Field(default_factory=list, description="Their squares, if a map")
+    hidden: bool = Field(default=False, description="Unseen at first (ambush)")
 
 
 class Encounter(GameModel):
@@ -47,3 +50,4 @@ class Encounter(GameModel):
     location: str | None = None
     status: EncounterStatus = "planned"
     notes: str = ""
+    battlefield: Battlefield | None = None  # laid out when the fight starts

@@ -3,12 +3,12 @@
 Built field by field from what is allowed, never by trimming the game
 master's views, so a field added to a model stays hidden until it is added
 here. Players see their party in full, but never an NPC's biography or notes,
-a planned encounter, or a monster's statistics: a monster's hit points show
-as how hurt it looks.
+a planned encounter, a monster's statistics, or a foe hidden from them: a
+monster's hit points show as how hurt it looks.
 """
 
 from gamemaster_mcp.models import Campaign, Combatant
-from gamemaster_mcp.views.battle import battle_map, health
+from gamemaster_mcp.views.battle import battle_map, health, unseen
 from gamemaster_mcp.views.widgets import Json, vitals
 
 JOURNAL_EVENTS = 8
@@ -21,7 +21,9 @@ def combat(campaign: Campaign) -> Json:
     return {
         "in_combat": state.in_combat,
         "round": state.combat_round,
-        "order": [_fighter(campaign, c, c is current) for c in state.initiative_order],
+        "order": [
+            _fighter(campaign, c, c is current) for c in state.initiative_order if not unseen(c)
+        ],
         "defeated": [c.name for c in state.defeated],
         "xp": sum(c.xp for c in state.defeated),
         "map": battle_map(campaign, public=True),

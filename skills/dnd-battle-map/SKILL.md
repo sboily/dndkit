@@ -1,10 +1,12 @@
 ---
 name: dnd-battle-map
-description: Run a D&D 5e fight on a grid battle map with the Gamemaster tools - lay out the room, place combatants, move them by the rules (speed, terrain, opportunity attacks). Activate when a fight starts where positions matter.
+description: Run a D&D 5e fight on a grid battle map with the Gamemaster tools - lay out the room, place and hide combatants, move them by the rules (speed, terrain, opportunity attacks), areas of effect, cover. Activate when a fight starts where positions matter.
 allowed_tools:
   - set_battlefield
   - place_tokens
   - move_token
+  - area_of_effect
+  - check_target
 ---
 
 # Fighting on the battle map
@@ -23,8 +25,15 @@ from whoever is acting, and every move says who is now in reach.
   (a 30-foot room is 6 squares), walls and pillars as `walls`, rubble, mud or
   undergrowth as `difficult`. Blocks are written `C1:C6`.
 - `start_combat` places everyone with no square yet: the party on the left
-  edge, its foes on the right. Use `place_tokens` for an ambush or a
-  formation; a big creature is placed by its top-left square.
+  edge, its foes on the right. Use `place_tokens` for a formation; a big
+  creature is placed by its top-left square.
+- A planned encounter can carry its map and its monsters' squares
+  (`plan_encounter` with `battlefield`, and `at` per group): `start_combat`
+  with that encounter lays them out.
+- Foes the players have not noticed are `hidden` (in the plan, or with
+  `place_tokens`): they stay off the players' screens and out of the
+  initiative they see. Reveal them with `place_tokens` (`hidden: false`) when
+  they are spotted or attack.
 - Save monsters with their `size` and `speed` (`save_monster`) first: a Large
   ogre holds 2x2 squares, and the speed decides how far it goes.
 
@@ -46,8 +55,15 @@ from whoever is acting, and every move says who is now in reach.
   or a creature.
 - Move monsters on their turns too, sensibly: toward the nearest or weakest
   character, away when they flee.
-- Ranges come from the distances the tools give: a ranged attack has
-  disadvantage beyond its normal range, or with a foe adjacent.
+- Before an attack, `check_target`: the distance (normal or long range),
+  reach, cover (+2 or +5 AC and Dexterity saves, or no target at all), a foe
+  adjacent to a ranged attacker (disadvantage), hidden attackers or targets.
+- For a spell or breath with an area, `area_of_effect`: a `sphere` (or
+  cylinder, radius) `at` a square or a creature, a `cone`, `line` or `cube`
+  from its `source` `toward` a square or a creature. It names everyone caught,
+  allies too, and walls stop it; it shows on the map until the next turn.
+  Each creature caught then makes its saving throw (`roll_dice`). Fireball
+  goes around corners: rule by hand when it matters.
 - `next_turn` gives the next combatant its full movement.
 
 ## Speaking about it

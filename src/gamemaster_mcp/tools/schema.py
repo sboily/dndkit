@@ -5,8 +5,10 @@ An optional parameter (``int | None = None``) is advertised by Pydantic as
 model leaves an optional parameter out rather than sending null, so the
 advertised form keeps only the real type: about a third fewer schema tokens,
 which keeps the catalogue under roomkit's Tool Search threshold, and no
-``anyOf`` for Gemini to stumble on. Validation is untouched: FastMCP checks
-calls against the Python signature, which still accepts null.
+``anyOf`` for Gemini to stumble on. A model parameter (``Participant``) also
+loses its docstring, which repeats the parameter's own description.
+Validation is untouched: FastMCP checks calls against the Python signature,
+which still accepts null.
 """
 
 from typing import Any
@@ -25,8 +27,13 @@ def compact(schema: dict[str, Any]) -> dict[str, Any]:
         result["items"] = compact(items)
     definitions = schema.get("$defs")
     if isinstance(definitions, dict):  # models such as Participant; FastMCP inlines them later
-        result["$defs"] = {name: compact(d) for name, d in definitions.items()}
+        result["$defs"] = {name: _definition(d) for name, d in definitions.items()}
     return result
+
+
+def _definition(model: dict[str, Any]) -> dict[str, Any]:
+    # A model's docstring would repeat what the parameter using it already says.
+    return {key: value for key, value in compact(model).items() if key != "description"}
 
 
 def _property(prop: dict[str, Any]) -> dict[str, Any]:

@@ -37,8 +37,15 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   squares the acting character can still reach; players see foes' state,
   not their hit points. Characters have a `speed` (from their race unless
   given) and monsters a `size`.
+- On the map: `area_of_effect` (spheres, cubes, cones, lines; walls stop
+  them; who is caught, shown until the next turn), `check_target` (distance,
+  reach, cover by the DMG corner rule, disadvantage from an adjacent foe or a
+  hidden target), hidden foes kept off the players' screens until revealed,
+  and encounters planned with their map and their monsters' squares.
 - `skills/dnd-battle-map`, an Agent Skill for roomkit-ui that teaches the map
-  and keeps its three tools out of the catalogue until a fight needs them.
+  and keeps its five tools out of the catalogue until a fight needs them.
+- Model parameters lose their docstring in the advertised schemas (the
+  parameter's description says it): fewer tokens.
 
 ### Changed
 

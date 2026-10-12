@@ -7,14 +7,15 @@ from fastmcp.dependencies import Depends
 from fastmcp.tools import tool
 from pydantic import Field
 
-from gamemaster_mcp.game import battlefield, combat, movement
+from gamemaster_mcp.game import areas, battlefield, combat, movement, sight
+from gamemaster_mcp.game.areas import Aim, Shape
 from gamemaster_mcp.game.movement import Order
 from gamemaster_mcp.models import Placement
 from gamemaster_mcp.models.battle import MAX_SQUARES
 from gamemaster_mcp.storage import CampaignStore
-from gamemaster_mcp.tools import render_map
+from gamemaster_mcp.tools import render_combat, render_map
 from gamemaster_mcp.tools.apps import COMBAT_APP, app_meta
-from gamemaster_mcp.tools.deps import get_store
+from gamemaster_mcp.tools.deps import READ_ONLY, get_store
 
 Squares = Annotated[list[str] | None, Field(description='Squares: "C3", or "C1:C6" for a block')]
 Creature = Annotated[str | None, Field(description="A combatant")]
@@ -28,8 +29,8 @@ def set_battlefield(
     difficult: Squares = None,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Lay out the battle map (A1 top left) with walls and difficult terrain. Whoever
-    has no square yet is placed: the party on the left edge, foes on the right."""
+    """Lay out the battle map (A1 top left). Whoever has no square goes to an edge:
+    the party left, foes right."""
     with store.transaction() as campaign:
         state = campaign.game_state
         battlefield.lay_out(state, width, height, walls or [], difficult or [])
@@ -39,19 +40,24 @@ def set_battlefield(
 
 @tool
 def place_tokens(
-    tokens: Annotated[list[Placement], Field(min_length=1, description="Who stands where")],
+    tokens: Annotated[list[Placement], Field(min_length=1, description="Who and where")],
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Put combatants on chosen squares (an ambush, a formation); a big creature by its
-    top-left square."""
+    """Put combatants on squares (big ones by their top-left square), or hide them from
+    the players (an ambush) and reveal them."""
     with store.transaction() as campaign:
         state = campaign.game_state
         for token in tokens:
             combatant = combat.find(state, token.who)
-            combatant.position = None
             if token.ally is not None:
                 combatant.ally = token.ally
-            battlefield.place(state, combatant, token.at)
+            if token.hidden is not None:
+                combatant.hidden = token.hidden
+            if token.at is not None:
+                combatant.position = None
+                battlefield.place(state, combatant, token.at)
+        if state.battlefield is None:
+            return render_combat.initiative(campaign)
         return render_map.battle_map(campaign)
 
 
@@ -67,13 +73,45 @@ def move_token(
     forced: Annotated[bool, Field(description="Pushed, pulled or teleported")] = False,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Move by the 5e rules: speed, terrain, others in the way, standing up. Says the cost,
-    what is left, the opportunity attacks provoked and who is in reach. Refuses an
-    impossible move. toward stops within reach of the creature."""
+    """Move by the 5e rules; says the cost, movement left, opportunity attacks and who is
+    in reach. Refuses impossible moves; toward stops within reach."""
     order = Order(to=to, toward=toward, away_from=away_from, feet=feet)
     with store.transaction() as campaign:
         done = movement.move(campaign, who, order, dash=dash, disengage=disengage, forced=forced)
         return render_map.move(campaign, done)
 
 
-TOOLS: list[Callable[..., str]] = [set_battlefield, place_tokens, move_token]
+@tool
+def area_of_effect(
+    shape: Annotated[Shape, Field(description="sphere also for cylinders")],
+    feet: Annotated[int, Field(ge=5, description="Radius, cube side, or cone/line length")],
+    at: Annotated[str | None, Field(description="Centre: square or creature")] = None,
+    source: Annotated[str | None, Field(description="Caster of a cone, line or cube")] = None,
+    toward: Annotated[str | None, Field(description="Square or creature aimed at")] = None,
+    width: Annotated[int, Field(ge=5, description="Line width")] = 5,
+    store: CampaignStore = Depends(get_store),
+) -> str:
+    """Who an area of effect catches; walls stop it. Shown until the next turn."""
+    aim = Aim(shape=shape, feet=feet, at=at, source=source, toward=toward, width=width)
+    with store.transaction() as campaign:
+        return render_map.area(areas.resolve(campaign.game_state, aim))
+
+
+@tool(annotations=READ_ONLY)
+def check_target(
+    attacker: Annotated[str, Field(min_length=1, description="Who attacks")],
+    target: Annotated[str, Field(min_length=1, description="Who is attacked")],
+    store: CampaignStore = Depends(get_store),
+) -> str:
+    """Before an attack on the map: distance, reach, cover, and what gives disadvantage."""
+    with store.reading() as campaign:
+        return render_map.sightline(sight.look(campaign, attacker, target))
+
+
+TOOLS: list[Callable[..., str]] = [
+    set_battlefield,
+    place_tokens,
+    move_token,
+    area_of_effect,
+    check_target,
+]
