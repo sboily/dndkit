@@ -1,22 +1,18 @@
-"""What only the game master sees: plans, statistics, secrets and notes."""
+"""The game master's plans: encounters still to fight and quests, notes included."""
 
 from gamemaster_mcp.errors import GameError
 from gamemaster_mcp.game import bestiary
-from gamemaster_mcp.models import NPC, Campaign, Encounter, Monster, Quest
+from gamemaster_mcp.models import Campaign, Encounter, Quest
 from gamemaster_mcp.views.widgets import Json
 
 
 def backstage(campaign: Campaign) -> Json:
-    """Encounters still to fight, NPCs with their secrets, every quest, the bestiary."""
+    """The plans: encounters still to fight, and every quest with its notes."""
     return {
         "encounters": [
             _encounter(campaign, e) for e in campaign.encounters.values() if e.status != "done"
         ],
-        "npcs": [_npc(n) for n in sorted(campaign.npcs.values(), key=lambda n: n.name)],
         "quests": [_quest(q) for q in campaign.quests.values()],
-        "monsters": [
-            _monster(m) for m in sorted(campaign.monsters.values(), key=lambda m: m.name)
-        ],
     }
 
 
@@ -37,33 +33,17 @@ def _encounter(campaign: Campaign, encounter: Encounter) -> Json:
     }
 
 
-def _npc(npc: NPC) -> Json:
-    return {
-        "name": npc.name,
-        "attitude": npc.attitude,
-        "occupation": npc.occupation,
-        "location": npc.location,
-        "description": npc.description,
-        "bio": npc.bio,
-        "notes": npc.notes,
-    }
-
-
 def _quest(quest: Quest) -> Json:
     return {
         "title": quest.title,
         "status": quest.status,
+        "giver": quest.giver,
+        "description": quest.description,
+        "objectives": [
+            {"text": text, "done": text in quest.completed_objectives} for text in quest.objectives
+        ],
         "done": len(quest.completed_objectives),
         "total": len(quest.objectives),
         "reward": quest.reward,
         "notes": quest.notes,
-    }
-
-
-def _monster(monster: Monster) -> Json:
-    return {
-        "name": monster.name,
-        "ac": monster.armor_class,
-        "hp": monster.hit_points,
-        "cr": monster.challenge_rating,
     }

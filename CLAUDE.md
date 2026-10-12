@@ -55,8 +55,8 @@ src/gamemaster_mcp/
 │   ├── screen.py      # get_screen_data, the widgets' data tool
 │   └── render*.py     # Plain-text views of game data (render_map: the map in text)
 ├── views/        # JSON views for screens: widgets (GM, everything), public
-│                 # (what players may see, allow-listed), backstage (GM secrets),
-│                 # battle (the map to draw)
+│                 # (what players may see, allow-listed), backstage (GM plans),
+│                 # world (NPCs, places, bestiary: GM only), battle (the map)
 ├── web/          # Live web pages, inside the MCP process: changes (notices from
 │                 # tool threads), access (player links, QR), audiences (views
 │                 # per page), feed (SSE), routes (Starlette), server (uvicorn)
@@ -65,7 +65,7 @@ src/gamemaster_mcp/
 │                 # skill:// resources, skills/list, skills/get)
 └── ui/           # Pages: widgets and web pages (<name>.html), shared.css,
                   # components.css, words.js, shared.js (transports), dicetray.js,
-                  # battlemap.js, backstage.js, components.js (renderers),
+                  # battlemap.js, backstage.js, world.js, sheet.js, components.js,
                   # assembled by ui.page()
 ```
 

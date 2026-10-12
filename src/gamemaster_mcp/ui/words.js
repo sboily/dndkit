@@ -62,6 +62,14 @@ const I18N = (() => {
     // Adventure log entries.
     combat: ["combat", "combat"], roleplay: ["roleplay", "interprétation"], exploration: ["exploration", "exploration"],
     quest: ["quest", "quête"], character: ["character", "personnage"], world: ["world", "monde"],
+    // The world, on the backstage.
+    locations: ["Locations", "Lieux"], noLocation: ["No location yet.", "Aucun lieu."],
+    partyHere: ["the party is here", "le groupe est ici"], population: ["Population", "Population"],
+    government: ["Government", "Gouvernement"], notable: ["Notable", "À remarquer"], leadsTo: ["Leads to", "Mène à"],
+    ties: ["Ties", "Liens"], inFight: ["fighting", "en combat"],
+    // Sizes ("medium" is shared with the difficulty ratings below).
+    tiny: ["tiny", "très petite"], small: ["small", "petite"],
+    large: ["large", "grande"], huge: ["huge", "très grande"], gargantuan: ["gargantuan", "gigantesque"],
     // Backstage.
     backstage: ["Backstage", "Régie"], encounters: ["Planned encounters", "Rencontres prévues"],
     noEncounter: ["Nothing planned.", "Rien de prévu."], npcs: ["NPCs", "PNJ"], noNpc: ["No NPC yet.", "Aucun PNJ."],

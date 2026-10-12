@@ -35,8 +35,9 @@ def save_monster(
     store: CampaignStore = Depends(get_store),
 ) -> str:
     """Save or update a monster stat block; combatants named after it get its stats.
-    Invent the monsters your story needs: a challenge rating alone sets AC, HP and
-    attacks (DMG). A boss gets 3 legendary actions and resistances unless told."""
+    A book monster (goblin, orc) takes its book numbers. For one you invent, a challenge
+    rating alone sets AC, HP and attacks (DMG table, sturdy at low CR). A boss gets 3
+    legendary actions and resistances unless told."""
     fields = provided(
         armor_class=armor_class,
         hit_points=hit_points,

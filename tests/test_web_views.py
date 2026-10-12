@@ -50,6 +50,23 @@ def test_the_game_master_sees_everything(tmp_path: Path) -> None:
     assert data["backstage"]["encounters"][0]["difficulty"] == "deadly"
 
 
+def test_the_backstage_world_holds_npcs_places_and_stat_blocks(tmp_path: Path) -> None:
+    sources = make_sources(tmp_path)
+    with sources.store.transaction() as campaign:
+        campaign.game_state.current_location = "port"
+        campaign.game_state.initiative_order[1].monster = "Goblin"
+    world = rendered(audiences.game_master(sources))["world"]
+    assert [n["name"] for n in world["npcs"]] == ["Mara"] and world["npcs"][0][
+        "bio"
+    ] == "SECRET-BIO"
+    assert world["locations"][0]["current"] is True
+    assert world["locations"][0]["notes"] == "SECRET-PLACE"
+    goblin = next(m for m in world["monsters"] if m["name"] == "Goblin")
+    assert goblin["fighting"] == 1 and goblin["notes"] == "SECRET-GOBLIN"
+    assert "world" not in audiences.table(sources, "http://127.0.0.1:8765/")
+    assert "world" not in audiences.player(sources, aria_token(sources))
+
+
 def test_a_player_gets_their_own_sheet(tmp_path: Path) -> None:
     sources = make_sources(tmp_path)
     data = rendered(audiences.player(sources, aria_token(sources)))

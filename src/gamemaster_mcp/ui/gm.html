@@ -13,6 +13,7 @@
       <div class="col" id="plans"></div>
       <div class="col" id="side"></div>
     </div>
+    <div id="world"></div>
     <div id="status"></div>
     <script>
       // The game master's backstage: exact numbers, plans and secrets, to
@@ -23,12 +24,14 @@
       const seating = Views.seating();
       const party = Views.party({ campaign: false });
       const backstage = Views.backstage();
+      const world = Views.world();
       const dice = Views.dice();
       const journal = Views.journal();
 
       document.getElementById("play").append(combat.el, party.el, seating.el);
       document.getElementById("plans").append(backstage.el);
       document.getElementById("side").append(dice.el, journal.el);
+      document.getElementById("world").append(world.el);
 
       GM.start(() => {
         GM.live("party", null, heading.render);
@@ -36,6 +39,7 @@
         GM.live("combat", null, (data) => { combat.el.hidden = !data.in_combat; combat.render(data); });
         GM.live("party", null, (data) => { document.title = `${GM.t("backstage")} — ${data.campaign}`; party.render(data); });
         GM.live("backstage", null, backstage.render);
+        GM.live("world", null, world.render);
         GM.live("dice", null, dice.render);
         GM.live("journal", null, journal.render);
       });

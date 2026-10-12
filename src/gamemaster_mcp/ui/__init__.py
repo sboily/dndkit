@@ -18,6 +18,7 @@ _SCRIPTS = (
     "dicetray.js",
     "battlemap.js",
     "backstage.js",
+    "world.js",
     "sheet.js",
     "components.js",
 )

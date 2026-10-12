@@ -362,7 +362,7 @@ the game goes on without the pages.
 | --- | --- | --- |
 | `/table/` | a shared screen (TV, laptop) | The campaign's name and pitch, the session, place and date; initiative order, the party's hit points and conditions (absent players' characters faded), the table with who sits where, the dice tray, active quests, the adventure log, and a QR code per character |
 | `/p/<code>/` | each player's phone | Their full character sheet, the fight, the dice, quests and log, the party; "Your turn!" and a buzz when their turn comes |
-| `/gm/` | you, on the computer running the game | Everything, to follow what the model does: exact monster hit points and AC, planned encounters and their difficulty, NPC secrets and notes, every quest, the bestiary |
+| `/gm/` | you, on the computer running the game | Everything, to follow what the model does: exact monster hit points and AC, planned encounters and their difficulty, every quest with its objectives and notes, and the world: NPCs with their secrets and ties, locations (the party's marked) with their notes, the bestiary's full stat blocks and how many of each are fighting |
 
 - **Joining**: players scan their character's code on the table screen. Each
   link carries a code derived from the campaign, the character and a key kept

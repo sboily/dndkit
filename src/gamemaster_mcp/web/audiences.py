@@ -14,6 +14,7 @@ from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.views import public, widgets
 from gamemaster_mcp.views.backstage import backstage
 from gamemaster_mcp.views.widgets import Json
+from gamemaster_mcp.views.world import world
 from gamemaster_mcp.web import access
 from gamemaster_mcp.web.access import PlayerLinks
 from gamemaster_mcp.web.changes import Changes
@@ -83,6 +84,7 @@ def game_master(sources: Sources) -> Views:
         **_shared(sources),
         "combat": sources.reading(widgets.combat),
         "backstage": sources.reading(backstage),
+        "world": sources.reading(world),
     }
 
 

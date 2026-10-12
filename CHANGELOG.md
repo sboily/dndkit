@@ -71,6 +71,11 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   sheets give the spell attack bonus, save DC and initiative bonus, and the
   sheet on screen shows background, alignment, appearance, story, spells with
   their descriptions, gear, features, proficiencies and languages.
+- The backstage (`/gm/`) gains a world section: NPCs (secrets, notes, ties),
+  locations (the party's marked, notes) and the bestiary's full stat blocks
+  (boss, legendary uses, actions, how many are fighting); quests show their
+  objectives. `save_monster` and the monsters skill steer book monsters to
+  their book numbers: the challenge-rating table is for invented ones.
 - `get_character` without a name reads whose turn it is, or the only
   character. The server instructions tell the model to resolve every roll
   itself and never ask the players for a number the tools hold.

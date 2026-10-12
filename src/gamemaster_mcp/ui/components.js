@@ -236,5 +236,5 @@ const Views = (() => {
   }
 
   return { campaign, combat, party, seating, character: CharacterSheet, journal, join, backstage: Backstage,
-    dice: DiceTray };
+    world: World, dice: DiceTray };
 })();

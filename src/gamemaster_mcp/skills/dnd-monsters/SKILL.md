@@ -12,6 +12,14 @@ You are the game master: the creatures of your story are yours to invent. Do
 not ask the players for a monster's statistics, and do not stop because the
 bestiary lacks one. Create it, then rate the fight.
 
+## Book monsters first
+
+A goblin, an orc, an ogre or a young dragon has its numbers in the Monster
+Manual (or the SRD): give them to `save_monster` (a goblin is AC 15, 7 hit
+points, challenge 1/4). The challenge-rating table below is for creatures you
+invent: at low challenge ratings it gives far more hit points than the book's
+monsters have (a challenge 1/4 creature gets 42).
+
 ## Inventing a creature
 
 - `save_monster` with a `name`, a `challenge_rating`, and its `size` and
