@@ -67,8 +67,10 @@ monsters have (a challenge 1/4 creature gets 42).
 
 ## Running the fight
 
-- `start_combat` with the encounter. On a battle map, the monsters can wait
-  at their planned squares, hidden for an ambush (the `dnd-battle-map` skill).
+- `start_combat` with the encounter. The characters at the table join with
+  initiative rolled for them, unless you give them as `participants`. On a
+  battle map, the monsters can wait at their planned squares, hidden for an
+  ambush (the `dnd-battle-map` skill).
 - Too many or too few once it starts? `remove_combatant` with `reason:
   withdrawn` takes a monster back (no XP, off the map); `add_combatant`
   brings reinforcements. Before it starts, change the plan instead:

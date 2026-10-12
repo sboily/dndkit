@@ -44,6 +44,10 @@ def test_frontmatter_is_required() -> None:
         frontmatter_of("# No frontmatter")
     with pytest.raises(ValueError, match="name and a description"):
         frontmatter_of("---\nname: x\n---\nbody")
+    with pytest.raises(ValueError, match="no closing"):
+        frontmatter_of("---\nname: x\n")
+    dashed = "---\nname: x\ndescription: a---b\nupdated: 2026-01-02\n---\nbody --- here"
+    assert frontmatter_of(dashed) == {"name": "x", "description": "a---b", "updated": "2026-01-02"}
 
 
 async def test_the_server_declares_the_extension(client: Client) -> None:

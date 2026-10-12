@@ -7,6 +7,7 @@ describe exactly what the server serves.
 """
 
 import hashlib
+import json
 import mimetypes
 from dataclasses import dataclass
 from functools import cache
@@ -76,14 +77,19 @@ def load_catalog() -> tuple[Skill, ...]:
 
 
 def frontmatter_of(text: str) -> dict[str, Any]:
-    """The YAML frontmatter of a ``SKILL.md``, as a mapping."""
-    if not text.startswith("---"):
+    """The YAML frontmatter of a ``SKILL.md``, as a JSON-ready mapping: between a
+    first line ``---`` and the next line that is ``---`` alone."""
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
         raise ValueError("SKILL.md must begin with YAML frontmatter.")
-    block = text.split("---", 2)[1]
-    data = yaml.safe_load(block)
+    end = next((i for i, line in enumerate(lines[1:], 1) if line.strip() == "---"), None)
+    if end is None:
+        raise ValueError("SKILL.md frontmatter has no closing '---'.")
+    data = yaml.safe_load("\n".join(lines[1:end]))
     if not isinstance(data, dict) or not data.get("name") or not data.get("description"):
         raise ValueError("SKILL.md frontmatter needs a name and a description.")
-    return data
+    # skills/list sends it as JSON: a YAML date becomes its text.
+    return dict(json.loads(json.dumps(data, default=str)))
 
 
 def _load(folder: Traversable) -> Skill:
