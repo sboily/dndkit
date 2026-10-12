@@ -207,7 +207,7 @@ the game goes on without the pages.
 
 | Address | For | Shows |
 | --- | --- | --- |
-| `/table/` | a shared screen (TV, laptop) | Initiative order, the party's hit points and conditions, the dice tray, active quests, the adventure log, and a QR code per character |
+| `/table/` | a shared screen (TV, laptop) | The campaign's name and pitch, the session, place and date; initiative order, the party's hit points and conditions, the dice tray, active quests, the adventure log, and a QR code per character |
 | `/p/<code>/` | each player's phone | Their full character sheet, the fight, the dice, quests and log, the party; "Your turn!" and a buzz when their turn comes |
 | `/gm/` | you, on the computer running the game | Everything, to follow what the model does: exact monster hit points and AC, planned encounters and their difficulty, NPC secrets and notes, every quest, the bestiary |
 
@@ -216,7 +216,8 @@ the game goes on without the pages.
   in the data directory (`player-links.key`): it cannot be guessed, survives
   restarts, and belongs to the active campaign. Delete the key file to change
   every link.
-- **What players see** is built field by field from what they may know: their
+- **What players see** is built field by field from what they may know: the
+  campaign's description (a pitch: `create_campaign` asks for no spoilers), their
   party in full, but a monster only as *unhurt*, *hurt*, *bloodied* or *down*,
   and never an NPC's biography or notes, a planned encounter, a monster's
   statistics or the game master's notes.

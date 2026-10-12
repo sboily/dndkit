@@ -9,6 +9,8 @@ Live web pages: a table screen, each player's phone, the game master's backstage
 - **Web pages** (`GAMEMASTER_WEB_PORT`, `GAMEMASTER_WEB_HOST`,
   `GAMEMASTER_WEB_URL`), served from the MCP server's process and updated at
   every change through server-sent events:
+  - Every page opens on the campaign's name and pitch (its description, now
+    advertised to the model as shown to the players), session, place and date.
   - `/table/`: initiative order, the party, the dice tray, active quests with
     their objectives, the adventure log, and a QR code per character.
   - `/p/<code>/`: one player's character sheet with the fight, the dice, quests

@@ -62,8 +62,30 @@ const Views = (() => {
     return { el, render };
   }
 
-  /** Where the party stands and each character's vitals; *quests* adds their progress. */
-  function party({ quests = true } = {}) {
+  /** A web page's heading: the campaign's name and pitch, the session, where and when. */
+  function campaign() {
+    const name = h("h1", {});
+    const pitch = h("p", { class: "pitch" });
+    const facts = h("div", { class: "facts muted" });
+    const el = h("header", { class: "campaign" }, name, pitch, facts);
+    pitch.addEventListener("click", () => pitch.classList.toggle("open"));
+
+    function render(data) {
+      name.textContent = data.campaign;
+      pitch.textContent = data.description || "";
+      pitch.hidden = !data.description;
+      fill(facts, [[t("session"), data.session], ["📍", data.location], ["📅", data.date]]
+        .filter(([, value]) => value)
+        .map(([label, value]) => h("span", {}, `${label} `, h("b", {}, value))));
+    }
+
+    return { el, render };
+  }
+
+  /** Each character's vitals. *campaign*: under the campaign's name, with where and
+   *  when (a widget), else under "Party" (a web page, whose heading says the rest).
+   *  *quests* adds their progress. */
+  function party({ quests = true, campaign = true } = {}) {
     const name = h("span", { class: "title" }, "🛡");
     const session = h("span", { class: "muted small" });
     const facts = h("div", { class: "facts muted small" });
@@ -86,9 +108,10 @@ const Views = (() => {
         h("i", { style: `width:${(q.total ? q.done / q.total : 0) * 100}%` })));
 
     function render(data) {
-      name.textContent = data.campaign;
-      session.textContent = `${t("session")} ${data.session}`;
-      fill(facts, [["📍", data.location], ["📅", data.date], [t("funds"), data.funds]]
+      name.textContent = campaign ? data.campaign : `🛡 ${t("party")}`;
+      session.textContent = campaign ? `${t("session")} ${data.session}` : "";
+      const place = campaign ? [["📍", data.location], ["📅", data.date]] : [];
+      fill(facts, [...place, [t("funds"), data.funds]]
         .filter(([, value]) => value)
         .map(([label, value]) => h("span", {}, `${label} `, h("b", {}, value))));
       fill(banner, data.in_combat
@@ -225,5 +248,5 @@ const Views = (() => {
     return { el, render };
   }
 
-  return { combat, party, character, journal, join, backstage, dice: DiceTray };
+  return { campaign, combat, party, character, journal, join, backstage, dice: DiceTray };
 })();

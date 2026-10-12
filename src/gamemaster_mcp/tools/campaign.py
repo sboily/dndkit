@@ -32,7 +32,7 @@ def _setting_text(
 @tool
 def create_campaign(
     name: Annotated[str, Field(min_length=1, description="Campaign name")],
-    description: Annotated[str, Field(description="One-line pitch of the campaign")],
+    description: Annotated[str, Field(description="Pitch shown to the players, no spoilers")],
     dm_name: Annotated[str | None, Field(description="Game master's name")] = None,
     setting: Setting = None,
     setting_file: SettingFile = None,
@@ -85,7 +85,7 @@ def load_campaign(
 
 @tool
 def update_campaign(
-    description: Annotated[str | None, Field(description="New pitch")] = None,
+    description: Annotated[str | None, Field(description="New pitch, shown to players")] = None,
     dm_name: Annotated[str | None, Field(description="Game master's name")] = None,
     setting: Setting = None,
     setting_file: SettingFile = None,

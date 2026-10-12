@@ -8,6 +8,7 @@
     <!--gm:shared-->
   </head>
   <body class="web">
+    <div id="heading"></div>
     <div class="board">
       <div class="col" id="main"></div>
       <div class="col" id="side"></div>
@@ -22,7 +23,9 @@
       const combat = Views.combat();
       const dice = Views.dice();
       const journal = Views.journal();
-      const party = Views.party({ quests: false });
+      const heading = Views.campaign();
+      document.getElementById("heading").append(heading.el);
+      const party = Views.party({ quests: false, campaign: false });
       let me = null;
       let fight = null;
       let myTurn = false;
@@ -41,6 +44,7 @@
       document.getElementById("side").append(dice.el, journal.el, party.el);
 
       GM.start(() => {
+        GM.live("party", null, heading.render);
         GM.live("me", null, (data) => { me = data.name; sheet.render(data); checkTurn(); });
         GM.live("combat", null, (data) => {
           fight = data;

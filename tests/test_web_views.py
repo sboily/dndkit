@@ -52,6 +52,8 @@ def test_a_player_gets_their_own_sheet(tmp_path: Path) -> None:
     sources = make_sources(tmp_path)
     data = rendered(audiences.player(sources, aria_token(sources)))
     assert data["me"]["name"] == "Aria"
+    assert data["party"]["campaign"] == "Secrets"
+    assert data["party"]["description"] == "A campaign with things to hide"
     assert data["journal"]["quests"][0]["objectives"] == [
         {"text": "Reach the tower", "done": True},
         {"text": "Ring the bell", "done": False},

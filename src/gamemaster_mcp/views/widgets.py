@@ -73,6 +73,7 @@ def party(campaign: Campaign) -> Json:
     current = state.current_combatant
     return {
         "campaign": campaign.name,
+        "description": campaign.description,
         "session": state.current_session,
         "location": state.current_location,
         "date": state.current_date_in_game,

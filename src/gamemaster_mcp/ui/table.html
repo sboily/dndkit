@@ -7,6 +7,7 @@
     <!--gm:shared-->
   </head>
   <body class="web">
+    <div id="heading"></div>
     <div class="board">
       <div class="col" id="main"></div>
       <div class="col" id="side"></div>
@@ -16,7 +17,9 @@
       // The shared screen: what everyone at the table may see, and the codes
       // that open each character on a phone.
       const combat = Views.combat();
-      const party = Views.party({ quests: false });
+      const heading = Views.campaign();
+      document.getElementById("heading").append(heading.el);
+      const party = Views.party({ quests: false, campaign: false });
       const dice = Views.dice();
       const journal = Views.journal();
       const join = Views.join();
@@ -24,6 +27,7 @@
       document.getElementById("side").append(dice.el, journal.el, join.el);
 
       GM.start(() => {
+        GM.live("party", null, heading.render);
         GM.live("combat", null, (data) => { combat.el.hidden = !data.in_combat; combat.render(data); });
         GM.live("party", null, (data) => { document.title = data.campaign; party.render(data); });
         GM.live("dice", null, dice.render);
