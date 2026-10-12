@@ -1,0 +1,75 @@
+"""What a level gives a sheet, and the line between the dying and the dead."""
+
+import pytest
+from fastmcp import Client
+
+from gamemaster_mcp.errors import InvalidChangeError
+from gamemaster_mcp.game import characters, combat, progression, world
+from gamemaster_mcp.models import CharacterClass, Combatant
+from tests.helpers import call, make_campaign, make_character
+
+pytestmark = pytest.mark.anyio
+
+
+def test_a_character_made_at_level_9_has_its_level_s_numbers() -> None:
+    campaign = make_campaign()
+    wizard = make_character(character_class=CharacterClass(name="Magicien", level=9))
+    characters.create(campaign, wizard)
+    assert (wizard.proficiency_bonus, wizard.hit_dice_remaining) == (4, "9d6")
+    assert wizard.character_class.hit_dice == "1d6" and wizard.spell_slots[5] == 1
+
+
+def test_a_level_set_by_hand_moves_proficiency_slots_and_hit_dice() -> None:
+    campaign = make_campaign()
+    wizard = characters.create(campaign, make_character())
+    wizard.spell_slots_used = {1: 2}
+    fixed = characters.update(campaign, "Aria", {"class_level": 5}, {})
+    assert (fixed.proficiency_bonus, fixed.hit_dice_remaining) == (3, "5d6")
+    assert fixed.spell_slots[3] == 2 and fixed.spell_slots_used == {1: 2}
+
+
+def test_a_level_up_adds_one_hit_die_not_all_of_them() -> None:
+    campaign = make_campaign()
+    fighter = make_character("Borin", character_class=CharacterClass(name="Fighter", level=3))
+    characters.create(campaign, fighter)
+    fighter.hit_dice_remaining = "1d10"  # two spent
+    progression.level_up(campaign, "Borin", None)
+    assert fighter.hit_dice_remaining == "2d10"
+
+
+def test_healing_does_not_raise_the_dead_but_a_spell_can() -> None:
+    campaign = make_campaign()
+    aria = characters.create(campaign, make_character(hp=10))
+    characters.change_hp(aria, -30)  # massive damage
+    with pytest.raises(InvalidChangeError, match="is dead"):
+        characters.change_hp(aria, 5)
+    raised = characters.update(campaign, "Aria", {"hit_points_current": 1}, {})
+    assert (raised.death_saves_failure, "unconscious" in raised.conditions) == (0, False)
+
+
+def test_a_character_removed_mid_fight_leaves_it() -> None:
+    campaign = make_campaign()
+    aria = characters.create(campaign, make_character())
+    state = campaign.game_state
+    fighters = [
+        Combatant(name="Aria", initiative=9, character_id=aria.id),
+        Combatant(name="Goblin", initiative=5, hit_points=7),
+    ]
+    combat.start(state, fighters)
+    world.remove_entity(campaign, "character", "Aria")
+    assert [c.name for c in state.initiative_order] == ["Goblin"]
+    assert state.current_combatant is state.initiative_order[0] and state.defeated == []
+
+
+async def test_create_character_reports_a_level_5_caster_right(client: Client) -> None:
+    await call(client, "create_campaign", name="Five", description="d")
+    made = await call(
+        client,
+        "create_character",
+        name="Elminster",
+        character_class="Wizard",
+        race="Human",
+        class_level=5,
+        intelligence=16,
+    )
+    assert "spell attack +6, save DC 14" in made

@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from typing import Any, Literal
 
 from gamemaster_mcp.errors import NotFoundError
-from gamemaster_mcp.game import registry
+from gamemaster_mcp.game import combat, registry
 from gamemaster_mcp.models import NPC, Campaign, Location, Quest, QuestStatus
 
 EntityKind = Literal["character", "npc", "location", "quest"]
@@ -21,11 +21,22 @@ _COLLECTIONS: dict[str, tuple[str, str]] = {
 }
 
 
-def remove_entity(campaign: Campaign, kind: EntityKind, ref: str) -> str:
-    """Remove a character, NPC, location or quest; returns its name."""
+def find_entity(campaign: Campaign, kind: EntityKind, ref: str) -> registry.Named:
+    """The character, NPC, location or quest *ref* names."""
     attribute, label = _COLLECTIONS[kind]
-    items = getattr(campaign, attribute)
-    return str(registry.remove(items, ref, label).name)
+    found: registry.Named = registry.find(getattr(campaign, attribute), ref, label)
+    return found
+
+
+def remove_entity(campaign: Campaign, kind: EntityKind, ref: str) -> str:
+    """Remove a character, NPC, location or quest; returns its name. A character
+    leaves the running fight too."""
+    attribute, label = _COLLECTIONS[kind]
+    removed: registry.Named = registry.remove(getattr(campaign, attribute), ref, label)
+    state = campaign.game_state
+    for fighter in [c for c in state.initiative_order if c.character_id == removed.id]:
+        combat.remove(state, fighter.name, overcome=False)
+    return removed.name
 
 
 def find_npc(campaign: Campaign, ref: str) -> NPC:

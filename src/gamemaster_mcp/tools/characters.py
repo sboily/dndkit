@@ -115,7 +115,9 @@ def update_character(
     bio: Text = None,
     background: Text = None,
     alignment: Text = None,
-    class_level: Annotated[int | None, Field(ge=1, le=20, description="New level")] = None,
+    class_level: Annotated[
+        int | None, Field(ge=1, le=20, description="Corrected level; level_up gains one")
+    ] = None,
     hit_points_current: Annotated[int | None, Field(ge=0, description="Current HP")] = None,
     hit_points_max: Annotated[int | None, Field(ge=1, description="Maximum HP")] = None,
     temporary_hit_points: Annotated[int | None, Field(ge=0, description="Temporary HP")] = None,

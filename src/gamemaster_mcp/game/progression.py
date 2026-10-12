@@ -1,5 +1,6 @@
 """Experience and levels: awarding XP and levelling a character up (PHB ch. 1)."""
 
+import re
 from collections.abc import Sequence
 
 from gamemaster_mcp.errors import InvalidChangeError
@@ -54,7 +55,7 @@ def level_up(campaign: Campaign, ref: str, hit_die_roll: int | None) -> str:
     character.hit_points_max += gain
     character.hit_points_current += gain
     character.proficiency_bonus = rules.proficiency_bonus(level)
-    character.hit_dice_remaining = f"{level}d{die}"
+    character.hit_dice_remaining = f"{min(level, _dice_count(character) + 1)}d{die}"
     slots_note = _update_slots(character, level)
     character.updated_at = now()
     source = "rolled" if hit_die_roll is not None else "average"
@@ -72,10 +73,12 @@ def _update_slots(character: Character, level: int) -> str:
         if rules.class_key(character.character_class.name) is None:
             return "; unknown class, so spell slots are left as they were"
         return ""
+    character.spell_slots_used = characters.slots_still_used(character, slots)
     character.spell_slots = dict(slots)
-    character.spell_slots_used = {
-        lvl: min(used, slots[lvl])
-        for lvl, used in character.spell_slots_used.items()
-        if lvl in slots
-    }
     return f", spell slots {describe_slots(character)}" if slots else ""
+
+
+def _dice_count(character: Character) -> int:
+    """How many hit dice are left ("3d8" -> 3); 0 if the sheet says something else."""
+    match = re.match(r"\s*(\d+)\s*d", character.hit_dice_remaining)
+    return int(match.group(1)) if match else 0

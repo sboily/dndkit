@@ -39,14 +39,41 @@ def pick(campaign: Campaign, ref: str | None) -> Character:
 
 
 def create(campaign: Campaign, character: Character) -> Character:
-    """Add a character, a caster with its class's slots and casting ability; the name
-    must be free."""
+    """Add a character with what its class and level give: proficiency, hit dice, a
+    caster's slots and casting ability. The name must be free."""
+    cls = character.character_class
     if character.spellcasting_ability is None:
-        character.spellcasting_ability = rules.casting_ability(character.character_class.name)
+        character.spellcasting_ability = rules.casting_ability(cls.name)
+    die = rules.hit_die(cls.name)
+    character.character_class = cls.model_copy(update={"hit_dice": f"1d{die}"})
+    character.hit_dice_remaining = f"{cls.level}d{die}"
+    character.proficiency_bonus = rules.proficiency_bonus(cls.level)
     if not character.spell_slots:
-        cls = character.character_class
         character.spell_slots = rules.spell_slots_for(cls.name, cls.level) or {}
     return registry.add(campaign.characters, character, KIND)
+
+
+def level_edits(character: Character, level: int) -> dict[str, Any]:
+    """What follows a level set by hand: proficiency, hit dice and spell slots (spent
+    ones stay spent). Hit points do not: ``level_up`` gains a level in full."""
+    cls = character.character_class
+    die = rules.hit_die(cls.name)
+    edits: dict[str, Any] = {
+        "character_class": {**cls.model_dump(), "level": level, "hit_dice": f"1d{die}"},
+        "proficiency_bonus": rules.proficiency_bonus(level),
+        "hit_dice_remaining": f"{level}d{die}",
+    }
+    slots = rules.spell_slots_for(cls.name, level)
+    if slots is not None:
+        edits["spell_slots"] = dict(slots)
+        edits["spell_slots_used"] = slots_still_used(character, slots)
+    return edits
+
+
+def slots_still_used(character: Character, slots: Mapping[int, int]) -> dict[int, int]:
+    """The spent slots that remain spent once the character has *slots*."""
+    used = character.spell_slots_used
+    return {lvl: min(count, slots[lvl]) for lvl, count in used.items() if lvl in slots}
 
 
 def spellcasting(character: Character) -> Spellcasting | None:
@@ -94,7 +121,11 @@ def update(
     edits = dict(changes)
     level = edits.pop("class_level", None)
     if level is not None:
-        edits["character_class"] = {**character.character_class.model_dump(), "level": level}
+        edits.update(level_edits(character, level))
+    if character.hit_points_current == 0 and edits.get("hit_points_current", 0) > 0:
+        # Back from 0 HP by hand (a spell that raises the dead): a fresh start.
+        edits.update(death_saves_success=0, death_saves_failure=0)
+        edits.setdefault("conditions", [c for c in character.conditions if c != "unconscious"])
     if abilities:
         unknown = sorted(set(abilities) - set(ABILITIES))
         if unknown:
@@ -122,6 +153,11 @@ def _cap_hit_points(character: Character, edits: dict[str, Any]) -> None:
 def change_hp(character: Character, delta: int) -> str:
     """Heal or damage one character, following the 0 HP rules (PHB ch. 9)."""
     was_down = character.hit_points_current == 0
+    if delta > 0 and character.death_saves_failure >= 3:
+        raise InvalidChangeError(
+            f"{character.name} is dead: healing does not bring them back. If a spell does "
+            "(revivify, raise dead), set their hit points with update_character."
+        )
     hp = rules.apply_hp_change(
         character.hit_points_current,
         character.hit_points_max,

@@ -150,7 +150,15 @@ async def test_utilities_need_no_campaign(client: Client) -> None:
 async def test_remove_from_campaign(client: Client) -> None:
     await call(client, "create_campaign", name="Ghost", description="d")
     await call(client, "create_npc", name="Bob")
-    assert await call(client, "remove_from_campaign", kind="npc", name_or_id="bob") == (
-        "Removed npc 'Bob'."
+    asked = await call(client, "remove_from_campaign", kind="npc", name_or_id="bob")
+    assert asked.startswith("Nothing removed yet. Ask the user to confirm removing the npc 'Bob'")
+    wrong = await call_error(
+        client, "remove_from_campaign", kind="npc", name_or_id="bob", confirmation_code="zéro"
     )
+    assert "wrong or expired, so nothing was removed" in wrong
+    asked = await call(client, "remove_from_campaign", kind="npc", name_or_id="bob")
+    code = asked.split("confirmation_code '")[1][:4]
+    assert await call(
+        client, "remove_from_campaign", kind="npc", name_or_id="bob", confirmation_code=code
+    ) == ("Removed npc 'Bob'.")
     assert await call(client, "list_npcs") == "No NPCs yet."

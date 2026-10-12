@@ -50,4 +50,5 @@ class Confirmations:
             pending = self._pending.pop(target, None)
         if pending is None or self._clock() > pending.expires_at:
             return False
-        return secrets.compare_digest(pending.code, code.strip())
+        # Bytes: compare_digest refuses a str that is not ASCII ("zéro").
+        return secrets.compare_digest(pending.code.encode(), code.strip().encode())

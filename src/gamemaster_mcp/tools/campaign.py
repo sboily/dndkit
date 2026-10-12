@@ -12,7 +12,14 @@ from gamemaster_mcp.game import world
 from gamemaster_mcp.game.world import EntityKind
 from gamemaster_mcp.storage import CampaignStore
 from gamemaster_mcp.tools import render
-from gamemaster_mcp.tools.deps import DESTRUCTIVE, READ_ONLY, NameOrId, get_store, provided
+from gamemaster_mcp.tools.deps import (
+    DESTRUCTIVE,
+    READ_ONLY,
+    ConfirmationCode,
+    NameOrId,
+    get_store,
+    provided,
+)
 
 Setting = Annotated[str | None, Field(description="World and tone, in prose or markdown")]
 SettingFile = Annotated[
@@ -111,21 +118,35 @@ def update_campaign(
 def remove_from_campaign(
     kind: Annotated[EntityKind, Field(description="What to remove")],
     name_or_id: NameOrId,
+    confirmation_code: ConfirmationCode = None,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Permanently remove a character, NPC, location or quest. Confirm with the user first."""
+    """Permanently remove a character, NPC, location or quest in two calls. The first only
+    returns a code: ask the user, and call again with it only after a clear yes."""
+    with store.reading() as campaign:
+        entity = world.find_entity(campaign, kind, name_or_id)
+        target = f"{campaign.id}/{kind}/{entity.id}"
+    if confirmation_code is None:
+        code = store.confirmations.issue(target)
+        return (
+            f"Nothing removed yet. Ask the user to confirm removing the {kind} "
+            f"'{entity.name}'. Only if they clearly say yes, call remove_from_campaign again "
+            f"with confirmation_code '{code}' (valid {store.confirmations.ttl_minutes} minutes)."
+        )
+    if not store.confirmations.consume(target, confirmation_code):
+        raise InvalidChangeError(
+            "That confirmation code is wrong or expired, so nothing was removed. "
+            "Call remove_from_campaign without a code to get a new one."
+        )
     with store.transaction() as campaign:
-        name = world.remove_entity(campaign, kind, name_or_id)
+        name = world.remove_entity(campaign, kind, entity.id)
     return f"Removed {kind} '{name}'."
 
 
 @tool(annotations=DESTRUCTIVE)
 def delete_campaign(
     name: Annotated[str, Field(min_length=1, description="Campaign name")],
-    confirmation_code: Annotated[
-        str | None,
-        Field(description="Code from the first call, once the user has said yes"),
-    ] = None,
+    confirmation_code: ConfirmationCode = None,
     store: CampaignStore = Depends(get_store),
 ) -> str:
     """Delete a campaign in two calls. The first only returns a code and what would be lost:

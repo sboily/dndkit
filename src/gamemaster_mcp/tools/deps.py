@@ -16,6 +16,9 @@ READ_ONLY: dict[str, Any] = {"readOnlyHint": True}
 DESTRUCTIVE: dict[str, Any] = {"destructiveHint": True}
 
 NameOrId = Annotated[str, Field(min_length=1, description="Name or ID")]
+ConfirmationCode = Annotated[
+    str | None, Field(description="Code from the first call, once the user has said yes")
+]
 
 
 def get_store(ctx: Context = CurrentContext()) -> CampaignStore:
