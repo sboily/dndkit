@@ -148,7 +148,7 @@ async def play(
             "uv", ["run", "--directory", str(REPO), "gamemaster-mcp"], env=env
         )
         async with mcp:
-            for tool, arguments in [*SEED, *scenario.seed]:
+            for tool, arguments in scenario.seed if scenario.fresh else [*SEED, *scenario.seed]:
                 answer = await mcp.call_tool(tool, arguments)
                 if answer.startswith('{"error"'):
                     raise RuntimeError(f"seed {tool} failed: {answer}")
@@ -266,6 +266,7 @@ async def read_state(mcp: MCPToolProvider) -> dict[str, Any]:
         "party": await view("party"),
         "seating": await view("seating"),
         "sheets": {name: await view("character", name=name) for name in ("Thrain", "Aria")},
+        "check": await mcp.call_tool("check_campaign", {}),
     }
 
 

@@ -83,6 +83,7 @@ class Scenario:
     turns: list[tuple[str, str]]  # (speaker, what they say)
     check: Check
     seed: list[tuple[str, dict[str, Any]]] = field(default_factory=list)
+    fresh: bool = False  # no campaign at all: SEED is not played
 
 
 def called(calls: list[Call], name: str) -> list[Call]:
@@ -228,6 +229,22 @@ def concentrating(calls: list[Call], state: State) -> list[str]:
     return problems
 
 
+def prepared_campaign(calls: list[Call], state: State) -> list[str]:
+    """A new campaign, both characters with their players, and check_campaign's
+    final word: ready to play, or what is still left."""
+    problems = needs(calls, "create_campaign", "check_campaign")
+    made = called(calls, "create_character")
+    for character, player in (("Thrain", "Sylvain"), ("Aria", "Marie")):
+        if not any(
+            mentions(c, "name", character) and mentions(c, "player_name", player) for c in made
+        ):
+            problems.append(f"{character} not created for {player}")
+    final = state["check"]
+    if "is ready to play" not in final:
+        problems += [line[2:] for line in final.splitlines() if line.startswith("- ")]
+    return problems
+
+
 def shoved(calls: list[Call], state: State) -> list[str]:
     problems = needs(calls, "roll_dice")
     prone = "prone" in fighter(state, "Gobelin").get("conditions", [])
@@ -237,6 +254,24 @@ def shoved(calls: list[Call], state: State) -> list[str]:
 
 
 SCENARIOS = [
+    Scenario(
+        "new_campaign",
+        [
+            (
+                "Sylvain",
+                "Salut ! On voudrait commencer une nouvelle campagne de Donjons et Dragons, "
+                "on n'y a jamais joué. Moi c'est Sylvain, je veux jouer Thrain, un guerrier nain.",
+            ),
+            (
+                "Marie",
+                "Et moi c'est Marie, je veux jouer Aria, une magicienne elfe. Pour le reste, "
+                "choisis pour nous : une aventure classique, dans une crypte.",
+            ),
+            ("Sylvain", "Parfait. Prépare tout ce qu'il faut et dis-nous quand on commence."),
+        ],
+        prepared_campaign,
+        fresh=True,
+    ),
     Scenario(
         "seating",
         [
