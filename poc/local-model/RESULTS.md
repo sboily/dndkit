@@ -78,3 +78,37 @@ its speaker, as at a real table.
 - Turns took longer (median 45 s against 18 s) with the same model and
   settings; with a background agent answering the table, latency is not the
   measure here.
+
+# Third series: the players named as roomkit-ui names them
+
+Same model and settings as the second series, with the plain map wording.
+Sylvain and Marie are now the room's participants and the prompt ends with
+roomkit-ui's roster note ("Speaker A is \"Sylvain\", the user. Speaker B is
+\"Marie\"."): until then the model only saw labelled turns, never who was at
+the table.
+
+| | skills | full |
+| --- | --- | --- |
+| all scenarios | **26/36** (22 before) | **30/36** (26 before) |
+| seating | 3/3 (0/3) | 2/3 (0/3) |
+| map move, plain wording | 0/3 (2/3) | 3/3 (3/3) |
+| the other ten | 23/30 (22/30) | 25/30 (26/30) |
+
+- **Naming the players fixes the roll call**: `seat_players` with the right
+  seats in 5 runs of 6, against 1 of 6 with the reminder reworded alone. The
+  model greets each player by name and seats them as they speak. The other
+  scenarios do not move (23 and 25 of 30 against 22 and 26: noise).
+- **The bench's output cap cost some runs.** 4 runs ended without a word (5
+  and 6 in the earlier series), all failed: the llama-server log shows 34
+  generations stopped at exactly 1024 tokens, the cap set here as roomkit
+  sets it. Thinking spends it before the reply. roomkit-ui now lifts the cap
+  to the context window when the model thinks.
+- **What still fails** (16 runs): the model narrates instead of calling in 7
+  (Detect Magic without `set_concentration` 4 times, the battle map move
+  without `move_token` twice, the turn handed over without `next_turn`); it
+  opens the session again and forgets the owlbear twice; it plays the
+  goblin's turn itself, or rolls damage and never applies it (attack, twice);
+  it says "je vous installe" and calls nothing (seating, once).
+- With skills, the tools a skill gates are the weak spot: the map move and the
+  owlbear pass 0 of 6 behind `dnd-battle-map` and `dnd-monsters` (two of those
+  six cut by the cap), 5 of 6 with every tool in sight.

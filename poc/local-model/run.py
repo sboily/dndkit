@@ -83,10 +83,19 @@ class Outcome:
 
 
 def game_master_prompt() -> str:
-    """The README's system prompt for a voice game master, as users paste it."""
+    """The README's system prompt for a voice game master, as users paste it, then
+    the note roomkit-ui adds once two voices are named (speaker_roster.prompt_note)."""
     readme = (REPO / "README.md").read_text(encoding="utf-8")
     section = readme.split("## System prompt for a voice game master", 1)[1]
-    return re.search(r"```markdown\n(.*?)```", section, re.DOTALL).group(1).strip()
+    prompt = re.search(r"```markdown\n(.*?)```", section, re.DOTALL).group(1).strip()
+    return f"{prompt}\n\n{ROSTER_NOTE}"
+
+
+# roomkit-ui's note when its diarizing STT has two named voices, the first the user's.
+ROSTER_NOTE = (
+    "Several people speak in this conversation; each of their turns opens with who "
+    'said it.\n- Speaker A is "Sylvain", the user.\n- Speaker B is "Marie".'
+)
 
 
 class KeptOpen(LlamaCppAIProvider):
@@ -217,6 +226,8 @@ async def table(
     players.register_connection("speaker", heard, room_id="table")
     await kit.create_room(room_id="table")
     await kit.attach_channel("table", "table")
+    for player in PLAYERS:  # the named voices, as the room's participants
+        await kit.ensure_participant("table", "table", player.lower(), display_name=player)
     await kit.attach_channel("table", "gm", category=ChannelCategory.INTELLIGENCE)
     return kit
 

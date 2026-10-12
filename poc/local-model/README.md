@@ -9,8 +9,11 @@ the campaign they leave.
   `ornith-ai/Ornith-1.5-35B-A3B-GGUF:Q8_0`, thinking off as roomkit-ui sets it
   for voice.
 - **Game master**: an `AIChannel` with the README's system prompt, the
-  server's tools over stdio, speaker names on each turn (`sender_name`), the
-  skills read from `src/gamemaster_mcp/skills`.
+  server's tools over stdio, the skills read from `src/gamemaster_mcp/skills`.
+- **Players**: named as roomkit-ui names its voices: Sylvain and Marie are the
+  room's participants, each turn carries its speaker (`sender_name`), and the
+  prompt ends with roomkit-ui's roster note ("Speaker A is \"Sylvain\", the
+  user...").
 - **Campaign**: a fresh one per scenario (`scenarios.SEED`): Thrain (Sylvain)
   and Aria (Marie), Mara the innkeeper, a quest, a goblin's stat block.
 
