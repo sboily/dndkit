@@ -87,8 +87,8 @@ as a server of its own, for several computers or on a home server, see
 | --- | --- | --- |
 | `DNDKIT_STORAGE_DIR` | the per-user data directory (below) | Where campaigns are stored |
 | `DNDKIT_LOG_LEVEL` | `INFO` | Log level; logs go to stderr |
-| `DNDKIT_WEB_PORT` | unset: no web pages | Serve the [live web pages](#live-web-pages) on this port |
-| `DNDKIT_WEB_HOST` | `127.0.0.1` | `0.0.0.0` lets phones on the same network open them |
+| `DNDKIT_WEB_PORT` | unset: no web pages | Serve the [live web pages](#live-web-pages) on this port; the players' join codes (`show_join_codes`) need them |
+| `DNDKIT_WEB_HOST` | `127.0.0.1` | `0.0.0.0` lets phones on the same network open them, and scan their join codes |
 | `DNDKIT_WEB_URL` | guessed | The address phones should use, when the server cannot tell (a DNS name, Tailscale) |
 | `DNDKIT_TRANSPORT` | `stdio` | `http`: a server of its own, MCP at `/mcp` (Streamable HTTP) and `/health` |
 | `DNDKIT_HTTP_HOST` | `127.0.0.1` | Where HTTP listens; beyond this machine it takes a token |
@@ -120,7 +120,7 @@ In **Settings → Integrations → MCP**, add a server:
 | Transport | `stdio` |
 | Command | `uvx` |
 | Arguments | `dndkit` (from PyPI), or `--from git+https://github.com/sboily/dndkit dndkit` |
-| Environment variables | `DNDKIT_STORAGE_DIR=/Users/you/Games/dnd` (optional)<br>`DNDKIT_WEB_PORT=8765` and `DNDKIT_WEB_HOST=0.0.0.0` for the web pages (optional) |
+| Environment variables | `DNDKIT_STORAGE_DIR=/Users/you/Games/dnd` (optional)<br>`DNDKIT_WEB_PORT=8765` and `DNDKIT_WEB_HOST=0.0.0.0` for the web pages and the players' join codes on their phones (optional) |
 
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/dndkit dndkit`.
@@ -185,6 +185,12 @@ echo "DNDKIT_WEB_URL=http://192.168.1.20:8765" >> .env   # this computer on your
 docker compose up -d
 docker compose logs dndkit | grep Backstage   # the game master's link
 ```
+
+The image sets `DNDKIT_TRANSPORT=http`, `DNDKIT_HTTP_HOST=0.0.0.0`,
+`DNDKIT_HTTP_PORT=8000`, `DNDKIT_WEB_HOST=0.0.0.0`, `DNDKIT_WEB_PORT=8765` and
+`DNDKIT_STORAGE_DIR=/data`; `compose.yaml` adds `DNDKIT_HTTP_TOKEN` and
+`DNDKIT_WEB_URL` from `.env`. Any other setting from the table above goes in
+the service's `environment`.
 
 In roomkit-ui, add the server with Transport `streamable_http`, URL
 `http://<the server's address>:8000/mcp`, and the header
