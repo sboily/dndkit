@@ -93,9 +93,9 @@ In **Settings → Integrations → MCP**, add a server:
 From a local checkout instead: Command `uv`, Arguments
 `run --directory /path/to/gamemaster-mcp gamemaster-mcp`.
 
-The 59 tool schemas weigh about 8,350 tokens by roomkit's own estimate, just
+The 60 tool schemas weigh about 8,650 tokens by roomkit's own estimate, just
 over the 8,000 at which roomkit hides tools behind `find_tools` by default:
-enable the skills below (their tools then wait for them: about 6,750 tokens)
+enable the skills below (their tools then wait for them: about 7,050 tokens)
 or raise roomkit's threshold (`tool_search_threshold_tokens`). Optional
 parameters are advertised without their `null` alternative to save room.
 Put the system prompt below in the assistant's personality.
@@ -118,7 +118,7 @@ at both skills' URIs, for hosts that only read resources.
 
 A skill's `allowed_tools` frontmatter is roomkit's: roomkit keeps those tools
 out of the catalogue, and out of its token count, until the model activates
-the skill. With both skills on, the catalogue weighs about 6,750 tokens. To
+the skill. With both skills on, the catalogue weighs about 7,050 tokens. To
 use them in roomkit-ui before it speaks the Skills extension, add this
 repository (or its checkout) as a skill source in Settings → Skills: they
 live in `src/gamemaster_mcp/skills/`.
@@ -159,10 +159,15 @@ The Gamemaster tools hold the campaign. Trust them over your memory:
 - Before describing a character, place or quest, read it (get_character,
   get_location, get_quest, get_game_state).
 - Record every change as it happens: damage and healing with change_hit_points
-  (characters and monsters), conditions with set_condition, items with
+  (characters and monsters), conditions with set_condition, a spell held
+  with set_concentration (damage then asks for the save), items with
   add_item_to_character and remove_item_from_character, spells with
   use_spell_slot, the party's location and date with update_game_state.
 - Roll every die with roll_dice and say the result; never invent a roll.
+  What the players must not see (a hidden foe's Stealth, an NPC's lie) is a
+  secret roll: say only what it means.
+- Ability checks and saves use the sheet's bonuses (get_character); a short
+  rest spends Hit Dice with rest and hit_dice.
 - In combat, start_combat with everyone's initiative (or a planned encounter),
   then next_turn after each turn. Monsters at 0 HP leave the fight on their own.
   When positions matter, play it on the battle map (the dnd-battle-map skill:
@@ -184,8 +189,9 @@ The Gamemaster tools hold the campaign. Trust them over your memory:
 
 Starting a new campaign, run a short session zero, one question at a time:
 the campaign's name and pitch, then each player's character (name, race,
-class, level, hit points, ability scores), the starting location, a first NPC
-and a first quest, creating each with its tool as soon as you have it.
+class, level, ability scores, then their skills with update_character), the
+starting location, a first NPC and a first quest, creating each with its tool
+as soon as you have it.
 ```
 
 ## Tools
@@ -200,7 +206,7 @@ and a first quest, creating each with its tool as soon as you have it.
 | NPCs | `create_npc`, `get_npc`, `update_npc`, `list_npcs` |
 | Locations | `create_location`, `get_location`, `update_location`, `list_locations` |
 | Quests | `create_quest`, `get_quest`, `update_quest`, `list_quests` |
-| Table | `seat_players` 🖥, `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition` |
+| Table | `seat_players` 🖥, `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition`, `set_concentration` |
 | Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `use_legendary`, `end_combat` |
 | Battle map | `set_battlefield` 🖥, `place_tokens`, `move_token`, `area_of_effect`, `check_target` |
 | Bestiary | `save_monster`, `get_monsters`, `plan_encounter`, `list_encounters` |
@@ -212,6 +218,21 @@ and a first quest, creating each with its tool as soon as you have it.
 `update_character` sets absolute values; `change_hit_points` applies damage or
 healing to characters and monsters alike, and changes nobody if one name is
 unknown. A tool that fails changes nothing, in memory or on disk.
+
+A few rules the tools keep:
+
+- **Proficiencies**: `update_character` takes skills, saving throws (English
+  or French names: *Discrétion*, *Sagesse*), languages and features; a new
+  character is proficient in its class's saves. The sheets give each
+  proficient skill and save with its bonus.
+- **Hit Dice**: `rest` with `hit_dice` spends them on a short rest (rolled on
+  the dice tray, each die plus the Constitution modifier); a long rest gives
+  half of them back.
+- **Concentration**: `set_concentration` holds one spell. Damage then asks for
+  the Constitution save (DC 10 or half the damage); 0 HP or an incapacitating
+  condition ends it.
+- **Secret rolls**: `roll_dice` with `secret` shows on the backstage only, not
+  on the table screen, the phones or the dice widget.
 
 ### Monsters and bosses
 

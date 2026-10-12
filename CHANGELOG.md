@@ -99,6 +99,18 @@ Live web pages: a table screen, each player's phone, the game master's backstage
 - Model parameters lose their docstring in the advertised schemas (the
   parameter's description says it): fewer tokens.
 
+- **Proficiencies**: `update_character` sets skills, saving throws (English
+  or French names), languages and features; a new character is proficient in
+  its class's saving throws; the sheets give each proficient skill and save
+  with its bonus.
+- **Hit Dice**: `rest` with `hit_dice` spends them on a short rest (rolled on
+  the dice tray); a long rest gives half of them back.
+- **Concentration**: `set_concentration`; damage asks for the Constitution
+  save, 0 HP or incapacitation ends the spell; the screens show it.
+- **Secret rolls**: `roll_dice` with `secret`, shown on the backstage only.
+- **CI**: GitHub Actions run ruff, mypy, bandit and the tests on Python 3.12
+  and 3.13, and knip on the pages' scripts, now ES modules.
+
 ### Changed
 
 - After a roll call, encounter difficulty counts the characters at the table
@@ -145,6 +157,8 @@ Live web pages: a table screen, each player's phone, the game master's backstage
   resolved against the client's working directory; a non-UTF-8 setting file
   or an accented confirmation code is a clear error.
 - Old mid-combat saves with odd initiative entries load.
+- French class names in the feminine (Magicienne, Guerrière, Rôdeuse...) are
+  known: their characters got a d8 and no spell slots.
 
 ## 0.3.0
 
