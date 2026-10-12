@@ -86,11 +86,15 @@ def set_condition(
     names: Targets,
     condition: Annotated[Condition, Field(description="5e condition")],
     active: Annotated[bool, Field(description="false to remove it")] = True,
+    rounds: Annotated[
+        int | None, Field(ge=1, le=100, description="Ends after its Nth turn (1 minute: 10)")
+    ] = None,
     store: CampaignStore = Depends(get_store),
 ) -> str:
-    """Add or remove a condition (poisoned, prone...) on characters or monsters."""
+    """Add or remove a condition (poisoned, prone...) on characters or monsters. With
+    rounds, next_turn ends it at the end of the target's turn that many turns on."""
     with store.transaction() as campaign:
-        return "\n".join(effects.set_condition(campaign, names, condition, active))
+        return "\n".join(effects.set_condition(campaign, names, condition, active, rounds))
 
 
 @tool

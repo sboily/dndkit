@@ -212,12 +212,14 @@ export const GM = (() => {
     );
   }
 
-  const conditions = (names, exhaustion, concentration) =>
+  /** A creature's conditions (turns left on a timed one), exhaustion and spell held. */
+  const conditions = ({ conditions: names, rounds, exhaustion, concentration }) =>
     h(
       "div",
       { class: "chips" },
       concentration ? h("span", { class: "chip conc", title: t("concentration") }, `◎ ${concentration}`) : null,
-      (names || []).map((name) => h("span", { class: "chip cond" }, t(name))),
+      (names || []).map((name) => h("span", { class: "chip cond" },
+        rounds && rounds[name] ? `${t(name)} · ${t("turnsLeft", { n: rounds[name] })}` : t(name))),
       exhaustion ? h("span", { class: "chip warn" }, `${t("exhaustion")} ${exhaustion}`) : null,
     );
 

@@ -37,6 +37,7 @@ class Combatant(GameModel):
     armor_class: int | None = Field(default=None, ge=0)
     xp: int = Field(default=0, ge=0)
     conditions: list[str] = Field(default_factory=list)
+    condition_rounds: dict[str, int] = Field(default_factory=dict)  # turns left, if timed
     concentration: str | None = None  # the spell held (a character's is on its sheet)
     ally: bool = False
     size: Size = "medium"

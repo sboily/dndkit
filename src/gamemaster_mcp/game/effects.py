@@ -123,9 +123,14 @@ def grant_temporary_hp(campaign: Campaign, refs: Sequence[str], amount: int) -> 
 
 
 def set_condition(
-    campaign: Campaign, refs: Sequence[str], condition: str, active: bool
+    campaign: Campaign,
+    refs: Sequence[str],
+    condition: str,
+    active: bool,
+    rounds: int | None = None,
 ) -> list[str]:
-    """Add or remove one condition on each target; one line per target."""
+    """Add or remove one condition on each target; one line per target. *rounds*:
+    it ends by itself at the end of the target's turn that many turns on."""
     if condition not in CONDITIONS:
         raise InvalidChangeError(
             f"Unknown condition '{condition}'. Conditions: {', '.join(CONDITIONS)}."
@@ -137,8 +142,9 @@ def set_condition(
             continue
         others = [c for c in holder.conditions if c != condition]
         holder.conditions = [*others, condition] if active else others
-        listed = ", ".join(holder.conditions) or "no condition"
-        lines.append(f"{target.name}: {listed}")
+        timers = {c: n for c, n in holder.condition_rounds.items() if c != condition}
+        holder.condition_rounds = {**timers, condition: rounds} if active and rounds else timers
+        lines.append(f"{target.name}: {timed(holder) or 'no condition'}")
         if (
             active
             and condition in INCAPACITATING
@@ -146,6 +152,25 @@ def set_condition(
         ):
             lines.append(lost)
     return lines
+
+
+def end_of_turn(campaign: Campaign, combatant: Combatant) -> list[str]:
+    """Count down the timed conditions of the creature whose turn ends."""
+    holder = campaign.characters.get(combatant.character_id or "") or combatant
+    left = {c: n - 1 for c, n in holder.condition_rounds.items() if c in holder.conditions}
+    ended = [c for c, n in left.items() if n <= 0]
+    holder.condition_rounds = {c: n for c, n in left.items() if n > 0}
+    holder.conditions = [c for c in holder.conditions if c not in ended]
+    return [f"{combatant.name}: {', '.join(ended)} ends."] if ended else []
+
+
+def timed(holder: Character | Combatant) -> str:
+    """ "stunned (1 turn left), prone": each condition, with what remains of a timed one."""
+    rounds = holder.condition_rounds
+    return ", ".join(
+        f"{c} ({rounds[c]} turn{'s' if rounds[c] > 1 else ''} left)" if c in rounds else c
+        for c in holder.conditions
+    )
 
 
 def set_concentration(campaign: Campaign, ref: str, spell: str | None) -> str:

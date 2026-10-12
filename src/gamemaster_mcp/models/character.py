@@ -117,6 +117,7 @@ class Character(GameModel):
     death_saves_failure: int = Field(default=0, ge=0, le=3)
     stable: bool = False  # at 0 HP without death saves (three successes, a Medicine check)
     conditions: list[str] = Field(default_factory=list)  # names from CONDITIONS
+    condition_rounds: dict[str, int] = Field(default_factory=dict)  # turns left, if timed
     concentration: str | None = None  # the spell held
     exhaustion: int = Field(default=0, ge=0, le=6)
     experience_points: int = Field(default=0, ge=0)

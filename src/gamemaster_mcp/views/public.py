@@ -46,6 +46,7 @@ def _fighter(campaign: Campaign, combatant: Combatant, current: bool) -> Json:
         "pc": False,
         "health": health(combatant.hit_points, combatant.hit_points_max),
         "conditions": list(combatant.conditions),
+        "rounds": dict(combatant.condition_rounds),
     }
 
 

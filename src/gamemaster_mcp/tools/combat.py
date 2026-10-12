@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from pydantic import Field
 
 from gamemaster_mcp.errors import InvalidChangeError
-from gamemaster_mcp.game import battlefield, bestiary, combat, combatants, pathing
+from gamemaster_mcp.game import battlefield, bestiary, combat, combatants, effects, pathing
 from gamemaster_mcp.game.dice import DiceLog
 from gamemaster_mcp.models import Participant
 from gamemaster_mcp.storage import CampaignStore
@@ -76,6 +76,8 @@ def next_turn(store: CampaignStore = Depends(get_store)) -> str:
     with store.transaction() as campaign:
         state = campaign.game_state
         caught_up = combatants.refresh(campaign)
+        ending = state.current_combatant
+        caught_up += effects.end_of_turn(campaign, ending) if ending else []
         current = combat.next_turn(state)
         prefix = f"Round {state.combat_round} begins. " if state.turn_index == 0 else ""
         line = render_combat.combatant_line(campaign, current)

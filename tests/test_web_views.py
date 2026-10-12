@@ -32,6 +32,7 @@ def test_the_table_and_the_players_see_no_secret(tmp_path: Path) -> None:
             "pc": False,
             "health": "bloodied",
             "conditions": [],
+            "rounds": {},
         }
         assert data["combat"]["order"][0]["hp"] == 12  # the party in full
 

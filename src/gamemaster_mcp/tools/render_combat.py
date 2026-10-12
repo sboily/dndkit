@@ -1,7 +1,14 @@
 """Plain-text views of fights, monsters and encounters."""
 
-from gamemaster_mcp.game import bestiary, rules
-from gamemaster_mcp.models import Campaign, Combatant, Encounter, EncounterGroup, Monster
+from gamemaster_mcp.game import bestiary, effects, rules
+from gamemaster_mcp.models import (
+    Campaign,
+    Character,
+    Combatant,
+    Encounter,
+    EncounterGroup,
+    Monster,
+)
 
 
 def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
@@ -11,15 +18,15 @@ def combatant_line(campaign: Campaign, combatant: Combatant) -> str:
     if character is not None:
         parts.append(f"HP {character.hit_points_current}/{character.hp_maximum}")
         parts.append(f"AC {character.armor_class}")
-        conditions = character.conditions
+        holder: Character | Combatant = character
     else:
         if combatant.hit_points is not None:
             parts.append(f"HP {combatant.hit_points}/{combatant.hit_points_max}")
         if combatant.armor_class is not None:
             parts.append(f"AC {combatant.armor_class}")
-        conditions = combatant.conditions
-    if conditions:
-        parts.append(", ".join(conditions))
+        holder = combatant
+    if holder.conditions:
+        parts.append(effects.timed(holder))
     held = character.concentration if character is not None else combatant.concentration
     if held:
         parts.append(f"concentrating on {held}")

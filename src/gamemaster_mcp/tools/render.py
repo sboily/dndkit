@@ -4,7 +4,7 @@ No emoji and little markup: a voice model reads these, then says what
 matters in its own words.
 """
 
-from gamemaster_mcp.game import characters, proficiencies, seating
+from gamemaster_mcp.game import characters, effects, proficiencies, seating
 from gamemaster_mcp.game.spellbook import describe_slots
 from gamemaster_mcp.models import (
     ABILITIES,
@@ -61,7 +61,7 @@ def character_sheet(c: Character) -> str:
         lines.append(casting)
     if c.conditions or c.exhaustion:
         exhaustion = [f"exhaustion {c.exhaustion}"] if c.exhaustion else []
-        lines.append(f"Conditions: {', '.join([*c.conditions, *exhaustion])}.")
+        lines.append(f"Conditions: {', '.join(filter(None, [effects.timed(c), *exhaustion]))}.")
     if c.hit_points_current == 0:
         lines.append(
             f"Death saves: {c.death_saves_success} successes, {c.death_saves_failure} failures."

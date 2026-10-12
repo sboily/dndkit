@@ -55,3 +55,25 @@ async def test_the_screens_show_the_spell_held(client: Client) -> None:
     assert party["characters"][0]["concentration"] == "Invisibility"
     sheet = await call(client, "get_character", name_or_id="Aria")
     assert "Concentrating on Invisibility." in sheet
+
+
+async def test_a_timed_condition_ends_by_itself_at_the_end_of_its_turn(client: Client) -> None:
+    await call(client, "create_campaign", name="Timed", description="d")
+    await call(client, "create_character", name="Aria", character_class="Wizard", race="Elf")
+    await call(
+        client,
+        "start_combat",
+        participants=[{"name": "Aria", "initiative": 15}, {"name": "Ogre", "initiative": 5}],
+    )
+    said = await call(client, "set_condition", names=["Ogre"], condition="stunned", rounds=2)
+    assert said == "Ogre: stunned (2 turns left)"
+    await call(client, "set_condition", names=["Ogre"], condition="prone")
+    turn = await call(client, "next_turn")  # Aria's turn ends: the ogre's timer waits
+    assert "Ogre's turn" in turn and "stunned (2 turns left), prone" in turn
+    await call(client, "next_turn")  # the ogre's first turn ends
+    turn = await call(client, "next_turn")
+    assert "Ogre: stunned ends." not in turn
+    turn = await call(client, "next_turn")  # its second turn ends
+    assert turn.startswith("Ogre: stunned ends.\nRound 3 begins. Aria's turn")
+    seen = json.loads(await call(client, "get_screen_data", view="combat"))
+    assert seen["order"][1]["conditions"] == ["prone"] and seen["order"][1]["rounds"] == {}
