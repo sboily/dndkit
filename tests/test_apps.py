@@ -2,10 +2,13 @@
 
 import json
 import re
+from pathlib import Path
 
 import pytest
 from fastmcp import Client
 
+from dndkit.app import build_server
+from dndkit.config import WebSettings
 from tests.helpers import call, call_error
 
 pytestmark = pytest.mark.anyio
@@ -16,6 +19,7 @@ APP_TOOLS = {
     "get_game_state": "ui://dndkit/party.html",
     "seat_players": "ui://dndkit/seating.html",
     "get_character": "ui://dndkit/character.html",
+    "show_join_codes": "ui://dndkit/join.html",
 }
 
 
@@ -56,6 +60,28 @@ async def test_screen_data_for_each_widget(client: Client) -> None:
     sheet = json.loads(await call(client, "get_screen_data", view="character", name="aria"))
     assert sheet["abilities"][0] == {"key": "str", "score": 10, "mod": 0}
     assert "needs a name" in await call_error(client, "get_screen_data", view="character")
+
+
+async def test_join_codes_on_screen_need_the_web_pages(client: Client, tmp_path: Path) -> None:
+    await call(client, "create_campaign", name="Far", description="d")
+    assert "web pages are off" in await call_error(client, "show_join_codes")
+    off = json.loads(await call(client, "get_screen_data", view="join"))
+    assert off == {"off": True, "reachable": False, "players": []}
+    for settings, reachable in (
+        (WebSettings(port=0), False),  # this machine only: phones cannot reach it
+        (WebSettings(port=0, public_url="http://table.local:8765"), True),
+    ):
+        async with Client(build_server(tmp_path / str(reachable), web=settings)) as served:
+            await call(served, "create_campaign", name="Near", description="d")
+            assert "No characters yet" in await call(served, "show_join_codes")
+            await call(served, "create_character", name="Aria", character_class="Mage", race="Elf")
+            said = await call(served, "show_join_codes")
+            assert said.startswith("QR codes on screen for Aria" if reachable else "Codes shown")
+            shown = json.loads(await call(served, "get_screen_data", view="join"))
+            (aria,) = shown["players"]
+            assert shown["reachable"] is reachable and aria["qr"].startswith("data:image/svg")
+            assert re.fullmatch(r"http://[^/]+/p/[a-z2-7]{16}/", aria["url"])
+            assert aria["url"].startswith("http://table.local:8765/") is reachable
 
 
 async def test_a_planned_fight_from_start_to_level_up(client: Client) -> None:

@@ -31,6 +31,7 @@ from tests.helpers import call
 from tests.web_helpers import aria_token, make_sources
 
 WEB_PAGES = ["table", "player", "gm"]
+WIDGETS = ["dice", "combat", "party", "character", "seating", "join"]
 
 
 @pytest.mark.anyio
@@ -181,7 +182,7 @@ def test_the_scripts_are_modules_inlined_in_order() -> None:
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="needs Node.js")
-@pytest.mark.parametrize("name", ["dice", "combat", "party", "character", "seating", *WEB_PAGES])
+@pytest.mark.parametrize("name", [*WIDGETS, *WEB_PAGES])
 def test_a_page_s_script_parses(name: str, tmp_path: Path) -> None:
     html = ui.page(name, web=name in WEB_PAGES)
     for number, script in enumerate(re.findall(r"<script>(.*?)</script>", html, re.DOTALL)):

@@ -29,7 +29,7 @@ from dndkit.skills import register_skills
 from dndkit.storage import CampaignStore
 from dndkit.tools import ALL_TOOLS
 from dndkit.tools.apps import register_apps
-from dndkit.tools.deps import DICE_LOG_KEY, STORE_KEY
+from dndkit.tools.deps import DICE_LOG_KEY, JOIN_CODES_KEY, STORE_KEY
 from dndkit.tools.recorder import Recorder
 from dndkit.tools.schema import compact
 from dndkit.transport import BearerToken, add_health, serve
@@ -82,8 +82,8 @@ def build_server(
         dice_log = DiceLog(on_record=changes.notify)
         activity.on_record = changes.notify_activity
         try:
-            async with web_pages(web, store, dice_log, activity, changes):
-                yield {STORE_KEY: store, DICE_LOG_KEY: dice_log}
+            async with web_pages(web, store, dice_log, activity, changes) as codes:
+                yield {STORE_KEY: store, DICE_LOG_KEY: dice_log, JOIN_CODES_KEY: codes}
         finally:
             store.close()
 

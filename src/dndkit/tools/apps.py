@@ -18,6 +18,7 @@ COMBAT_APP = "ui://dndkit/combat.html"
 PARTY_APP = "ui://dndkit/party.html"
 CHARACTER_APP = "ui://dndkit/character.html"
 SEATING_APP = "ui://dndkit/seating.html"
+JOIN_APP = "ui://dndkit/join.html"
 
 _PAGES = {
     DICE_APP: ("dice", "Dice tray: the latest roll, rolling."),
@@ -25,6 +26,7 @@ _PAGES = {
     PARTY_APP: ("party", "Party board: hit points, conditions, location and quests, live."),
     CHARACTER_APP: ("character", "Character sheet, live."),
     SEATING_APP: ("seating", "The table: who plays which character tonight, live."),
+    JOIN_APP: ("join", "Join codes: each character's QR code, for the players' phones."),
 }
 
 

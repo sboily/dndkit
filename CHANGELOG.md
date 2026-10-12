@@ -16,6 +16,8 @@ A server of its own: dndkit over HTTP, in Docker.
 - **The backstage's link**, `/gm/<code>/`, written in the server's log: the
   backstage opens from another computer, or from behind Docker's gateway,
   where it cannot tell this computer from others.
+- **`show_join_codes`**, with a widget: the players' QR codes in roomkit-ui,
+  as on the table screen, at the address phones reach. 63 tools.
 
 ## 0.4.0 (2026-10-12)
 

@@ -130,9 +130,9 @@ roomkit-ui reads what the server publishes besides its tools: its skills
 tools are meant to be used (roomkit 0.99). Put the system prompt below in the
 assistant's personality.
 
-The 62 tool schemas weigh about 8,900 tokens by roomkit's own estimate, over
+The 63 tool schemas weigh about 8,950 tokens by roomkit's own estimate, over
 the 8,000 at which roomkit may hide tools behind `find_tools`: keep the skills
-on (the tools they bring then wait for them: about 7,300 tokens), or raise
+on (the tools they bring then wait for them: about 7,350 tokens), or raise
 roomkit's threshold (`tool_search_threshold_tokens`). roomkit-ui's automatic
 Tool Search leaves a local voice model every tool. Optional parameters are
 advertised without their `null` alternative to save room.
@@ -167,7 +167,7 @@ at each skill's URI, for hosts that only read resources. Load
 
 A skill's `allowed_tools` frontmatter is roomkit's: roomkit keeps those tools
 out of the catalogue, and out of its token count, until the model activates
-the skill. With the skills on, the catalogue weighs about 7,300 tokens.
+the skill. With the skills on, the catalogue weighs about 7,350 tokens.
 roomkit-ui lists them under the server's name; a client that does not speak
 the extension can load them from `src/dndkit/skills/` as a skill folder.
 
@@ -300,7 +300,7 @@ Then call check_campaign and fix what it lists before the first scene.
 | NPCs | `create_npc`, `get_npc`, `update_npc`, `list_npcs` |
 | Locations | `create_location`, `get_location`, `update_location`, `list_locations` |
 | Quests | `create_quest`, `get_quest`, `update_quest`, `list_quests` |
-| Table | `seat_players` 🖥, `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition`, `set_concentration` |
+| Table | `seat_players` 🖥, `show_join_codes` 🖥, `get_game_state` 🖥, `update_game_state`, `change_hit_points`, `set_condition`, `set_concentration` |
 | Combat | `start_combat` 🖥, `add_combatant`, `next_turn`, `remove_combatant`, `use_legendary`, `take_reaction`, `end_combat` |
 | Battle map | `set_battlefield` 🖥, `place_tokens`, `move_token`, `area_of_effect`, `check_target` |
 | Bestiary | `save_monster`, `get_monsters`, `plan_encounter`, `list_encounters` |
@@ -458,7 +458,7 @@ from where it can be put back by hand. A wrong code cancels the request.
 
 ## On-screen widgets (MCP Apps)
 
-Six tools carry an MCP App (`_meta.ui.resourceUri`): the client opens their
+Seven tools carry an MCP App (`_meta.ui.resourceUri`): the client opens their
 page next to the conversation.
 
 | Tool | Widget |
@@ -467,6 +467,7 @@ page next to the conversation.
 | `start_combat`, `set_battlefield` | Combat tracker, live: the battle map when there is one, initiative order, current turn, hit point bars that flash on damage or healing, AC, conditions, the defeated and their XP. |
 | `get_game_state` | Party board, live: location, date, funds, every character's hit points, spell slots, conditions and death saves, quest progress, combat banner. |
 | `seat_players` | The table, live: the players seated around it with their characters, newcomers without one yet, absent players and characters nobody plays. |
+| `show_join_codes` | Join codes: each character's QR code for the players' phones, the same as on the table screen, so roomkit-ui alone is enough to hand them out. Needs the web pages (`DNDKIT_WEB_PORT`, and `DNDKIT_WEB_HOST=0.0.0.0` for phones). |
 | `get_character` | Character sheet, live: hit points, AC, proficiency, XP to next level, abilities, conditions, spell slots, spells, inventory. |
 
 Each page is self-contained (no network access), French or English after the

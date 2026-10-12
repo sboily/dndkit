@@ -12,10 +12,11 @@ from dndkit.errors import InvalidChangeError
 from dndkit.game.dice import DiceLog
 from dndkit.models import Campaign
 from dndkit.storage import CampaignStore
-from dndkit.tools.deps import READ_ONLY, get_dice_log, get_store
+from dndkit.tools.deps import READ_ONLY, JoinCodes, get_dice_log, get_join_codes, get_store
 from dndkit.views import everyone, widgets
 
-View = Literal["dice", "combat", "party", "character", "seating"]
+View = Literal["dice", "combat", "party", "character", "seating", "join"]
+WEB_OFF: everyone.Json = {"off": True, "reachable": False, "players": []}
 CAMPAIGN_VIEWS: dict[str, Callable[[Campaign], everyone.Json]] = {
     "combat": widgets.combat,
     "party": everyone.party,
@@ -29,10 +30,16 @@ def get_screen_data(
     name: Annotated[str | None, Field(description="Character, for the character view")] = None,
     store: CampaignStore = Depends(get_store),
     log: DiceLog = Depends(get_dice_log),
+    codes: JoinCodes | None = Depends(get_join_codes),
 ) -> str:
     """JSON for the on-screen widgets. Never needed in conversation."""
     if view == "dice":
         data = everyone.dice(log)
+    elif view == "join" and codes is None:
+        data = WEB_OFF
+    elif view == "join" and codes is not None:
+        with store.reading() as campaign:
+            data = codes.view(campaign)
     elif view == "character" and not name:
         raise InvalidChangeError("The character view needs a name.")
     else:
